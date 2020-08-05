@@ -201,7 +201,30 @@ void FuzzJitThumb16(const size_t instruction_count, const size_t instructions_to
         initial_regs[15] = 0;
 
         std::generate_n(test_env.code_mem.begin(), instruction_count, instruction_generator);
+        RunInstance(run_number, test_env, uni, jit, initial_regs, instruction_count, instructions_to_execute_count);
+    }
+}
 
+void FuzzJitThumb32(const size_t instruction_count, const size_t instructions_to_execute_count, const size_t run_count, const std::function<u32()> instruction_generator) {
+    ThumbTestEnv test_env;
+    // Prepare memory.
+    test_env.code_mem.resize(instruction_count * 2 + 1);
+    test_env.code_mem.back() = 0xE7FE; // b +#0
+
+    // Prepare test subjects
+    A32Unicorn uni{test_env};
+    A32::Jit jit{GetUserConfig(&test_env)};
+
+    for (size_t run_number = 0; run_number < run_count; run_number++) {
+        ThumbTestEnv::RegisterArray initial_regs;
+        std::generate_n(initial_regs.begin(), initial_regs.size() - 1, []{ return RandInt<u32>(0, 0xFFFFFFFF); });
+        initial_regs[15] = 0;
+        
+        for (size_t i = 0; i < instruction_count; i++) {
+            auto insn = instruction_generator();
+            test_env.code_mem[2*i] = Common::Bits<16,31>(insn);
+            test_env.code_mem[2*i+1] = Common::Bits<0,15>(insn);
+        }
         RunInstance(run_number, test_env, uni, jit, initial_regs, instruction_count, instructions_to_execute_count);
     }
 }
@@ -273,6 +296,27 @@ TEST_CASE("Fuzz Thumb instructions set 1", "[JitX64][Thumb]") {
     }
 #endif
 }
+
+TEST_CASE("Fuzz Thumb2 instructions set 1", "[JitX64][Thumb2]") {
+    const std::array instructions = {
+        Thumb32InstGen("11110m00010011110mmm00ddmmmmmmmm"), // MOV (imm)
+    };
+
+    const auto instruction_select = [&]() -> u32 {
+        size_t inst_index = RandInt<size_t>(0, instructions.size() - 1);
+
+        return instructions[inst_index].Generate();
+    };
+
+    SECTION("single instructions") {
+        FuzzJitThumb32(1, 2, 10000, instruction_select);
+    }
+
+    SECTION("short blocks") {
+        FuzzJitThumb32(5, 6, 3000, instruction_select);
+    }
+}
+
 
 TEST_CASE("Fuzz Thumb instructions set 2 (affects PC)", "[JitX64][Thumb]") {
     const std::array instructions = {
