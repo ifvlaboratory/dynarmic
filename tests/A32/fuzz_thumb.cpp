@@ -184,7 +184,7 @@ static void RunInstance(size_t run_number, ThumbTestEnv& test_env, A32Unicorn<Th
     }
 }
 
-void FuzzJitThumb(const size_t instruction_count, const size_t instructions_to_execute_count, const size_t run_count, const std::function<u16()> instruction_generator) {
+void FuzzJitThumb16(const size_t instruction_count, const size_t instructions_to_execute_count, const size_t run_count, const std::function<u16()> instruction_generator) {
     ThumbTestEnv test_env;
 
     // Prepare memory.
@@ -258,18 +258,18 @@ TEST_CASE("Fuzz Thumb instructions set 1", "[JitX64][Thumb]") {
     };
 
     SECTION("single instructions") {
-        FuzzJitThumb(1, 2, 10000, instruction_select);
+        FuzzJitThumb16(1, 2, 10000, instruction_select);
     }
 
     SECTION("short blocks") {
-        FuzzJitThumb(5, 6, 3000, instruction_select);
+        FuzzJitThumb16(5, 6, 3000, instruction_select);
     }
 
     // TODO: Test longer blocks when Unicorn can consistently
     //       run these without going into an infinite loop.
 #if 0
     SECTION("long blocks") {
-        FuzzJitThumb(1024, 1025, 1000, instruction_select);
+        FuzzJitThumb16(1024, 1025, 1000, instruction_select);
     }
 #endif
 }
@@ -314,7 +314,7 @@ TEST_CASE("Fuzz Thumb instructions set 2 (affects PC)", "[JitX64][Thumb]") {
         return instructions[inst_index].Generate();
     };
 
-    FuzzJitThumb(1, 1, 10000, instruction_select);
+    FuzzJitThumb16(1, 1, 10000, instruction_select);
 }
 
 TEST_CASE("Verify fix for off by one error in MemoryRead32 worked", "[Thumb]") {
