@@ -35,6 +35,20 @@ bool ThumbTranslatorVisitor::thumb32_BLX_imm(Imm<11> hi, Imm<11> lo) {
     return false;
 }
 
+bool ThumbTranslatorVisitor::thumb32_MOV_imm(Imm<1> i, bool S, Imm<3> imm3, Reg d, Imm<8> imm8) {
+    const auto cpsr_c = ir.GetCFlag();
+    const auto imm_carry = ThumbExpandImm_C(i, imm3, imm8, cpsr_c);
+    const auto result = ir.Imm32(imm_carry.imm32);
+    
+    ir.SetRegister(d, result);
+    if (S) {
+        ir.SetNFlag(ir.MostSignificantBit(result));
+        ir.SetZFlag(ir.IsZero(result));
+        ir.SetCFlag(imm_carry.carry);
+    }
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }
