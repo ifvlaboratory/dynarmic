@@ -35,6 +35,7 @@ bool ThumbTranslatorVisitor::thumb32_BLX_imm(Imm<11> hi, Imm<11> lo) {
     return false;
 }
 
+// MOV<c> <Rd>, #<const>
 bool ThumbTranslatorVisitor::thumb32_MOV_imm(Imm<1> i, bool S, Imm<3> imm3, Reg d, Imm<8> imm8) {
     if (!ConditionPassed()) {
         return false;
@@ -49,6 +50,17 @@ bool ThumbTranslatorVisitor::thumb32_MOV_imm(Imm<1> i, bool S, Imm<3> imm3, Reg 
         ir.SetZFlag(ir.IsZero(result));
         ir.SetCFlag(imm_carry.carry);
     }
+    return true;
+}
+
+// TST<c> <Rn>, #<const>
+bool ThumbTranslatorVisitor::thumb32_TST_imm(Imm<1> i, Reg n, Imm<3> imm3, Imm<8> imm8) {
+    const auto cpsr_c = ir.GetCFlag();
+    const auto imm_carry = ThumbExpandImm_C(i, imm3, imm8, cpsr_c);
+    const auto result = ir.And(ir.GetRegister(n), ir.Imm32(imm_carry.imm32));
+    ir.SetNFlag(ir.MostSignificantBit(result));
+    ir.SetZFlag(ir.IsZero(result));
+    ir.SetCFlag(imm_carry.carry);
     return true;
 }
 

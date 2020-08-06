@@ -45,7 +45,7 @@ public:
         
     ThumbInstGen(const char* format, std::function<bool(InstructionType)> is_valid = [](InstructionType){ return true; }) : is_valid(is_valid) {
         int bitsize = Common::BitSize<InstructionType>();
-        REQUIRE(strlen(format) == 16);
+        REQUIRE(strlen(format) == bitsize);
         for (int i = 0; i < bitsize; i++) {
             const InstructionType bit = 1 << ((bitsize-1) - i);
             switch (format[i]) {
@@ -335,6 +335,7 @@ TEST_CASE("Fuzz Thumb IT blocks", "[JitX64][Thumb]") {
 TEST_CASE("Fuzz Thumb2 instructions set 1", "[JitX64][Thumb2]") {
     const std::array instructions = {
         Thumb32InstGen("11110m00010011110mmm00ddmmmmmmmm"), // MOV (imm)
+        Thumb32InstGen("11110i000001rrrr0kkk1111mmmmmmmm"), // TST (imm)
     };
 
     const auto instruction_select = [&](int) -> u32 {
