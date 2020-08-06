@@ -174,6 +174,7 @@ struct ThumbTranslatorVisitor final {
     bool thumb32_TEQ_imm(Imm<1> i, Reg n, Imm<3> imm3, Imm<8> imm8);
     bool thumb32_EOR_imm(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
     bool thumb32_CMN_imm(Imm<1> i, Reg n, Imm<3> imm3, Imm<8> imm8);
+    bool thumb32_ADD_imm_1(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
     bool thumb32_BL_imm(Imm<11> hi, Imm<11> lo);
     bool thumb32_BLX_imm(Imm<11> hi, Imm<11> lo);
     bool thumb32_UDF();

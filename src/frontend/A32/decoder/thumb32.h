@@ -89,7 +89,7 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         INST(&V::thumb32_TEQ_imm,        "TEQ (imm)",                "11110i001001nnnn0kkk1111mmmmmmmm"),
         INST(&V::thumb32_EOR_imm,        "EOR (imm)",                "11110i00100Snnnn0kkkddddmmmmmmmm"),
         INST(&V::thumb32_CMN_imm,        "CMN (imm)",                "11110i010001nnnn0kkk1111mmmmmmmm"),
-        //INST(&V::thumb32_ADD_imm_1,      "ADD (imm)",                "11110-01000-----0---------------"),
+        INST(&V::thumb32_ADD_imm_1,      "ADD (imm)",                "11110i01000Snnnn0kkkddddmmmmmmmm"),
         //INST(&V::thumb32_ADC_imm,        "ADC (imm)",                "11110-01010-----0---------------"),
         //INST(&V::thumb32_SBC_imm,        "SBC (imm)",                "11110-01011-----0---------------"),
         //INST(&V::thumb32_CMP_imm,        "CMP (imm)",                "11110-011011----0---1111--------"),
