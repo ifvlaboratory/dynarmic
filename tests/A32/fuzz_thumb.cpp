@@ -335,6 +335,8 @@ TEST_CASE("Fuzz Thumb IT blocks", "[JitX64][Thumb]") {
 TEST_CASE("Fuzz Thumb2 instructions set 1", "[JitX64][Thumb2]") {
     const std::array instructions = {
         Thumb32InstGen("11110m00010011110mmm00ddmmmmmmmm"), // MOV (imm)
+        Thumb32InstGen("11110i00001Snnnn0kkkddddmmmmmmmm", // BIC (imm)
+        [](u32 inst){ return Common::Bits<8, 11>(inst) != 0b1111 && Common::Bits<16, 19>(inst) != 0b1111; }),  // R15 is UNPREDICTABLE
         Thumb32InstGen("11110i00000Snnnn0kkkddddmmmmmmmm", // AND (imm)
            [](u32 inst){ return Common::Bits<8, 11>(inst) != 0b1111 && Common::Bits<16, 19>(inst) != 0b1111; }),  // R15 is UNPREDICTABLE
         Thumb32InstGen("11110i00010Snnnn0kkkddddmmmmmmmm", // ORR (imm)
