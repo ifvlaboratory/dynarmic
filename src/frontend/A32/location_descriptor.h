@@ -87,6 +87,12 @@ public:
     LocationDescriptor SetFPSCR(u32 new_fpscr) const {
         return LocationDescriptor(arm_pc, cpsr, A32::FPSCR{new_fpscr & FPSCR_MODE_MASK}, single_stepping);
     }
+    
+    LocationDescriptor SetIT(ITState it) const {
+        PSR new_cpsr = cpsr;
+        new_cpsr.IT(it);
+        return LocationDescriptor(arm_pc, new_cpsr, fpscr, single_stepping);
+    }
 
     LocationDescriptor AdvanceIT() const {
         PSR new_cpsr = cpsr;
