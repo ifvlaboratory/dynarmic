@@ -87,6 +87,29 @@ bool ThumbTranslatorVisitor::thumb32_AND_imm(Imm<1> i, bool S, Reg n, Imm<3> imm
     return true;
 }
 
+// ORR{S}<c> <Rd>,<Rn>,#<const>
+bool ThumbTranslatorVisitor::thumb32_ORR_imm(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (n == Reg::PC || d == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    
+    const auto cpsr_c = ir.GetCFlag();
+    const auto imm_carry = ThumbExpandImm_C(i, imm3, imm8, cpsr_c);
+    const auto result = ir.Or(ir.GetRegister(n), ir.Imm32(imm_carry.imm32));
+
+    
+    ir.SetRegister(d, result);
+    if (S) {
+        ir.SetNFlag(ir.MostSignificantBit(result));
+        ir.SetZFlag(ir.IsZero(result));
+        ir.SetCFlag(imm_carry.carry);
+    }
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }
