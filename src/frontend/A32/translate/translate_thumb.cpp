@@ -54,6 +54,15 @@ std::tuple<u32, ThumbInstSize> ReadThumbInstruction(u32 arm_pc, MemoryReadCodeFu
 
 } // local namespace
 
+static bool CondCanContinue(ConditionalState cond_state, const A32::IREmitter& ir) {
+    ASSERT_MSG(cond_state != ConditionalState::Break, "Should never happen.");
+    if (cond_state == ConditionalState::None)
+        return true;
+
+    // TODO: This is more conservative than necessary.
+    return std::all_of(ir.block.begin(), ir.block.end(), [](const IR::Inst& inst) { return !inst.WritesToCPSR(); });
+}
+
 IR::Block TranslateThumb(LocationDescriptor descriptor, MemoryReadCodeFuncType memory_read_code, const TranslationOptions& options) {
     const bool single_step = descriptor.SingleStepping();
 
@@ -66,27 +75,45 @@ IR::Block TranslateThumb(LocationDescriptor descriptor, MemoryReadCodeFuncType m
         const auto [thumb_instruction, inst_size] = ReadThumbInstruction(arm_pc, memory_read_code);
 
         if (inst_size == ThumbInstSize::Thumb16) {
+            visitor.is_thumb_16 = true;
             if (const auto decoder = DecodeThumb16<ThumbTranslatorVisitor>(static_cast<u16>(thumb_instruction))) {
                 should_continue = decoder->get().call(visitor, static_cast<u16>(thumb_instruction));
             } else {
                 should_continue = visitor.thumb16_UDF();
             }
         } else {
+            visitor.is_thumb_16 = false;
             if (const auto decoder = DecodeThumb32<ThumbTranslatorVisitor>(thumb_instruction)) {
                 should_continue = decoder->get().call(visitor, thumb_instruction);
             } else {
                 should_continue = visitor.thumb32_UDF();
             }
         }
+        
+        if (visitor.cond_state == ConditionalState::Break) {
+            break;
+        }
 
         const s32 advance_pc = (inst_size == ThumbInstSize::Thumb16) ? 2 : 4;
         visitor.ir.current_location = visitor.ir.current_location.AdvancePC(advance_pc);
         block.CycleCount()++;
-    } while (should_continue && !single_step);
 
-    if (single_step && should_continue) {
-        visitor.ir.SetTerm(IR::Term::LinkBlock{visitor.ir.current_location});
+        if (visitor.ir.current_location.IT().IsInITBlock()) {
+            visitor.ir.current_location = visitor.ir.current_location.AdvanceIT();
+        }
+    } while (should_continue && CondCanContinue(visitor.cond_state, visitor.ir) && !single_step);
+
+    if (visitor.cond_state == ConditionalState::Translating || visitor.cond_state == ConditionalState::Trailing || single_step) {
+        if (should_continue) {
+            if (single_step) {
+                visitor.ir.SetTerm(IR::Term::LinkBlock{visitor.ir.current_location});
+            } else {
+                visitor.ir.SetTerm(IR::Term::LinkBlockFast{visitor.ir.current_location});
+            }
+        }
     }
+    
+    ASSERT_MSG(block.HasTerminal(), "Terminal has not been set");
 
     block.SetEndLocation(visitor.ir.current_location);
 
@@ -98,6 +125,7 @@ bool TranslateSingleThumbInstruction(IR::Block& block, LocationDescriptor descri
 
     const bool is_thumb_16 = IsThumb16(static_cast<u16>(thumb_instruction));
     bool should_continue = true;
+    visitor.is_thumb_16 = is_thumb_16;
     if (is_thumb_16) {
         if (const auto decoder = DecodeThumb16<ThumbTranslatorVisitor>(static_cast<u16>(thumb_instruction))) {
             should_continue = decoder->get().call(visitor, static_cast<u16>(thumb_instruction));
@@ -119,6 +147,103 @@ bool TranslateSingleThumbInstruction(IR::Block& block, LocationDescriptor descri
     block.SetEndLocation(visitor.ir.current_location);
 
     return should_continue;
+}
+
+bool ThumbTranslatorVisitor::ConditionPassed() {
+    Cond cond;
+    auto it = ir.current_location.IT();
+    if (!it.IsInITBlock()) {
+       cond = Cond::AL;
+    } else {
+       cond = it.Cond();
+    }
+    
+    // Do we need to end this block and try again with a new block?
+    bool should_stop = false;
+    // Are we emitting an instruction to conditional part of this block?
+    bool step_cond = false;
+    
+    switch (cond_state) {
+        case ConditionalState::None: {
+            if (cond == Cond::AL) {
+                // Unconditional
+                should_stop = false;
+                break;
+            }
+            // No AL cond
+            if (!ir.block.empty()) {
+                // Give me an empty block
+                should_stop = true;
+                break;
+            }
+            // We've not emitted instructions yet.
+            // We'll emit one instruction, and set the block-entry conditional appropriately.
+            cond_state = ConditionalState::Translating;
+            ir.block.SetCondition(cond);
+            step_cond = true;
+            break;
+        }
+        case ConditionalState::Trailing: {
+            if (cond == Cond::AL) {
+                should_stop = false;
+                break;
+            }
+            // No AL cond
+            if (!ir.block.empty()) {
+                should_stop = true;
+                break;
+            }
+            break;
+        }
+        case ConditionalState::Translating: {
+            // Jump inside conditional block
+            if (ir.block.ConditionFailedLocation() != ir.current_location) {
+                cond_state = ConditionalState::Trailing;
+                should_stop = !ir.block.empty();
+                break;
+            }
+            // Try adding unconditional instructions to end of this block
+            // not stepping the conditional
+            if (cond == Cond::AL) {
+                cond_state = ConditionalState::Trailing;
+                should_stop = false;
+                break;
+            }
+            // cond has changed, abort
+            if (cond != ir.block.GetCondition()) {
+                should_stop = true;
+                break;
+            }
+            step_cond = true;
+            break;
+        }
+        default: {
+            ASSERT_MSG(cond_state != ConditionalState::Break,
+                             "This should never happen. We requested a break but that wasn't honored.");
+        }
+    }
+
+    if (step_cond) {
+        auto next_failed_location = ir.current_location;
+        if (is_thumb_16) {
+            next_failed_location = next_failed_location.AdvancePC(2);
+        } else {
+            next_failed_location = next_failed_location.AdvancePC(4);
+        }
+        if (it.IsInITBlock()) {
+            next_failed_location = next_failed_location.AdvanceIT();
+        }
+        ir.block.ConditionFailedCycleCount() = ir.block.CycleCount() + 1;
+        ir.block.SetConditionFailedLocation(next_failed_location);
+    }
+    
+    if (should_stop) {
+        cond_state = ConditionalState::Break;
+        ir.SetTerm(IR::Term::LinkBlockFast{ir.current_location});
+        return false;
+    }
+    
+    return true;
 }
 
 bool ThumbTranslatorVisitor::InterpretThisInstruction() {

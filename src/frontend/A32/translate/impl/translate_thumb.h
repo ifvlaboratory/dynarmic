@@ -14,6 +14,17 @@
 
 namespace Dynarmic::A32 {
 
+enum class ConditionalState {
+    /// We haven't met any conditional instructions yet.
+    None,
+    /// Current instruction is with a new condition code. This marks the end of this basic block.
+    Break,
+    /// This basic block is made up solely of conditional instructions.
+    Translating,
+    /// This basic block is made up of conditional instructions followed by unconditional instructions.
+    Trailing,
+};
+
 enum class Exception;
 
 struct ThumbTranslatorVisitor final {
@@ -60,7 +71,12 @@ struct ThumbTranslatorVisitor final {
 
     A32::IREmitter ir;
     TranslationOptions options;
+    
+    ConditionalState cond_state = ConditionalState::None;
+    
+    bool is_thumb_16;
 
+    bool ConditionPassed();
     bool InterpretThisInstruction();
     bool UnpredictableInstruction();
     bool UndefinedInstruction();
