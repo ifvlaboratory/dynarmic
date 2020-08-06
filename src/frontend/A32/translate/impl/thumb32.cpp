@@ -36,6 +36,9 @@ bool ThumbTranslatorVisitor::thumb32_BLX_imm(Imm<11> hi, Imm<11> lo) {
 }
 
 bool ThumbTranslatorVisitor::thumb32_MOV_imm(Imm<1> i, bool S, Imm<3> imm3, Reg d, Imm<8> imm8) {
+    if (!ConditionPassed()) {
+        return false;
+    }
     const auto cpsr_c = ir.GetCFlag();
     const auto imm_carry = ThumbExpandImm_C(i, imm3, imm8, cpsr_c);
     const auto result = ir.Imm32(imm_carry.imm32);
