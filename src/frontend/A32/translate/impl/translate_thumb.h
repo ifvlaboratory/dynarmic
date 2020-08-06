@@ -63,7 +63,7 @@ struct ThumbTranslatorVisitor final {
     ImmAndCarry ThumbExpandImm_C(Imm<1> i, Imm<3> imm3, Imm<8> imm8, IR::U1 carry_in) {
         u32 imm32 = ThumbExpandImm(i, imm3, imm8);
         auto carry_out = carry_in;
-        if (imm3.Bit<2>() != 0 && i != 0) {
+        if (imm3.Bit<2>() != 0 || i != 0) {
             carry_out = ir.Imm1(Common::Bit<31>(imm32));
         }
         return {imm32, carry_out};
