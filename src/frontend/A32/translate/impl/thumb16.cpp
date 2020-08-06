@@ -504,6 +504,10 @@ bool ThumbTranslatorVisitor::thumb16_ADD_reg_t2(bool d_n_hi, Reg m, Reg d_n_lo) 
     const Reg d = d_n;
     const auto result = ir.AddWithCarry(ir.GetRegister(n), ir.GetRegister(m), ir.Imm1(0));
     if (d == Reg::PC) {
+        const auto it = ir.current_location.IT();
+        if (it.IsInITBlock() && !it.IsLastInITBlock()) {
+            return UnpredictableInstruction();
+        }
         ir.ALUWritePC(result.result);
         // Return to dispatch as we can't predict what PC is going to be. Stop compilation.
         ir.SetTerm(IR::Term::FastDispatchHint{});
@@ -544,6 +548,10 @@ bool ThumbTranslatorVisitor::thumb16_MOV_reg(bool d_hi, Reg m, Reg d_lo) {
     const auto result = ir.GetRegister(m);
 
     if (d == Reg::PC) {
+        const auto it = ir.current_location.IT();
+        if (it.IsInITBlock() && !it.IsLastInITBlock()) {
+            return UnpredictableInstruction();
+        }
         ir.ALUWritePC(result);
         ir.SetTerm(IR::Term::FastDispatchHint{});
         return false;
@@ -1162,7 +1170,8 @@ bool ThumbTranslatorVisitor::thumb16_UDF() {
 
 // BX <Rm>
 bool ThumbTranslatorVisitor::thumb16_BX(Reg m) {
-    if (ir.current_location.IT().IsInITBlock()) {
+    const auto it = ir.current_location.IT();
+    if (it.IsInITBlock() && !it.IsLastInITBlock()) {
         return UnpredictableInstruction();
     }
     ir.BXWritePC(ir.GetRegister(m));
@@ -1175,7 +1184,8 @@ bool ThumbTranslatorVisitor::thumb16_BX(Reg m) {
 
 // BLX <Rm>
 bool ThumbTranslatorVisitor::thumb16_BLX_reg(Reg m) {
-    if (ir.current_location.IT().IsInITBlock()) {
+    const auto it = ir.current_location.IT();
+    if (it.IsInITBlock() && !it.IsLastInITBlock()) {
         return UnpredictableInstruction();
     }
     ir.PushRSB(ir.current_location.AdvancePC(2));
@@ -1200,6 +1210,9 @@ bool ThumbTranslatorVisitor::thumb16_SVC(Imm<8> imm8) {
 
 // B<cond> <label>
 bool ThumbTranslatorVisitor::thumb16_B_t1(Cond cond, Imm<8> imm8) {
+    if (ir.current_location.IT().IsInITBlock()) {
+        return UnpredictableInstruction();
+    }
     if (cond == Cond::AL) {
         return thumb16_UDF();
     }
@@ -1214,7 +1227,8 @@ bool ThumbTranslatorVisitor::thumb16_B_t1(Cond cond, Imm<8> imm8) {
 
 // B <label>
 bool ThumbTranslatorVisitor::thumb16_B_t2(Imm<11> imm11) {
-    if (ir.current_location.IT().IsInITBlock()) {
+    const auto it = ir.current_location.IT();
+    if (it.IsInITBlock() && ! it.IsLastInITBlock()) {
         return UnpredictableInstruction();
     }
     const s32 imm32 = static_cast<s32>((imm11.SignExtend<u32>() << 1) + 4);

@@ -9,6 +9,10 @@ namespace Dynarmic::A32 {
 
 // BL <label>
 bool ThumbTranslatorVisitor::thumb32_BL_imm(Imm<11> hi, Imm<11> lo) {
+    const auto it = ir.current_location.IT();
+    if (it.IsInITBlock() && !it.IsLastInITBlock()) {
+        return UnpredictableInstruction();
+    }
     ir.PushRSB(ir.current_location.AdvancePC(4));
     ir.SetRegister(Reg::LR, ir.Imm32((ir.current_location.PC() + 4) | 1));
 
@@ -20,6 +24,10 @@ bool ThumbTranslatorVisitor::thumb32_BL_imm(Imm<11> hi, Imm<11> lo) {
 
 // BLX <label>
 bool ThumbTranslatorVisitor::thumb32_BLX_imm(Imm<11> hi, Imm<11> lo) {
+    const auto it = ir.current_location.IT();
+    if (it.IsInITBlock() && !it.IsLastInITBlock()) {
+        return UnpredictableInstruction();
+    }
     if (lo.Bit<0>()) {
         return UnpredictableInstruction();
     }
