@@ -299,6 +299,39 @@ TEST_CASE("Fuzz Thumb instructions set 1", "[JitX64][Thumb]") {
 #endif
 }
 
+TEST_CASE("Fuzz Thumb IT blocks", "[JitX64][Thumb]") {
+    std::vector instructions = {
+        Thumb16InstGen("00000xxxxxxxxxxx"), // LSL <Rd>, <Rm>, #<imm5>
+        Thumb16InstGen("00001xxxxxxxxxxx"), // LSR <Rd>, <Rm>, #<imm5>
+        Thumb16InstGen("00010xxxxxxxxxxx"), // ASR <Rd>, <Rm>, #<imm5>
+        Thumb16InstGen("000110oxxxxxxxxx"), // ADD/SUB_reg
+        Thumb16InstGen("000111oxxxxxxxxx"), // ADD/SUB_imm
+        Thumb16InstGen("001ooxxxxxxxxxxx"), // ADD/SUB/CMP/MOV_imm
+        Thumb16InstGen("010000ooooxxxxxx"), // Data Processing
+        Thumb16InstGen("010001000hxxxxxx"), // ADD (high registers)
+        Thumb16InstGen("0100010101xxxxxx",  // CMP (high registers)
+                     [](u16 inst){ return Common::Bits<3, 5>(inst) != 0b111; }), // R15 is UNPREDICTABLE
+        Thumb16InstGen("0100010110xxxxxx",  // CMP (high registers)
+                     [](u16 inst){ return Common::Bits<0, 2>(inst) != 0b111; }), // R15 is UNPREDICTABLE
+        Thumb16InstGen("010001100hxxxxxx") // MOV (high registers)6 inst)
+    };
+
+    const auto cond_instruction_select = [&](int i) -> u16 {
+        if (i == 2 || i == 7) {
+            // IT
+            return Thumb16InstGen("10111111cccc1mmm",
+              [](u16 inst){ return Common::Bits<4, 7>(inst) != 0b1111 && Common::Bits<4, 7>(inst) != 0b1110; }).Generate();
+        }
+        size_t inst_index = RandInt<size_t>(0, instructions.size() - 1);
+
+        return instructions[inst_index].Generate();
+    };
+
+    SECTION("short blocks") {
+        FuzzJitThumb16(20, 21, 3000, cond_instruction_select);
+    }
+}
+
 TEST_CASE("Fuzz Thumb2 instructions set 1", "[JitX64][Thumb2]") {
     const std::array instructions = {
         Thumb32InstGen("11110m00010011110mmm00ddmmmmmmmm"), // MOV (imm)
