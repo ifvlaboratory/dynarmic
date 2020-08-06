@@ -161,6 +161,7 @@ struct ThumbTranslatorVisitor final {
     bool thumb16_SVC(Imm<8> imm8);
     bool thumb16_B_t1(Cond cond, Imm<8> imm8);
     bool thumb16_B_t2(Imm<11> imm11);
+    bool thumb16_IT(Cond firstcond, Imm<4> mask);
 
     // thumb32
     bool thumb32_MOV_imm(Imm<1> i, bool S, Imm<3> imm3, Reg d, Imm<8> imm8);

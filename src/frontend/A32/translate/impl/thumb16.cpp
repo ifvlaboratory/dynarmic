@@ -950,4 +950,32 @@ bool ThumbTranslatorVisitor::thumb16_B_t2(Imm<11> imm11) {
     return false;
 }
 
+// IT{x{y{z}}} <firstcond>
+bool ThumbTranslatorVisitor::thumb16_IT(Cond firstcond, Imm<4> mask) {
+    if (ir.current_location.IT().IsInITBlock()) {
+       return UndefinedInstruction();
+    }
+    if (firstcond == Cond::NV) {
+       // NV conditional is obsolete
+       return UnpredictableInstruction();
+    }
+    if (mask == 0b0000) {
+        return UndefinedInstruction();
+    }
+    
+    auto new_it = ITState(0);
+    u8 cond = static_cast<u8>(firstcond);
+    u8 first_flag = Common::Bit<0>(cond);
+    u8 flags = (first_flag << 4) | mask.ZeroExtend();
+    u8 base = Common::Bits<1,3>(cond);
+    new_it.Base(base);
+    new_it.Flags(flags);
+
+    ir.current_location = ir.current_location.SetIT(new_it);
+    ir.current_location = ir.current_location.AdvancePC(2);
+    ir.SetTerm(IR::Term::LinkBlockFast{ir.current_location});
+    cond_state = ConditionalState::Break;
+    return true;
+}
+
 } // namespace Dynarmic::A32
