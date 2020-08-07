@@ -448,6 +448,10 @@ TEST_CASE("Fuzz Thumb2 instructions set 1", "[JitX64][Thumb2]") {
                 [](u32 inst) { return Common::Bits<0, 3>(inst) != 0b1111 && Common::Bits<8, 11>(inst) != 0b1111 &&
                 Common::Bits<16, 19>(inst) != 0b1111; }),
             // R15 is UNPREDICTABLE
+        Thumb32InstGen("11101011011Snnnn0iiiddddmmttrrrr", // SBC (reg) 
+                [](u32 inst) { return Common::Bits<0, 3>(inst) != 0b1111 && Common::Bits<8, 11>(inst) != 0b1111 &&
+                Common::Bits<16, 19>(inst) != 0b1111; }),
+            // R15 is UNPREDICTABLE
     };
 
     const auto instruction_select = [&](int) -> u32 {
