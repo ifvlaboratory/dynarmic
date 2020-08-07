@@ -688,7 +688,6 @@ bool ThumbTranslatorVisitor::thumb32_EOR_reg(bool S, Reg n, Imm<3> imm3, Reg d, 
     return true;
 }
 
-
 // PKHBT<c> <Rd>,<Rn>,<Rm>{,LSL #<imm>}
 // PKHTB<c> <Rd>,<Rn>,<Rm>{,ASR #<imm>}
 bool ThumbTranslatorVisitor::thumb32_PKH(Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, bool tb, Reg m) {
@@ -721,6 +720,40 @@ bool ThumbTranslatorVisitor::thumb32_CMN_reg(Reg n, Imm<3> imm3, Imm<2> imm2, Im
     ir.SetVFlag(result.overflow);
     return true;
 }
+
+// ADD{S}<c>.W <Rd>,<Rn>,<Rm>{,<shift>}
+bool ThumbTranslatorVisitor::thumb32_ADD_reg(bool S, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (m == Reg::PC || n == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const auto cpsr_c = ir.GetCFlag();
+    const auto shifted_m = DecodeShiftedReg(m, imm3, imm2, t, cpsr_c);
+    const auto result = ir.AddWithCarry(ir.GetRegister(n), shifted_m.result, ir.Imm1(0));
+    // TODO move this to helper function
+    if (d == Reg::PC) {
+        const auto it = ir.current_location.IT();
+        if (it.IsInITBlock() && !it.IsLastInITBlock()) {
+            return UnpredictableInstruction();
+        }
+        ir.ALUWritePC(result.result);
+        // Return to dispatch as we can't predict what PC is going to be. Stop compilation.
+        ir.SetTerm(IR::Term::FastDispatchHint{});
+        return false;
+    }
+    ir.SetRegister(d, result.result);
+    if (S) {
+        ir.SetNFlag(ir.MostSignificantBit(result.result));
+        ir.SetZFlag(ir.IsZero(result.result));
+        ir.SetCFlag(result.carry);
+        ir.SetVFlag(result.overflow);
+    };
+    return true;
+}
+
 
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
