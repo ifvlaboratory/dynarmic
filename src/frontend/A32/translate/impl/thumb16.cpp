@@ -1252,10 +1252,10 @@ bool ThumbTranslatorVisitor::thumb16_IT(Cond firstcond, Imm<4> mask) {
     }
     
     auto new_it = ITState(0);
-    u8 cond = static_cast<u8>(firstcond);
-    u8 first_flag = Common::Bit<0>(cond);
-    u8 flags = (first_flag << 4) | mask.ZeroExtend();
-    u8 base = Common::Bits<1,3>(cond);
+    const u8 cond = static_cast<u8>(firstcond);
+    const u8 first_flag = Common::Bit<0>(cond);
+    const u8 flags = (first_flag << 4) | mask.ZeroExtend();
+    const u8 base = Common::Bits<1,3>(cond);
     new_it.Base(base);
     new_it.Flags(flags);
 

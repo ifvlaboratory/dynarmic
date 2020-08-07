@@ -44,7 +44,7 @@ struct ThumbInstGen final {
 public:
         
     ThumbInstGen(const char* format, std::function<bool(InstructionType)> is_valid = [](InstructionType){ return true; }) : is_valid(is_valid) {
-        int bitsize = Common::BitSize<InstructionType>();
+        const int bitsize = Common::BitSize<InstructionType>();
         REQUIRE(strlen(format) == bitsize);
         for (int i = 0; i < bitsize; i++) {
             const InstructionType bit = 1 << ((bitsize-1) - i);
@@ -223,7 +223,7 @@ void FuzzJitThumb32(const size_t instruction_count, const size_t instructions_to
         initial_regs[15] = 0;
         
         for (size_t i = 0; i < instruction_count; i++) {
-            auto insn = instruction_generator(i);
+            const auto insn = instruction_generator(i);
             test_env.code_mem[2*i] = Common::Bits<16,31>(insn);
             test_env.code_mem[2*i+1] = Common::Bits<0,15>(insn);
         }
@@ -322,7 +322,7 @@ TEST_CASE("Fuzz Thumb IT blocks", "[JitX64][Thumb]") {
             return Thumb16InstGen("10111111cccc1mmm",
               [](u16 inst){ return Common::Bits<4, 7>(inst) != 0b1111 && Common::Bits<4, 7>(inst) != 0b1110; }).Generate();
         }
-        size_t inst_index = RandInt<size_t>(0, instructions.size() - 1);
+        const size_t inst_index = RandInt<size_t>(0, instructions.size() - 1);
 
         return instructions[inst_index].Generate();
     };
@@ -377,7 +377,7 @@ TEST_CASE("Fuzz Thumb2 instructions set 1", "[JitX64][Thumb2]") {
     };
 
     const auto instruction_select = [&](int) -> u32 {
-        size_t inst_index = RandInt<size_t>(0, instructions.size() - 1);
+        const size_t inst_index = RandInt<size_t>(0, instructions.size() - 1);
 
         return instructions[inst_index].Generate();
     };

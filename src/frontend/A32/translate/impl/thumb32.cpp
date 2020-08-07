@@ -107,7 +107,6 @@ bool ThumbTranslatorVisitor::thumb32_AND_imm(Imm<1> i, bool S, Reg n, Imm<3> imm
     const auto imm_carry = ThumbExpandImm_C(i, imm3, imm8, cpsr_c);
     const auto result = ir.And(ir.GetRegister(n), ir.Imm32(imm_carry.imm32));
 
-    
     ir.SetRegister(d, result);
     if (S) {
         ir.SetNFlag(ir.MostSignificantBit(result));
@@ -130,7 +129,6 @@ bool ThumbTranslatorVisitor::thumb32_ORR_imm(Imm<1> i, bool S, Reg n, Imm<3> imm
     const auto imm_carry = ThumbExpandImm_C(i, imm3, imm8, cpsr_c);
     const auto result = ir.Or(ir.GetRegister(n), ir.Imm32(imm_carry.imm32));
 
-    
     ir.SetRegister(d, result);
     if (S) {
         ir.SetNFlag(ir.MostSignificantBit(result));

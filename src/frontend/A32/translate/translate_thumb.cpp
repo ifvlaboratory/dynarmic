@@ -56,8 +56,9 @@ std::tuple<u32, ThumbInstSize> ReadThumbInstruction(u32 arm_pc, MemoryReadCodeFu
 
 static bool CondCanContinue(ConditionalState cond_state, const A32::IREmitter& ir) {
     ASSERT_MSG(cond_state != ConditionalState::Break, "Should never happen.");
-    if (cond_state == ConditionalState::None)
-        return true;
+	if (cond_state == ConditionalState::None) {
+		return true;
+	}
 
     // TODO: This is more conservative than necessary.
     return std::all_of(ir.block.begin(), ir.block.end(), [](const IR::Inst& inst) { return !inst.WritesToCPSR(); });
@@ -151,7 +152,7 @@ bool TranslateSingleThumbInstruction(IR::Block& block, LocationDescriptor descri
 
 bool ThumbTranslatorVisitor::ConditionPassed() {
     Cond cond;
-    auto it = ir.current_location.IT();
+    const auto it = ir.current_location.IT();
     if (!it.IsInITBlock()) {
        cond = Cond::AL;
     } else {

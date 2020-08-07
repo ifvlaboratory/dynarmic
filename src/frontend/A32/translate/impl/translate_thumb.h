@@ -37,7 +37,7 @@ struct ThumbTranslatorVisitor final {
     static u32 ThumbExpandImm(Imm<1> i, Imm<3> imm3, Imm<8> imm8) {
         const auto imm12 = concatenate(i, imm3, imm8);
         if (imm12.Bits<10, 11>() == 0) {
-            u32 imm8 = imm12.Bits<0, 7>();
+            const u32 imm8 = imm12.Bits<0, 7>();
             switch (imm12.Bits<8, 9>()) {
                 case 0b00:
                     return imm8;
@@ -50,8 +50,8 @@ struct ThumbTranslatorVisitor final {
             }
             assert(false);
         }
-        int rotate = imm12.Bits<7, 11>();
-        Imm<8> unrotated_value = concatenate(Imm<1>(1), Imm<7>(imm12.Bits<0, 6>()));
+        const int rotate = imm12.Bits<7, 11>();
+        const Imm<8> unrotated_value = concatenate(Imm<1>(1), Imm<7>(imm12.Bits<0, 6>()));
         return Common::RotateRight<u32>(unrotated_value.ZeroExtend(), rotate);
     }
     
@@ -61,7 +61,7 @@ struct ThumbTranslatorVisitor final {
     };
     
     ImmAndCarry ThumbExpandImm_C(Imm<1> i, Imm<3> imm3, Imm<8> imm8, IR::U1 carry_in) {
-        u32 imm32 = ThumbExpandImm(i, imm3, imm8);
+        const u32 imm32 = ThumbExpandImm(i, imm3, imm8);
         auto carry_out = carry_in;
         if (imm3.Bit<2>() != 0 || i != 0) {
             carry_out = ir.Imm1(Common::Bit<31>(imm32));
