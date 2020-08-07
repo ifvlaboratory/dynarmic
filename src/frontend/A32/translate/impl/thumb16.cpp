@@ -1241,7 +1241,7 @@ bool ThumbTranslatorVisitor::thumb16_B_t2(Imm<11> imm11) {
 // IT{x{y{z}}} <firstcond>
 bool ThumbTranslatorVisitor::thumb16_IT(Cond firstcond, Imm<4> mask) {
     if (ir.current_location.IT().IsInITBlock()) {
-       return UndefinedInstruction();
+        return UndefinedInstruction();
     }
     if (firstcond == Cond::NV) {
        // NV conditional is obsolete

@@ -1,11 +1,10 @@
 /* This file is part of the dynarmic project.
- * Copyright (c) 2016 MerryMage
+ * Copyright (c) 2020 MerryMage
  * SPDX-License-Identifier: 0BSD
  */
 
 #pragma once
 
-#include "common/assert.h"
 #include "frontend/A32/ir_emitter.h"
 #include "frontend/A32/types.h"
 
@@ -15,4 +14,4 @@ bool LDMHelper(A32::IREmitter& ir, bool W, Reg n, RegList list, IR::U32 start_ad
 bool STMHelper(A32::IREmitter& ir, bool W, Reg n, RegList list, IR::U32 start_address, IR::U32 writeback_address);
 void PKHHelper(A32::IREmitter& ir, bool tb, Reg d, IR::U32 n, IR::U32 shifted);
 
-} // namespace Dynarmic::A32
+} // namespace Dynarmic::A32::Helper
