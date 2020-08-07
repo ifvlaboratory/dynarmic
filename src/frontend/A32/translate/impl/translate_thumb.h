@@ -70,6 +70,43 @@ struct ThumbTranslatorVisitor final {
         return {imm32, carry_out};
     }
 
+    IR::ResultAndCarry<IR::U32> DecodeShiftedReg(Reg n, Imm<3> imm3, Imm<2> imm2, Imm<2> t, IR::U1 carry_in) {
+        const auto reg = ir.GetRegister(n);
+        switch (t.ZeroExtend()) {
+            case 0b00: {
+                const auto shift_n = concatenate(imm3, imm2).ZeroExtend();
+                const auto result = ir.LogicalShiftLeft(reg, ir.Imm8(shift_n), carry_in);
+                return result;
+            }
+            case 0b01: {
+                auto shift_n = concatenate(imm3, imm2).ZeroExtend();
+                if (shift_n == 0) {
+                    shift_n = 32;
+                }
+                const auto result = ir.LogicalShiftRight(reg, ir.Imm8(shift_n), carry_in);
+                return result;
+            }
+            case 0b10: {
+                auto shift_n = concatenate(imm3, imm2).ZeroExtend();
+                if (shift_n == 0) {
+                    shift_n = 32;
+                }
+                const auto result = ir.ArithmeticShiftRight(reg, ir.Imm8(shift_n), carry_in);
+                return result;
+            } 
+            case 0b11: {
+                auto shift_n = concatenate(imm3, imm2).ZeroExtend();
+                if (shift_n == 0) {
+                    const auto result = ir.RotateRightExtended(reg, carry_in);
+                    return result;
+                }
+                const auto result = ir.RotateRight(reg, ir.Imm8(shift_n), carry_in);
+                return result;
+            }  
+        }
+        assert(false);
+    }
+
     A32::IREmitter ir;
     TranslationOptions options;
     
