@@ -394,7 +394,7 @@ bool ThumbTranslatorVisitor::thumb32_LDMIA(bool W, Reg n, RegList reg_list) {
 		return UnpredictableInstruction();
 	}
 	const bool is_pop = W && n == Reg::SP;
-	// If PC is in list, LR cannot be in list for pop
+	// For pop, if PC is in list, LR cannot be in list
 	if (is_pop && Common::Bit<15>(reg_list) && Common::Bit<14>(reg_list)) {
 		return UnpredictableInstruction();
 	}
