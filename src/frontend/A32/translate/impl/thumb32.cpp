@@ -364,9 +364,11 @@ bool ThumbTranslatorVisitor::thumb32_STMIA(bool W, Reg n, RegList reg_list) {
 	if (n == Reg::PC || Common::BitCount(reg_list) < 2) {
 		return UnpredictableInstruction();
 	}
+	// PC and SP cannot be in list
 	if (Common::Bit<15>(reg_list) || Common::Bit<13>(reg_list)) {
 		return UnpredictableInstruction();
 	}
+
 	auto address = ir.GetRegister(n);
 	for (size_t i = 0; i < 15; i++) {
 		if (Common::Bit(i, reg_list)) {
@@ -380,6 +382,53 @@ bool ThumbTranslatorVisitor::thumb32_STMIA(bool W, Reg n, RegList reg_list) {
 	if (W) {
 		ir.SetRegister(n, address);
 	}
+	return true;
+}
+
+// LDMIA<c>.W <Rn>{!},<registers>
+bool ThumbTranslatorVisitor::thumb32_LDMIA(bool W, Reg n, RegList reg_list) {
+	if (!ConditionPassed()) {
+		return true;
+	}
+	if (W && Common::Bit(static_cast<size_t>(n), reg_list)) {
+		return UnpredictableInstruction();
+	}
+	const bool is_pop = W && n == Reg::SP;
+	// If PC is in list, LR cannot be in list for pop
+	if (is_pop && Common::Bit<15>(reg_list) && Common::Bit<14>(reg_list)) {
+		return UnpredictableInstruction();
+	}
+	if (n == Reg::PC || Common::BitCount(reg_list) < 2) {
+		return UnpredictableInstruction();
+	}
+	const auto it = ir.current_location.IT();
+	if (Common::Bit<15>(reg_list) && it.IsInITBlock() && !it.IsLastInITBlock()) {
+		return UnpredictableInstruction();
+	}
+
+	auto address = ir.GetRegister(n);
+	for (size_t i = 0; i < 15; i++) {
+		if (Common::Bit(i, reg_list)) {
+			// TODO: Deal with alignment
+			const auto data = ir.ReadMemory32(address);
+			ir.SetRegister(static_cast<Reg>(i), data);
+			address = ir.Add(address, ir.Imm32(4));
+		}
+	}
+
+	if (W) {
+		ir.SetRegister(n, address);
+	}
+
+	if (Common::Bit<15>(reg_list)) {
+		// TODO(optimization): Possible location for an RSB pop.
+		const auto data = ir.ReadMemory32(address);
+		ir.LoadWritePC(data);
+		address = ir.Add(address, ir.Imm32(4));
+		ir.SetTerm(IR::Term::PopRSBHint{});
+		return false;
+	}
+
 	return true;
 }
 
