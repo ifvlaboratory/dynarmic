@@ -73,7 +73,7 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         INST(&V::thumb32_ADC_reg,        "ADC (reg)",                "11101011010Snnnn0iiiddddmmttrrrr"),
         INST(&V::thumb32_SBC_reg,        "SBC (reg)",                "11101011011Snnnn0iiiddddmmttrrrr"),
         INST(&V::thumb32_CMP_reg,        "CMP (reg)",                "111010111011nnnn0iii1111mmttrrrr"),
-        //INST(&V::thumb32_SUB_reg,        "SUB (reg)",                "11101011101---------------------"),
+        INST(&V::thumb32_SUB_reg,        "SUB (reg)",                "11101011101Snnnn0iiiddddmmttrrrr"),
         //INST(&V::thumb32_RSB_reg,        "RSB (reg)",                "11101011110---------------------"),
 
         // Data Processing (Modified Immediate)
