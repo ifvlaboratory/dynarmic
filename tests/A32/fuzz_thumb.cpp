@@ -372,37 +372,37 @@ TEST_CASE("Fuzz Thumb2 instructions set 1", "[JitX64][Thumb2]") {
                      [](u32 inst){ return Common::Bits<8, 11>(inst) != 0b1111 && Common::Bits<16, 19>(inst) != 0b1111; }),
             // R15 is UNPREDICTABLE
         Thumb32InstGen("11110i01110Snnnn0kkkddddmmmmmmmm", // RSB (imm)
-                 [](u32 inst){ return Common::Bits<8, 11>(inst) != 0b1111 && Common::Bits<16, 19>(inst) != 0b1111; }),
+                     [](u32 inst){ return Common::Bits<8, 11>(inst) != 0b1111 && Common::Bits<16, 19>(inst) != 0b1111; }),
             // R15 is UNPREDICTABLE
-		Thumb32InstGen("1110100xx0W0nnnn0r0rrrrrrrrrrrrr", // STMIA / STMDB
-					 [](u32 inst) {
-			// Ensure that the undefined case of
-			// the base register being within the list isn't hit when W is true.
-			// In the spec, when LowestBit(reg_list) == r_n, it's defined, 
-			// but unicorn sees it as an invalid instruction.
-			const u8 op = Common::Bits<23, 24>(inst);
-			if (op == 0b11 || op == 0b00) {
-				return false;
-			}
-			const u32 rn = Common::Bits<16, 19>(inst);
-			const bool W = Common::Bit<21>(inst);
-			const u16 reg_list = Common::Bits<0, 15>(inst);
-			return rn != 15 && !(W && Common::Bit(rn, reg_list)) && Common::BitCount(reg_list) >= 2;
-		}),
-		Thumb32InstGen("1110100xx0W1nnnnrrrrrrrrrrrrrrrr", // LDMIA / LDMDB
-					 [](u32 inst) {
-			const u8 op = Common::Bits<23, 24>(inst);
-			if (op == 0b11 || op == 0b00) {
-				return false;
-			}
-			const u32 rn = Common::Bits<16, 19>(inst);
-			const bool W = Common::Bit<21>(inst);
-			const u16 reg_list = Common::Bits<0, 15>(inst);
-			return rn != 15 && 
-				!(W && Common::Bit(rn, reg_list)) && // Base register should not be in list when W is true
-				!Common::Bit(15, reg_list) && // Prevent jump 
-				Common::BitCount(reg_list) >= 2;
-		}),
+        Thumb32InstGen("1110100xx0W0nnnn0r0rrrrrrrrrrrrr", // STMIA / STMDB
+                     [](u32 inst) {
+            // Ensure that the undefined case of
+            // the base register being within the list isn't hit when W is true.
+            // In the spec, when LowestBit(reg_list) == r_n, it's defined, 
+            // but unicorn sees it as an invalid instruction.
+            const u8 op = Common::Bits<23, 24>(inst);
+            if (op == 0b11 || op == 0b00) {
+                return false;
+            }
+            const u32 rn = Common::Bits<16, 19>(inst);
+            const bool W = Common::Bit<21>(inst);
+            const u16 reg_list = Common::Bits<0, 15>(inst);
+            return rn != 15 && !(W && Common::Bit(rn, reg_list)) && Common::BitCount(reg_list) >= 2;
+        }),
+        Thumb32InstGen("1110100xx0W1nnnnrrrrrrrrrrrrrrrr", // LDMIA / LDMDB
+                     [](u32 inst) {
+            const u8 op = Common::Bits<23, 24>(inst);
+            if (op == 0b11 || op == 0b00) {
+                return false;
+            }
+            const u32 rn = Common::Bits<16, 19>(inst);
+            const bool W = Common::Bit<21>(inst);
+            const u16 reg_list = Common::Bits<0, 15>(inst);
+            return rn != 15 && 
+                !(W && Common::Bit(rn, reg_list)) && // Base register should not be in list when W is true
+                !Common::Bit(15, reg_list) && // Prevent jump 
+                Common::BitCount(reg_list) >= 2;
+        }),
     };
 
     const auto instruction_select = [&](int) -> u32 {

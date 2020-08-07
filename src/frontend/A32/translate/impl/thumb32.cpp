@@ -358,91 +358,91 @@ bool ThumbTranslatorVisitor::thumb32_RSB_imm(Imm<1> i, bool S, Reg n, Imm<3> imm
 
 // STMIA<c>.W <Rn>{!},<registers>
 bool ThumbTranslatorVisitor::thumb32_STMIA(bool W, Reg n, RegList reg_list) {
-	if (!ConditionPassed()) {
-		return true;
-	}
-	if (n == Reg::PC || Common::BitCount(reg_list) < 2) {
-		return UnpredictableInstruction();
-	}
-	// PC and SP cannot be in list
-	if (Common::Bit<15>(reg_list) || Common::Bit<13>(reg_list)) {
-		return UnpredictableInstruction();
-	}
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (n == Reg::PC || Common::BitCount(reg_list) < 2) {
+    return UnpredictableInstruction();
+    }
+    // PC and SP cannot be in list
+    if (Common::Bit<15>(reg_list) || Common::Bit<13>(reg_list)) {
+        return UnpredictableInstruction();
+    }
 
-	const u32 num_bytes = static_cast<u32>(4 * Common::BitCount(reg_list));
-	const auto address = ir.GetRegister(n);
-	const auto final_address = ir.Add(ir.GetRegister(n), ir.Imm32(num_bytes));
-	return Helper::STMHelper(ir, W, n, reg_list, address, final_address);
+    const u32 num_bytes = static_cast<u32>(4 * Common::BitCount(reg_list));
+    const auto address = ir.GetRegister(n);
+    const auto final_address = ir.Add(ir.GetRegister(n), ir.Imm32(num_bytes));
+    return Helper::STMHelper(ir, W, n, reg_list, address, final_address);
 }
 
 // LDMIA<c>.W <Rn>{!},<registers>
 bool ThumbTranslatorVisitor::thumb32_LDMIA(bool W, Reg n, RegList reg_list) {
-	if (!ConditionPassed()) {
-		return true;
-	}
-	if (W && Common::Bit(static_cast<size_t>(n), reg_list)) {
-		return UnpredictableInstruction();
-	}
-	// If PC is in list, LR cannot be in list
-	if (Common::Bit<15>(reg_list) && Common::Bit<14>(reg_list)) {
-		return UnpredictableInstruction();
-	}
-	if (n == Reg::PC || Common::BitCount(reg_list) < 2) {
-		return UnpredictableInstruction();
-	}
-	const auto it = ir.current_location.IT();
-	if (Common::Bit<15>(reg_list) && it.IsInITBlock() && !it.IsLastInITBlock()) {
-		return UnpredictableInstruction();
-	}
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (W && Common::Bit(static_cast<size_t>(n), reg_list)) {
+        return UnpredictableInstruction();
+    }
+    // If PC is in list, LR cannot be in list
+    if (Common::Bit<15>(reg_list) && Common::Bit<14>(reg_list)) {
+        return UnpredictableInstruction();
+    }
+    if (n == Reg::PC || Common::BitCount(reg_list) < 2) {
+        return UnpredictableInstruction();
+    }
+    const auto it = ir.current_location.IT();
+    if (Common::Bit<15>(reg_list) && it.IsInITBlock() && !it.IsLastInITBlock()) {
+        return UnpredictableInstruction();
+    }
 
-	const u32 num_bytes = static_cast<u32>(4 * Common::BitCount(reg_list));
-	const auto address = ir.GetRegister(n);
-	const auto final_address = ir.Add(ir.GetRegister(n), ir.Imm32(num_bytes));
-	return Helper::LDMHelper(ir, W, n, reg_list, address, final_address);
+    const u32 num_bytes = static_cast<u32>(4 * Common::BitCount(reg_list));
+    const auto address = ir.GetRegister(n);
+    const auto final_address = ir.Add(ir.GetRegister(n), ir.Imm32(num_bytes));
+    return Helper::LDMHelper(ir, W, n, reg_list, address, final_address);
 }
 
 // STMDB<c> <Rn>{!},<registers>
 bool ThumbTranslatorVisitor::thumb32_STMDB(bool W, Reg n, RegList reg_list) {
-	if (!ConditionPassed()) {
-		return true;
-	}
-	if (n == Reg::PC || Common::BitCount(reg_list) < 2) {
-		return UnpredictableInstruction();
-	}
-	// PC and SP cannot be in list
-	if (Common::Bit<15>(reg_list) || Common::Bit<13>(reg_list)) {
-		return UnpredictableInstruction();
-	}
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (n == Reg::PC || Common::BitCount(reg_list) < 2) {
+        return UnpredictableInstruction();
+    }
+    // PC and SP cannot be in list
+    if (Common::Bit<15>(reg_list) || Common::Bit<13>(reg_list)) {
+        return UnpredictableInstruction();
+    }
 
-	const u32 num_bytes = static_cast<u32>(4 * Common::BitCount(reg_list));
-	const auto final_address = ir.Sub(ir.GetRegister(n), ir.Imm32(num_bytes));
-	return Helper::STMHelper(ir, W, n, reg_list, final_address, final_address);
+    const u32 num_bytes = static_cast<u32>(4 * Common::BitCount(reg_list));
+    const auto final_address = ir.Sub(ir.GetRegister(n), ir.Imm32(num_bytes));
+    return Helper::STMHelper(ir, W, n, reg_list, final_address, final_address);
 }
 
 // LDMDB<c> <Rn>{!},<registers>
 bool ThumbTranslatorVisitor::thumb32_LDMDB(bool W, Reg n, RegList reg_list) {
-	if (!ConditionPassed()) {
-		return true;
-	}
-	if (W && Common::Bit(static_cast<size_t>(n), reg_list)) {
-		return UnpredictableInstruction();
-	}
-	// If PC is in list, LR cannot be in list
-	if (Common::Bit<15>(reg_list) && Common::Bit<14>(reg_list)) {
-		return UnpredictableInstruction();
-	}
-	if (n == Reg::PC || Common::BitCount(reg_list) < 2) {
-		return UnpredictableInstruction();
-	}
-	const auto it = ir.current_location.IT();
-	if (Common::Bit<15>(reg_list) && it.IsInITBlock() && !it.IsLastInITBlock()) {
-		return UnpredictableInstruction();
-	}
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (W && Common::Bit(static_cast<size_t>(n), reg_list)) {
+        return UnpredictableInstruction();
+    }
+    // If PC is in list, LR cannot be in list
+    if (Common::Bit<15>(reg_list) && Common::Bit<14>(reg_list)) {
+        return UnpredictableInstruction();
+    }
+    if (n == Reg::PC || Common::BitCount(reg_list) < 2) {
+        return UnpredictableInstruction();
+    }
+    const auto it = ir.current_location.IT();
+    if (Common::Bit<15>(reg_list) && it.IsInITBlock() && !it.IsLastInITBlock()) {
+        return UnpredictableInstruction();
+    }
 
-	const u32 num_bytes = static_cast<u32>(4 * Common::BitCount(reg_list));
-	const auto final_address = ir.Sub(ir.GetRegister(n), ir.Imm32(num_bytes));
-	auto address = final_address;
-	return Helper::LDMHelper(ir, W, n, reg_list, final_address, final_address);
+    const u32 num_bytes = static_cast<u32>(4 * Common::BitCount(reg_list));
+    const auto final_address = ir.Sub(ir.GetRegister(n), ir.Imm32(num_bytes));
+    auto address = final_address;
+    return Helper::LDMHelper(ir, W, n, reg_list, final_address, final_address);
 }
 
 bool ThumbTranslatorVisitor::thumb32_UDF() {

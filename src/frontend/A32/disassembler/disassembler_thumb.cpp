@@ -278,10 +278,10 @@ public:
                 break;
             }
         }
-		if (until == -1) {
-			return "undefined";
-		}
-		for (int i = 3; i > until; i--) {
+        if (until == -1) {
+            return "undefined";
+        }
+        for (int i = 3; i > until; i--) {
             if (Common::Bit(i, mask.ZeroExtend()) == firstcond.Bit<0>()) {
                 out += 't';
             } else {

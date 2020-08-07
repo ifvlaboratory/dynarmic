@@ -25,7 +25,7 @@ enum class ThumbInstSize {
 };
 
 bool IsThumb16(u16 first_part) {
-	return (first_part & 0xF000) != 0xF000 && (first_part & 0xF800) != 0xE800;
+    return (first_part & 0xF000) != 0xF000 && (first_part & 0xF800) != 0xE800;
 }
 
 std::tuple<u32, ThumbInstSize> ReadThumbInstruction(u32 arm_pc, MemoryReadCodeFuncType memory_read_code) {
@@ -56,9 +56,9 @@ std::tuple<u32, ThumbInstSize> ReadThumbInstruction(u32 arm_pc, MemoryReadCodeFu
 
 static bool CondCanContinue(ConditionalState cond_state, const A32::IREmitter& ir) {
     ASSERT_MSG(cond_state != ConditionalState::Break, "Should never happen.");
-	if (cond_state == ConditionalState::None) {
-		return true;
-	}
+    if (cond_state == ConditionalState::None) {
+        return true;
+    }
 
     // TODO: This is more conservative than necessary.
     return std::all_of(ir.block.begin(), ir.block.end(), [](const IR::Inst& inst) { return !inst.WritesToCPSR(); });
