@@ -13,5 +13,6 @@ namespace Dynarmic::A32::Helper {
 
 bool LDMHelper(A32::IREmitter& ir, bool W, Reg n, RegList list, IR::U32 start_address, IR::U32 writeback_address);
 bool STMHelper(A32::IREmitter& ir, bool W, Reg n, RegList list, IR::U32 start_address, IR::U32 writeback_address);
+void PKHHelper(A32::IREmitter& ir, bool tb, Reg d, IR::U32 n, IR::U32 shifted);
 
 } // namespace Dynarmic::A32

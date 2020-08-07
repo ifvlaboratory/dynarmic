@@ -688,6 +688,24 @@ bool ThumbTranslatorVisitor::thumb32_EOR_reg(bool S, Reg n, Imm<3> imm3, Reg d, 
     return true;
 }
 
+
+// PKHBT<c> <Rd>,<Rn>,<Rm>{,LSL #<imm>}
+// PKHTB<c> <Rd>,<Rn>,<Rm>{,ASR #<imm>}
+bool ThumbTranslatorVisitor::thumb32_PKH(Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, bool tb, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (m == Reg::PC || n == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const auto cpsr_c = ir.GetCFlag();
+    const auto shifted_m = DecodeShiftedReg(m, imm3, imm2, concatenate(Imm<1>(tb), Imm<1>(0)), cpsr_c);
+    Helper::PKHHelper(ir, tb, d, ir.GetRegister(n), shifted_m.result);
+
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }

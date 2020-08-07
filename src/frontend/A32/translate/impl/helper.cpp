@@ -46,4 +46,13 @@ bool STMHelper(A32::IREmitter& ir, bool W, Reg n, RegList list, IR::U32 start_ad
     return true;
 }
 
+void PKHHelper(A32::IREmitter& ir, bool tb, Reg d, IR::U32 n, IR::U32 shifted) {
+    const auto lower_used = tb ? shifted : n;
+    const auto upper_used = tb ? n : shifted;
+    const auto lower_half = ir.And(lower_used, ir.Imm32(0x0000FFFF));
+    const auto upper_half = ir.And(upper_used, ir.Imm32(0xFFFF0000));
+
+    ir.SetRegister(d, ir.Or(lower_half, upper_half));
+}
+
 } // namespace Dynarmic::A32
