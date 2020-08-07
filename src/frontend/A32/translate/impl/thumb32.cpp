@@ -649,6 +649,23 @@ bool ThumbTranslatorVisitor::thumb32_ORN_reg(bool S, Reg n, Imm<3> imm3, Reg d, 
     return true;
 }
 
+// TEQ<c> <Rn>, <Rm> {,<shift>}
+bool ThumbTranslatorVisitor::thumb32_TEQ_reg(Reg n, Imm<3> imm3, Imm<2> imm2, Imm<2> t, Reg m) {
+    if (m == Reg::PC || n == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const auto cpsr_c = ir.GetCFlag();
+    const auto shifted_m = DecodeShiftedReg(m, imm3, imm2, t, cpsr_c);
+    const auto carry_out = shifted_m.carry;
+    const auto result = ir.Eor(ir.GetRegister(n), shifted_m.result);
+
+    ir.SetNFlag(ir.MostSignificantBit(result));
+    ir.SetZFlag(ir.IsZero(result));
+    ir.SetCFlag(carry_out);
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }
