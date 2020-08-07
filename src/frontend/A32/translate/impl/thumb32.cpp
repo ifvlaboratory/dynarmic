@@ -369,20 +369,10 @@ bool ThumbTranslatorVisitor::thumb32_STMIA(bool W, Reg n, RegList reg_list) {
 		return UnpredictableInstruction();
 	}
 
-	auto address = ir.GetRegister(n);
-	for (size_t i = 0; i < 15; i++) {
-		if (Common::Bit(i, reg_list)) {
-			const auto Ri = ir.GetRegister(static_cast<Reg>(i));
-			// Arm spec says that it will write undefined value, if W is true and LowestSetBit(reg_list) != n
-			ir.WriteMemory32(address, Ri);
-			address = ir.Add(address, ir.Imm32(4));
-		}
-	}
-
-	if (W) {
-		ir.SetRegister(n, address);
-	}
-	return true;
+	const u32 num_bytes = static_cast<u32>(4 * Common::BitCount(reg_list));
+	const auto address = ir.GetRegister(n);
+	const auto final_address = ir.Add(ir.GetRegister(n), ir.Imm32(num_bytes));
+	return Helper::STMHelper(ir, W, n, reg_list, address, final_address);
 }
 
 // LDMIA<c>.W <Rn>{!},<registers>
@@ -405,30 +395,10 @@ bool ThumbTranslatorVisitor::thumb32_LDMIA(bool W, Reg n, RegList reg_list) {
 		return UnpredictableInstruction();
 	}
 
-	auto address = ir.GetRegister(n);
-	for (size_t i = 0; i < 15; i++) {
-		if (Common::Bit(i, reg_list)) {
-			// TODO: Deal with alignment
-			const auto data = ir.ReadMemory32(address);
-			ir.SetRegister(static_cast<Reg>(i), data);
-			address = ir.Add(address, ir.Imm32(4));
-		}
-	}
-
-	if (W) {
-		ir.SetRegister(n, address);
-	}
-
-	if (Common::Bit<15>(reg_list)) {
-		// TODO(optimization): Possible location for an RSB pop.
-		const auto data = ir.ReadMemory32(address);
-		ir.LoadWritePC(data);
-		address = ir.Add(address, ir.Imm32(4));
-		ir.SetTerm(IR::Term::PopRSBHint{});
-		return false;
-	}
-
-	return true;
+	const u32 num_bytes = static_cast<u32>(4 * Common::BitCount(reg_list));
+	const auto address = ir.GetRegister(n);
+	const auto final_address = ir.Add(ir.GetRegister(n), ir.Imm32(num_bytes));
+	return Helper::LDMHelper(ir, W, n, reg_list, address, final_address);
 }
 
 // STMDB<c> <Rn>{!},<registers>
@@ -444,23 +414,9 @@ bool ThumbTranslatorVisitor::thumb32_STMDB(bool W, Reg n, RegList reg_list) {
 		return UnpredictableInstruction();
 	}
 
-	const u32 num_bytes_to_push = static_cast<u32>(4 * Common::BitCount(reg_list));
-	const auto final_address = ir.Sub(ir.GetRegister(n), ir.Imm32(num_bytes_to_push));
-	auto address = final_address;
-	for (size_t i = 0; i < 16; i++) {
-		if (Common::Bit(i, reg_list)) {
-			// TODO: Deal with alignment
-			const auto Ri = ir.GetRegister(static_cast<Reg>(i));
-			// Arm spec says that it will write undefined value, if W is true and LowestSetBit(reg_list) != n
-			ir.WriteMemory32(address, Ri);
-			address = ir.Add(address, ir.Imm32(4));
-		}
-	}
-
-	if (W) {
-		ir.SetRegister(n, final_address);
-	}
-	return true;
+	const u32 num_bytes = static_cast<u32>(4 * Common::BitCount(reg_list));
+	const auto final_address = ir.Sub(ir.GetRegister(n), ir.Imm32(num_bytes));
+	return Helper::STMHelper(ir, W, n, reg_list, final_address, final_address);
 }
 
 // LDMDB<c> <Rn>{!},<registers>
@@ -483,32 +439,10 @@ bool ThumbTranslatorVisitor::thumb32_LDMDB(bool W, Reg n, RegList reg_list) {
 		return UnpredictableInstruction();
 	}
 
-	const u32 num_bytes_to_push = static_cast<u32>(4 * Common::BitCount(reg_list));
-	const auto final_address = ir.Sub(ir.GetRegister(n), ir.Imm32(num_bytes_to_push));
+	const u32 num_bytes = static_cast<u32>(4 * Common::BitCount(reg_list));
+	const auto final_address = ir.Sub(ir.GetRegister(n), ir.Imm32(num_bytes));
 	auto address = final_address;
-	for (size_t i = 0; i < 15; i++) {
-		if (Common::Bit(i, reg_list)) {
-			// TODO: Deal with alignment
-			const auto data = ir.ReadMemory32(address);
-			ir.SetRegister(static_cast<Reg>(i), data);
-			address = ir.Add(address, ir.Imm32(4));
-		}
-	}
-
-	if (W) {
-		ir.SetRegister(n, final_address);
-	}
-
-	if (Common::Bit<15>(reg_list)) {
-		// TODO(optimization): Possible location for an RSB pop.
-		const auto data = ir.ReadMemory32(address);
-		ir.LoadWritePC(data);
-		address = ir.Add(address, ir.Imm32(4));
-		ir.SetTerm(IR::Term::PopRSBHint{});
-		return false;
-	}
-
-	return true;
+	return Helper::LDMHelper(ir, W, n, reg_list, final_address, final_address);
 }
 
 bool ThumbTranslatorVisitor::thumb32_UDF() {
