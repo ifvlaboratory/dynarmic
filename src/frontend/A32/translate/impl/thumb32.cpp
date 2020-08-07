@@ -393,9 +393,8 @@ bool ThumbTranslatorVisitor::thumb32_LDMIA(bool W, Reg n, RegList reg_list) {
 	if (W && Common::Bit(static_cast<size_t>(n), reg_list)) {
 		return UnpredictableInstruction();
 	}
-	const bool is_pop = W && n == Reg::SP;
-	// For pop, if PC is in list, LR cannot be in list
-	if (is_pop && Common::Bit<15>(reg_list) && Common::Bit<14>(reg_list)) {
+	// If PC is in list, LR cannot be in list
+	if (Common::Bit<15>(reg_list) && Common::Bit<14>(reg_list)) {
 		return UnpredictableInstruction();
 	}
 	if (n == Reg::PC || Common::BitCount(reg_list) < 2) {
@@ -461,6 +460,54 @@ bool ThumbTranslatorVisitor::thumb32_STMDB(bool W, Reg n, RegList reg_list) {
 	if (W) {
 		ir.SetRegister(n, final_address);
 	}
+	return true;
+}
+
+// LDMDB<c> <Rn>{!},<registers>
+bool ThumbTranslatorVisitor::thumb32_LDMDB(bool W, Reg n, RegList reg_list) {
+	if (!ConditionPassed()) {
+		return true;
+	}
+	if (W && Common::Bit(static_cast<size_t>(n), reg_list)) {
+		return UnpredictableInstruction();
+	}
+	// If PC is in list, LR cannot be in list
+	if (Common::Bit<15>(reg_list) && Common::Bit<14>(reg_list)) {
+		return UnpredictableInstruction();
+	}
+	if (n == Reg::PC || Common::BitCount(reg_list) < 2) {
+		return UnpredictableInstruction();
+	}
+	const auto it = ir.current_location.IT();
+	if (Common::Bit<15>(reg_list) && it.IsInITBlock() && !it.IsLastInITBlock()) {
+		return UnpredictableInstruction();
+	}
+
+	const u32 num_bytes_to_push = static_cast<u32>(4 * Common::BitCount(reg_list));
+	const auto final_address = ir.Sub(ir.GetRegister(n), ir.Imm32(num_bytes_to_push));
+	auto address = final_address;
+	for (size_t i = 0; i < 15; i++) {
+		if (Common::Bit(i, reg_list)) {
+			// TODO: Deal with alignment
+			const auto data = ir.ReadMemory32(address);
+			ir.SetRegister(static_cast<Reg>(i), data);
+			address = ir.Add(address, ir.Imm32(4));
+		}
+	}
+
+	if (W) {
+		ir.SetRegister(n, final_address);
+	}
+
+	if (Common::Bit<15>(reg_list)) {
+		// TODO(optimization): Possible location for an RSB pop.
+		const auto data = ir.ReadMemory32(address);
+		ir.LoadWritePC(data);
+		address = ir.Add(address, ir.Imm32(4));
+		ir.SetTerm(IR::Term::PopRSBHint{});
+		return false;
+	}
+
 	return true;
 }
 
