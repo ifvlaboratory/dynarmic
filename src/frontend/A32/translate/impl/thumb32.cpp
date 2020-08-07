@@ -356,6 +356,33 @@ bool ThumbTranslatorVisitor::thumb32_RSB_imm(Imm<1> i, bool S, Reg n, Imm<3> imm
     return true;
 }
 
+// STMIA<c>.W <Rn>{!},<registers>
+bool ThumbTranslatorVisitor::thumb32_STMIA(bool W, Reg n, RegList reg_list) {
+	if (!ConditionPassed()) {
+		return true;
+	}
+	if (n == Reg::PC || Common::BitCount(reg_list) < 2) {
+		return UnpredictableInstruction();
+	}
+	if (Common::Bit<15>(reg_list) || Common::Bit<13>(reg_list)) {
+		return UnpredictableInstruction();
+	}
+	auto address = ir.GetRegister(n);
+	for (size_t i = 0; i < 15; i++) {
+		if (Common::Bit(i, reg_list)) {
+			const auto Ri = ir.GetRegister(static_cast<Reg>(i));
+			// Arm spec says that it will write undefined value, if W is true and LowestSetBit(reg_list) != n
+			ir.WriteMemory32(address, Ri);
+			address = ir.Add(address, ir.Imm32(4));
+		}
+	}
+
+	if (W) {
+		ir.SetRegister(n, address);
+	}
+	return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }
