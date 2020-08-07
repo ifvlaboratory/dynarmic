@@ -706,6 +706,22 @@ bool ThumbTranslatorVisitor::thumb32_PKH(Reg n, Imm<3> imm3, Reg d, Imm<2> imm2,
     return true;
 }
 
+// CMN<c>.W <Rn>, <Rm> {,<shift>}
+bool ThumbTranslatorVisitor::thumb32_CMN_reg(Reg n, Imm<3> imm3, Imm<2> imm2, Imm<2> t, Reg m) {
+    if (m == Reg::PC || n == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const auto cpsr_c = ir.GetCFlag();
+    const auto shifted_m = DecodeShiftedReg(m, imm3, imm2, t, cpsr_c);
+    const auto result = ir.AddWithCarry(ir.GetRegister(n), shifted_m.result, ir.Imm1(0));
+    ir.SetNFlag(ir.MostSignificantBit(result.result));
+    ir.SetZFlag(ir.IsZero(result.result));
+    ir.SetCFlag(result.carry);
+    ir.SetVFlag(result.overflow);
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }

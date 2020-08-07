@@ -221,6 +221,7 @@ struct ThumbTranslatorVisitor final {
     bool thumb32_TEQ_reg(Reg n, Imm<3> imm3, Imm<2> imm2, Imm<2> t, Reg m);
     bool thumb32_EOR_reg(bool S, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m);
     bool thumb32_PKH(Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, bool tb, Reg m);
+    bool thumb32_CMN_reg(Reg n, Imm<3> imm3, Imm<2> imm2, Imm<2> t, Reg m);
 
     bool thumb32_MOV_imm(Imm<1> i, bool S, Imm<3> imm3, Reg d, Imm<8> imm8);
     bool thumb32_BIC_imm(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
