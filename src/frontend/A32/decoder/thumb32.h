@@ -53,7 +53,7 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_LDREXD,         "LDREXD",                   "111010001101------------0111----"),
 
         // Data Processing (Shifted Register)
-        //INST(&V::thumb32_TST_reg,        "TST (reg)",                "111010100001--------1111--------"),
+        INST(&V::thumb32_TST_reg,        "TST (reg)",                "111010100001nnnn0iii1111mmttrrrr"),
         //INST(&V::thumb32_AND_reg,        "AND (reg)",                "11101010000---------------------"),
         //INST(&V::thumb32_BIC_reg,        "BIC (reg)",                "11101010001---------------------"),
         //INST(&V::thumb32_MOV_reg,        "MOV (reg)",                "11101010010-1111-000----0000----"),
