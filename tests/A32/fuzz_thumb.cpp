@@ -395,6 +395,15 @@ TEST_CASE("Fuzz Thumb2 instructions set 1", "[JitX64][Thumb2]") {
 				!Common::Bit(15, reg_list) && // Prevent jump 
 				Common::BitCount(reg_list) >= 2;
 		}),
+		Thumb32InstGen("1110100100W0nnnn0r0rrrrrrrrrrrrr", // STMDB
+					 [](u32 inst) {
+			// Ensure that the undefined case of
+			// the base register being within the list isn't hit when W is true.
+			const u32 rn = Common::Bits<16, 19>(inst);
+			const bool W = Common::Bit<21>(inst);
+			const u16 reg_list = Common::Bits<0, 15>(inst);
+			return rn != 15 && !(W && Common::Bit(rn, reg_list)) && Common::BitCount(reg_list) >= 2;
+		}),
     };
 
     const auto instruction_select = [&](int) -> u32 {
