@@ -57,7 +57,7 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         INST(&V::thumb32_AND_reg,        "AND (reg)",                "11101010000Snnnn0iiiddddmmttrrrr"),
         INST(&V::thumb32_BIC_reg,        "BIC (reg)",                "11101010001Snnnn0iiiddddmmttrrrr"),
         //INST(&V::thumb32_MOV_reg,        "MOV (reg)",                "11101010010-1111-000----0000----"),
-        //INST(&V::thumb32_LSL_imm,        "LSL (imm)",                "11101010010-1111----------00----"),
+        INST(&V::thumb32_LSL_imm,        "LSL (imm)",                "11101010010S11110iiiddddmm00rrrr"),
         //INST(&V::thumb32_LSR_imm,        "LSR (imm)",                "11101010010-1111----------01----"),
         //INST(&V::thumb32_ASR_imm,        "ASR (imm)",                "11101010010-1111----------10----"),
         //INST(&V::thumb32_RRX,            "RRX",                      "11101010010-1111-000----0011----"),

@@ -506,6 +506,26 @@ bool ThumbTranslatorVisitor::thumb32_BIC_reg(bool S, Reg n, Imm<3> imm3, Reg d, 
     return true;
 }
 
+// LSL{S}<c>.W <Rd>,<Rm>,#<imm5>
+bool ThumbTranslatorVisitor::thumb32_LSL_imm(bool S, Imm<3> imm3, Reg d, Imm<2> imm2, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (m == Reg::PC || d == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const auto cpsr_c = ir.GetCFlag();
+    const auto result = DecodeShiftedReg(m, imm3, imm2, Imm<2>(0b00), cpsr_c);
+    ir.SetRegister(d, result.result);
+    if (S) {
+        ir.SetNFlag(ir.MostSignificantBit(result.result));
+        ir.SetZFlag(ir.IsZero(result.result));
+        ir.SetCFlag(result.carry);
+    }
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }
