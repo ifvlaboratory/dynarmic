@@ -28,7 +28,6 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_SRS_1,          "SRS",                      "1110100000-0--------------------"),
         //INST(&V::thumb32_RFE_2,          "RFE",                      "1110100000-1--------------------"),
         INST(&V::thumb32_STMIA,          "STMIA/STMEA",              "1110100010W0nnnnrrrrrrrrrrrrrrrr"),
-        //INST(&V::thumb32_POP,            "POP",                      "1110100010111101----------------"),
         //INST(&V::thumb32_LDMIA,          "LDMIA/LDMFD",              "1110100010-1--------------------"),
         //INST(&V::thumb32_PUSH,           "PUSH",                     "1110100100101101----------------"),
         //INST(&V::thumb32_STMDB,          "STMDB/STMFD",              "1110100100-0--------------------"),
