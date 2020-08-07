@@ -406,19 +406,23 @@ TEST_CASE("Fuzz Thumb2 instructions set 1", "[JitX64][Thumb2]") {
         Thumb32InstGen("111010100001nnnn0iii1111mmttrrrr", // TST (reg) 
                      [](u32 inst) { return Common::Bits<0, 3>(inst) != 0b1111 && Common::Bits<16, 19>(inst) != 0b1111; }),
             // R15 is UNPREDICTABLE
-         Thumb32InstGen("11101010000Snnnn0iiiddddmmttrrrr", // TST (reg) / AND (reg)
+        Thumb32InstGen("11101010000Snnnn0iiiddddmmttrrrr", // TST (reg) / AND (reg)
                      [](u32 inst) { return Common::Bits<0, 3>(inst) != 0b1111 && Common::Bits<8, 11>(inst) != 0b1111 &&
                     Common::Bits<16, 19>(inst) != 0b1111; }), // R15 is UNPREDICTABLE
         Thumb32InstGen("11101010001Snnnn0iiiddddmmttrrrr", // BIC (reg)
                      [](u32 inst) { return Common::Bits<0, 3>(inst) != 0b1111 && Common::Bits<8, 11>(inst) != 0b1111 && 
                     Common::Bits<16, 19>(inst) != 0b1111; }),
             // R15 is UNPREDICTABLE
-         Thumb32InstGen("11101010010S11110iiiddddmmttrrrr", // LSL (imm) / LSR (imm) / ASR(imm) / RRX / ROR (imm)
+        Thumb32InstGen("11101010010S11110iiiddddmmttrrrr", // LSL (imm) / LSR (imm) / ASR(imm) / RRX / ROR (imm)
                      [](u32 inst) { return Common::Bits<0, 3>(inst) != 0b1111 && Common::Bits<8, 11>(inst) != 0b1111; }),
             // R15 is UNPREDICTABLE
-         Thumb32InstGen("11101010010Snnnn0iiiddddmmttrrrr", // ORR (reg)
+        Thumb32InstGen("11101010010Snnnn0iiiddddmmttrrrr", // ORR (reg)
                     [](u32 inst) { return Common::Bits<0, 3>(inst) != 0b1111 && Common::Bits<8, 11>(inst) != 0b1111 &&
                     Common::Bits<16, 19>(inst) != 0b1111; }), // R15 is UNPREDICTABLE
+        Thumb32InstGen("11101010011S11110iiiddddmmttrrrr", // MVN (reg)
+                    [](u32 inst) { return Common::Bits<0, 3>(inst) != 0b1111 && Common::Bits<8, 11>(inst) != 0b1111; }), 
+            // R15 is UNPREDICTABLE
+            
            
     };
 
