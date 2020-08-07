@@ -124,6 +124,7 @@ if ("A32" IN_LIST DYNARMIC_FRONTENDS)
         frontend/A32/location_descriptor.cpp
         frontend/A32/location_descriptor.h
         frontend/A32/PSR.h
+        frontend/A32/translate/impl/helper.cpp
         frontend/A32/translate/impl/asimd_load_store_structures.cpp
         frontend/A32/translate/impl/asimd_misc.cpp
         frontend/A32/translate/impl/asimd_one_reg_modified_immediate.cpp
@@ -154,6 +155,7 @@ if ("A32" IN_LIST DYNARMIC_FRONTENDS)
         frontend/A32/translate/impl/translate_arm.h
         frontend/A32/translate/impl/translate_thumb.h
         frontend/A32/translate/impl/vfp.cpp
+        frontend/A32/translate/helper.h
         frontend/A32/translate/translate.cpp
         frontend/A32/translate/translate.h
         frontend/A32/translate/translate_arm.cpp
