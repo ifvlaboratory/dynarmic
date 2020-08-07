@@ -506,6 +506,18 @@ bool ThumbTranslatorVisitor::thumb32_BIC_reg(bool S, Reg n, Imm<3> imm3, Reg d, 
     return true;
 }
 
+static void MoveShiftRegisterHelper(ThumbTranslatorVisitor& visitor, bool S, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m) {
+    auto& ir = visitor.ir;
+    const auto cpsr_c = ir.GetCFlag();
+    const auto result = visitor.DecodeShiftedReg(m, imm3, imm2, t, cpsr_c);
+    ir.SetRegister(d, result.result);
+    if (S) {
+        ir.SetNFlag(ir.MostSignificantBit(result.result));
+        ir.SetZFlag(ir.IsZero(result.result));
+        ir.SetCFlag(result.carry);
+    }
+}
+
 // LSL{S}<c>.W <Rd>,<Rm>,#<imm5>
 bool ThumbTranslatorVisitor::thumb32_LSL_imm(bool S, Imm<3> imm3, Reg d, Imm<2> imm2, Reg m) {
     if (!ConditionPassed()) {
@@ -515,14 +527,59 @@ bool ThumbTranslatorVisitor::thumb32_LSL_imm(bool S, Imm<3> imm3, Reg d, Imm<2> 
         return UnpredictableInstruction();
     }
 
-    const auto cpsr_c = ir.GetCFlag();
-    const auto result = DecodeShiftedReg(m, imm3, imm2, Imm<2>(0b00), cpsr_c);
-    ir.SetRegister(d, result.result);
-    if (S) {
-        ir.SetNFlag(ir.MostSignificantBit(result.result));
-        ir.SetZFlag(ir.IsZero(result.result));
-        ir.SetCFlag(result.carry);
+    MoveShiftRegisterHelper(*this, S, imm3, d, imm2, Imm<2>(0b00), m);
+    return true;
+}
+
+// LSR{S}<c>.W <Rd>,<Rm>,#<imm5>
+bool ThumbTranslatorVisitor::thumb32_LSR_imm(bool S, Imm<3> imm3, Reg d, Imm<2> imm2, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
     }
+    if (m == Reg::PC || d == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    MoveShiftRegisterHelper(*this, S, imm3, d, imm2, Imm<2>(0b01), m);
+    return true;
+}
+
+// ASR{S}<c>.W <Rd>,<Rm>,#<imm5>
+bool ThumbTranslatorVisitor::thumb32_ASR_imm(bool S, Imm<3> imm3, Reg d, Imm<2> imm2, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (m == Reg::PC || d == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    MoveShiftRegisterHelper(*this, S, imm3, d, imm2, Imm<2>(0b10), m);
+    return true;
+}
+
+// RRX{S}<c> <Rd>,<Rm>
+bool ThumbTranslatorVisitor::thumb32_RRX(bool S, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (m == Reg::PC || d == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    MoveShiftRegisterHelper(*this, S, Imm<3>(0b000), d, Imm<2>(0b00), Imm<2>(0b11), m);
+    return true;
+}
+
+// ROR{S}<c> <Rd>,<Rm>,#<imm5>
+bool ThumbTranslatorVisitor::thumb32_ROR_imm(bool S, Imm<3> imm3, Reg d, Imm<2> imm2, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (m == Reg::PC || d == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    MoveShiftRegisterHelper(*this, S, imm3, d, imm2, Imm<2>(0b11), m);
     return true;
 }
 
