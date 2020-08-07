@@ -64,7 +64,7 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         INST(&V::thumb32_ROR_imm,        "ROR (imm)",                "11101010010S11110iiiddddmm11rrrr"),
         INST(&V::thumb32_ORR_reg,        "ORR (reg)",                "11101010010Snnnn0iiiddddmmttrrrr"),
         INST(&V::thumb32_MVN_reg,        "MVN (reg)",                "11101010011S11110iiiddddmmttrrrr"),
-        //INST(&V::thumb32_ORN_reg,        "ORN (reg)",                "11101010011---------------------"),
+        INST(&V::thumb32_ORN_reg,        "ORN (reg)",                "11101010011Snnnn0iiiddddmmttrrrr"),
         //INST(&V::thumb32_TEQ_reg,        "TEQ (reg)",                "111010101001--------1111--------"),
         //INST(&V::thumb32_EOR_reg,        "EOR (reg)",                "11101010100---------------------"),
         //INST(&V::thumb32_PKH,            "PKH",                      "11101010110---------------------"),
