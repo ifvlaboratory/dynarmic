@@ -882,6 +882,22 @@ bool ThumbTranslatorVisitor::thumb32_RSB_reg(bool S, Reg n, Imm<3> imm3, Reg d, 
     return true;
 }
 
+// ADR<c>.W <Rd>,<label> <label> after current instruction
+bool ThumbTranslatorVisitor::thumb32_ADR_after(Imm<1> i, Imm<3> imm3, Reg d, Imm<8> imm8) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (d == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 imm32 = concatenate(i, imm3, imm8).ZeroExtend();
+    const auto result = ir.Imm32(ir.AlignPC(4) + imm32);
+
+    ir.SetRegister(d, result);
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }

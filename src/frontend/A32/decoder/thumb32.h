@@ -95,8 +95,8 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         INST(&V::thumb32_RSB_imm,        "RSB (imm)",                "11110i01110Snnnn0kkkddddmmmmmmmm"),
 
         // Data Processing (Plain Binary Immediate)
-        //INST(&V::thumb32_ADR,            "ADR",                      "11110-10000011110---------------"),
         //INST(&V::thumb32_ADD_imm_2,      "ADD (imm)",                "11110-100000----0---------------"),
+        INST(&V::thumb32_ADR_after,      "ADR",                      "11110i10000011110kkkddddmmmmmmmm"),
         //INST(&V::thumb32_MOVW_imm,       "MOVW (imm)",               "11110-100100----0---------------"),
         //INST(&V::thumb32_ADR,            "ADR",                      "11110-10101011110---------------"),
         //INST(&V::thumb32_SUB_imm_2,      "SUB (imm)",                "11110-101010----0---------------"),
