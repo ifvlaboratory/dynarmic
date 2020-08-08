@@ -86,4 +86,12 @@ void SBFXHelper(A32::IREmitter& ir, Reg d, Reg n, u32 lsbit, u32 width_num) {
     ir.SetRegister(d, result);
 }
 
+void BFCHelper(A32::IREmitter& ir, Reg d, u32 lsbit, u32 msbit) {
+    const u32 mask = ~(Common::Ones<u32>(msbit - lsbit + 1) << lsbit);
+    const IR::U32 operand = ir.GetRegister(d);
+    const IR::U32 result = ir.And(operand, ir.Imm32(mask));
+
+    ir.SetRegister(d, result);
+}
+
 } // namespace Dynarmic::A32
