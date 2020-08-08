@@ -998,12 +998,16 @@ bool ThumbTranslatorVisitor::thumb32_SSAT(bool sh, Reg n, Imm<3> imm3, Reg d, Im
 }
 
 // SSAT16<c> <Rd>,#<imm>,<Rn>
-bool ThumbTranslatorVisitor::thumb32_SSAT16(Reg n, Reg d, Imm<4> sat_imm) {
+bool ThumbTranslatorVisitor::thumb32_SSAT16(Reg n, Reg d, Imm<5> sat_imm) {
     if (!ConditionPassed()) {
         return true;
     }
     if (n == Reg::PC || d == Reg::PC) {
         return UnpredictableInstruction();
+    }
+    // Note that to undefined this case, SAT16 mathced one more bit in sat_imm decoder field.
+    if (sat_imm.Bit<4>() != 0) {
+        return UndefinedInstruction();
     }
 
     const auto saturate_to = static_cast<size_t>(sat_imm.ZeroExtend()) + 1;
