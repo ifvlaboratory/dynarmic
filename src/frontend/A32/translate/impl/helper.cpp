@@ -74,4 +74,16 @@ void SSAT16Helper(A32::IREmitter& ir, Reg d, Reg n, size_t saturate_to) {
     ir.OrQFlag(hi_result.overflow);
 }
 
+void SBFXHelper(A32::IREmitter& ir, Reg d, Reg n, u32 lsbit, u32 width_num) {
+    const u32 msb = lsbit + width_num;
+    constexpr size_t max_width = Common::BitSize<u32>();
+    const u32 width = width_num + 1;
+    const u8 left_shift_amount = static_cast<u8>(max_width - width - lsbit);
+    const u8 right_shift_amount = static_cast<u8>(max_width - width);
+    const IR::U32 operand = ir.GetRegister(n);
+    const IR::U32 tmp = ir.LogicalShiftLeft(operand, ir.Imm8(left_shift_amount));
+    const IR::U32 result = ir.ArithmeticShiftRight(tmp, ir.Imm8(right_shift_amount));
+    ir.SetRegister(d, result);
+}
+
 } // namespace Dynarmic::A32

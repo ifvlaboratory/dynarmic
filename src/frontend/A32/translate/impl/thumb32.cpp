@@ -1011,6 +1011,25 @@ bool ThumbTranslatorVisitor::thumb32_SSAT16(Reg n, Reg d, Imm<4> sat_imm) {
     return true;
 }
 
+// SBFX<c> <Rd>,<Rn>,#<lsb>,#<width>
+bool ThumbTranslatorVisitor::thumb32_SBFX(Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5> widthm) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (n == Reg::PC || d == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 lsbit = concatenate(imm3, imm2).ZeroExtend();
+    const u32 width_num = widthm.ZeroExtend();
+
+    if (lsbit + width_num >= Common::BitSize<u32>()) {
+        return UnpredictableInstruction();
+    }
+
+    Helper::SBFXHelper(ir, d, n, lsbit, width_num);
+    return true;
+}
 
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();

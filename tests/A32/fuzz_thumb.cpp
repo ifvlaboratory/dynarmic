@@ -400,6 +400,14 @@ TEST_CASE("Fuzz Thumb2 instructions set 1", "[JitX64][Thumb2]") {
                    Common::Bits<6, 7>(inst) != 0b00 &&
                    Thumb32PCMask<1, 1, 0>()(inst);
         }), // SSAT
+        Thumb32InstGen("111100110100nnnn0kkkddddii0mmmmm", [](u32 inst) {
+            const u32 widthm = Common::Bits<0, 4>(inst);
+            const u32 lsb = (Common::Bits<12, 14>(inst) << 2) | Common::Bits<6, 7>(inst);
+            if (lsb + widthm >= Common::BitSize<u32>()) {
+                return false;
+            }
+            return Thumb32PCMask<1, 1, 0>()(inst);
+        }), // SBFX
         Thumb32InstGen("111100110010nnnn0000dddd0000mmmm", Thumb32PCMask<1, 1, 0>()), // SSAT16
         Thumb32InstGen("1110100xx0W0nnnn0r0rrrrrrrrrrrrr", // STMIA / STMDB
                      [](u32 inst) {
