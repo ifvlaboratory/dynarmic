@@ -55,4 +55,23 @@ void PKHHelper(A32::IREmitter& ir, bool tb, Reg d, IR::U32 n, IR::U32 shifted) {
     ir.SetRegister(d, ir.Or(lower_half, upper_half));
 }
 
+IR::U32 Pack2x16To1x32(A32::IREmitter& ir, IR::U32 lo, IR::U32 hi) {
+    return ir.Or(ir.And(lo, ir.Imm32(0xFFFF)), ir.LogicalShiftLeft(hi, ir.Imm8(16), ir.Imm1(0)).result);
+}
+
+IR::U16 MostSignificantHalf(A32::IREmitter& ir, IR::U32 value) {
+    return ir.LeastSignificantHalf(ir.LogicalShiftRight(value, ir.Imm8(16), ir.Imm1(0)).result);
+}
+
+void SSAT16Helper(A32::IREmitter& ir, Reg d, Reg n, size_t saturate_to) {
+    const auto lo_operand = ir.SignExtendHalfToWord(ir.LeastSignificantHalf(ir.GetRegister(n)));
+    const auto hi_operand = ir.SignExtendHalfToWord(MostSignificantHalf(ir, ir.GetRegister(n)));
+    const auto lo_result = ir.SignedSaturation(lo_operand, saturate_to);
+    const auto hi_result = ir.SignedSaturation(hi_operand, saturate_to);
+
+    ir.SetRegister(d, Pack2x16To1x32(ir, lo_result.result, hi_result.result));
+    ir.OrQFlag(lo_result.overflow);
+    ir.OrQFlag(hi_result.overflow);
+}
+
 } // namespace Dynarmic::A32

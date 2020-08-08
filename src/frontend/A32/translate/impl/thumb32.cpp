@@ -997,6 +997,21 @@ bool ThumbTranslatorVisitor::thumb32_SSAT(bool sh, Reg n, Imm<3> imm3, Reg d, Im
     return true;
 }
 
+// SSAT16<c> <Rd>,#<imm>,<Rn>
+bool ThumbTranslatorVisitor::thumb32_SSAT16(Reg n, Reg d, Imm<4> sat_imm) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (n == Reg::PC || d == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const auto saturate_to = static_cast<size_t>(sat_imm.ZeroExtend()) + 1;
+    Helper::SSAT16Helper(ir, d, n, saturate_to);
+    return true;
+}
+
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }

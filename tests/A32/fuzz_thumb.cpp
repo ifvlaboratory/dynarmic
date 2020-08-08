@@ -396,6 +396,7 @@ TEST_CASE("Fuzz Thumb2 instructions set 1", "[JitX64][Thumb2]") {
         Thumb32InstGen("11110i101010nnnn0kkkddddmmmmmmmm", Thumb32PCMask<1, 1, 0>()), // SUBW
         Thumb32InstGen("11110i101100kkkk0mmmddddaaaaaaaa", Thumb32PCMask<0, 1, 0>()), // MOVT
         Thumb32InstGen("1111001100s0nnnn0kkkddddii0mmmmm", Thumb32PCMask<1, 1, 0>()), // SSAT / some SSAT16
+        Thumb32InstGen("111100110010nnnn0000dddd0000mmmm", Thumb32PCMask<1, 1, 0>()), // SSAT16
         Thumb32InstGen("1110100xx0W0nnnn0r0rrrrrrrrrrrrr", // STMIA / STMDB
                      [](u32 inst) {
             // Ensure that the undefined case of

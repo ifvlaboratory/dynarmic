@@ -13,5 +13,7 @@ namespace Dynarmic::A32::Helper {
 bool LDMHelper(A32::IREmitter& ir, bool W, Reg n, RegList list, IR::U32 start_address, IR::U32 writeback_address);
 bool STMHelper(A32::IREmitter& ir, bool W, Reg n, RegList list, IR::U32 start_address, IR::U32 writeback_address);
 void PKHHelper(A32::IREmitter& ir, bool tb, Reg d, IR::U32 n, IR::U32 shifted);
-
+void SSAT16Helper(A32::IREmitter& ir, Reg d, Reg n, size_t saturate_to);
+IR::U32 Pack2x16To1x32(A32::IREmitter& ir, IR::U32 lo, IR::U32 hi);
+IR::U16 MostSignificantHalf(A32::IREmitter& ir, IR::U32 value);
 } // namespace Dynarmic::A32::Helper
