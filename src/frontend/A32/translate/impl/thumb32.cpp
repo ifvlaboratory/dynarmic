@@ -977,6 +977,26 @@ bool ThumbTranslatorVisitor::thumb32_MOVT(Imm<1> i, Imm<4> imm4, Imm<3> imm3, Re
     return true;
 }
 
+// SSAT<c> <Rd>,#<imm>,<Rn>{,<shift>}
+bool ThumbTranslatorVisitor::thumb32_SSAT(bool sh, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5> sat_imm) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (n == Reg::PC || d == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const auto cpsr_c = ir.GetCFlag();
+    const auto t = concatenate(Imm<1>(sh), Imm<1>(0));
+    const auto shifted_n = DecodeShiftedReg(n, imm3, imm2, t, cpsr_c);
+    const auto saturate_to = static_cast<size_t>(sat_imm.ZeroExtend()) + 1; 
+    const auto result = ir.SignedSaturation(shifted_n.result, saturate_to);
+
+    ir.SetRegister(d, result.result);
+    ir.OrQFlag(result.overflow);
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }
