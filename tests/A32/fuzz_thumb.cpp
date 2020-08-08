@@ -83,26 +83,31 @@ private:
 using Thumb16InstGen = ThumbInstGen<u16>;
 using Thumb32InstGen = ThumbInstGen<u32>;
 
-template<bool mask_n, bool mask_d, bool mask_m>
-static std::function<bool(u32)> Thumb32PCMask() {
-    return [](u32 inst) {
-        if (mask_n) {
-            if (Common::Bits<16, 19>(inst) == 0b1111) {
-                return false;
-            }
+// This validation function prevents PCs in
+// thumb32 instruction's register fields
+template<bool mask_n, bool mask_t, bool mask_d, bool mask_r>
+static bool T32PCMask(u32 inst) {
+    if constexpr (mask_n) {
+        if (Common::Bits<16, 19>(inst) == 0b1111) {
+            return false;
         }
-        if (mask_d) {
-            if (Common::Bits<8, 11>(inst) == 0b1111) {
-                return false;
-            }
+    }
+    if constexpr (mask_t) { 
+        if (Common::Bits<12, 15>(inst) == 0b1111) {
+            return false;
         }
-        if (mask_m) {
-            if (Common::Bits<0, 3>(inst) == 0b1111) {
-                return false;
-            }
+    }
+    if constexpr (mask_d) {
+        if (Common::Bits<8, 11>(inst) == 0b1111) {
+            return false;
         }
-        return true;
-    };
+    }
+    if constexpr (mask_r) {
+        if (Common::Bits<0, 3>(inst) == 0b1111) {
+            return false;
+        }
+    }
+    return true;
 }
 
 static bool DoesBehaviorMatch(const A32Unicorn<ThumbTestEnv>& uni, const A32::Jit& jit,
