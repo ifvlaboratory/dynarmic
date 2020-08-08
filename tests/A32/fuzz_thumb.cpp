@@ -23,6 +23,7 @@
 #include "frontend/A32/PSR.h"
 #include "frontend/A32/translate/translate.h"
 #include "frontend/ir/basic_block.h"
+#include "fuzz_util.h"
 #include "ir_opt/passes.h"
 #include "rand_int.h"
 #include "testenv.h"
@@ -70,7 +71,7 @@ public:
             const u32 initial = Common::Replicate(0xF, 4);
             const InstructionType random = RandInt<InstructionType>(0, static_cast<InstructionType>(initial));
             inst = bits | (random & ~mask);
-        } while (!is_valid(inst));
+        } while (!is_valid(inst) || !ShouldTestA32Inst(inst, pc, true, is_last_inst));
 
         ASSERT((inst & mask) == bits);
 
