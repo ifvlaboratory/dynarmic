@@ -98,7 +98,7 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         INST(&V::thumb32_ADR_after,      "ADR",                      "11110i10000011110kkkddddmmmmmmmm"),
         INST(&V::thumb32_ADD_imm_2,      "ADDW (imm)",               "11110i100000nnnn0kkkddddmmmmmmmm"),
         INST(&V::thumb32_MOVW_imm,       "MOVW (imm)",               "11110i100100kkkk0mmmddddaaaaaaaa"),
-        //INST(&V::thumb32_ADR,            "ADR",                      "11110-10101011110---------------"),
+        INST(&V::thumb32_ADR_before,     "ADR",                      "11110i10101011110kkkddddmmmmmmmm"),
         //INST(&V::thumb32_SUB_imm_2,      "SUB (imm)",                "11110-101010----0---------------"),
         //INST(&V::thumb32_MOVT,           "MOVT",                     "11110-101100----0---------------"),
         //INST(&V::thumb32_SSAT,           "SSAT",                     "11110-110000----0---------------"),
