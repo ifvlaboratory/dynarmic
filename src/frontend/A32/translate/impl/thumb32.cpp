@@ -914,6 +914,20 @@ bool ThumbTranslatorVisitor::thumb32_ADD_imm_2(Imm<1> i, Reg n, Imm<3> imm3, Reg
     return true;
 }
 
+// MOVW<c> <Rd>,#<imm16>
+bool ThumbTranslatorVisitor::thumb32_MOVW_imm(Imm<1> i, Imm<4> imm4, Imm<3> imm3, Reg d, Imm<8> imm8) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (d == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 imm32 = concatenate(imm4, i, imm3, imm8).ZeroExtend();
+    ir.SetRegister(d, ir.Imm32(imm32));
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }
