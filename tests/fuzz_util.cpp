@@ -8,9 +8,17 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
+#include <dynarmic/A32/a32.h>
+
 #include "common/assert.h"
 #include "common/fp/fpcr.h"
 #include "common/fp/rounding_mode.h"
+#include "frontend/A32/disassembler/disassembler.h"
+#include "frontend/A32/location_descriptor.h"
+#include "frontend/A32/translate/translate.h"
+#include "frontend/ir/basic_block.h"
+#include "frontend/ir/location_descriptor.h"
+#include "frontend/ir/opcodes.h"
 #include "fuzz_util.h"
 #include "rand_int.h"
 
@@ -57,4 +65,43 @@ InstructionGenerator::InstructionGenerator(const char* format){
 u32 InstructionGenerator::Generate() const {
     const u32 random = RandInt<u32>(0, 0xFFFFFFFF);
     return bits | (random & ~mask);
+}
+
+bool ShouldTestA32Inst(u32 instruction, u32 pc, bool thumb, bool is_last_inst) {
+    A32::LocationDescriptor location{ pc, {}, {} };
+    location = location.SetTFlag(thumb);
+    IR::Block block{ location };
+    const bool should_continue = A32::TranslateSingleInstruction(block, location, instruction);
+
+    if (!should_continue && !is_last_inst) {
+        return false;
+    }
+
+    if (auto terminal = block.GetTerminal(); boost::get<IR::Term::Interpret>(&terminal)) {
+        return false;
+    }
+
+    for (const auto& ir_inst : block) {
+        switch (ir_inst.GetOpcode()) {
+        case IR::Opcode::A32ExceptionRaised:
+        case IR::Opcode::A32CallSupervisor:
+        case IR::Opcode::A32CoprocInternalOperation:
+        case IR::Opcode::A32CoprocSendOneWord:
+        case IR::Opcode::A32CoprocSendTwoWords:
+        case IR::Opcode::A32CoprocGetOneWord:
+        case IR::Opcode::A32CoprocGetTwoWords:
+        case IR::Opcode::A32CoprocLoadWords:
+        case IR::Opcode::A32CoprocStoreWords:
+            return false;
+            // Currently unimplemented in Unicorn
+        case IR::Opcode::FPVectorRecipEstimate16:
+        case IR::Opcode::FPVectorRSqrtEstimate16:
+        case IR::Opcode::VectorPolynomialMultiplyLong64:
+            return false;
+        default:
+            continue;
+        }
+    }
+
+    return true;
 }
