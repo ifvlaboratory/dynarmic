@@ -48,18 +48,7 @@ bool ArmTranslatorVisitor::arm_STRT() {
 }
 
 static IR::U32 GetAddress(A32::IREmitter& ir, bool P, bool U, bool W, Reg n, IR::U32 offset) {
-    const bool index = P;
-    const bool add = U;
-    const bool wback = !P || W;
-
-    const IR::U32 offset_addr = add ? ir.Add(ir.GetRegister(n), offset) : ir.Sub(ir.GetRegister(n), offset);
-    const IR::U32 address = index ? offset_addr : ir.GetRegister(n);
-
-    if (wback) {
-        ir.SetRegister(n, offset_addr);
-    }
-
-    return address;
+    return Helper::GetAddress(ir, P, U, !P || W, n, offset);
 }
 
 // LDR <Rt>, [PC, #+/-<imm>]
