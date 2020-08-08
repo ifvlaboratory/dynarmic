@@ -359,115 +359,80 @@ TEST_CASE("Fuzz Thumb IT blocks", "[JitX64][Thumb]") {
 
 TEST_CASE("Fuzz Thumb2 instructions set 1", "[JitX64][Thumb2]") {
     const std::array instructions = {
-        Thumb32InstGen("11110m00010011110mmm00ddmmmmmmmm"), // MOV (imm)
-        Thumb32InstGen("11110i00001Snnnn0kkkddddmmmmmmmm", Thumb32PCMask<1, 1, 0>()), // BIC (imm)
-        Thumb32InstGen("11110i00000Snnnn0kkkddddmmmmmmmm", Thumb32PCMask<1, 1, 0>()), // AND (imm)
-        Thumb32InstGen("11110i00010Snnnn0kkkddddmmmmmmmm", Thumb32PCMask<1, 1, 0>()), // ORR (imm)
-        Thumb32InstGen("11110i000001rrrr0kkk1111mmmmmmmm"), // TST (imm)
-        Thumb32InstGen("11110i00011S11110kkkddddmmmmmmmm", Thumb32PCMask<0, 1, 0>()), // MVN (imm)
-        Thumb32InstGen("11110i00011Snnnn0kkkddddmmmmmmmm", Thumb32PCMask<1, 1, 0>()), // ORN (imm)
-        Thumb32InstGen("11110i001001nnnn0kkk1111mmmmmmmm", Thumb32PCMask<1, 0, 0>()), // TEQ (imm)
-        Thumb32InstGen("11110i00100Snnnn0kkkddddmmmmmmmm", Thumb32PCMask<1, 1, 0>()), // EOR (imm)
-        Thumb32InstGen("11110i010001nnnn0kkk1111mmmmmmmm", Thumb32PCMask<1, 0, 0>()), // CMN (imm)
-        Thumb32InstGen("11110i01000Snnnn0kkkddddmmmmmmmm", Thumb32PCMask<1, 1, 0>()), // ADD (imm)
-        Thumb32InstGen("11110i01010Snnnn0kkkddddmmmmmmmm", Thumb32PCMask<1, 1, 0>()),// ADC (imm)
-        Thumb32InstGen("11110i01011Snnnn0kkkddddmmmmmmmm", Thumb32PCMask<1, 1, 0>()), // SBC (imm)
-        Thumb32InstGen("11110i011011nnnn0kkk1111mmmmmmmm", Thumb32PCMask<1, 0, 0>()), // CMP (imm)
-        Thumb32InstGen("11110i01101Snnnn0kkkddddmmmmmmmm", Thumb32PCMask<1, 1, 0>()), // SUB (imm)
-        Thumb32InstGen("11110i01110Snnnn0kkkddddmmmmmmmm", Thumb32PCMask<1, 1, 0>()), // RSB (imm)
-        Thumb32InstGen("111010100001nnnn0iii1111mmttrrrr", Thumb32PCMask<1, 0, 1>()), // TST (reg) 
-        Thumb32InstGen("11101010000Snnnn0iiiddddmmttrrrr", Thumb32PCMask<1, 1, 1>()), // AND (reg)
-        Thumb32InstGen("11101010001Snnnn0iiiddddmmttrrrr", Thumb32PCMask<1, 1, 1>()), // BIC (reg)
-        Thumb32InstGen("11101010010S11110iiiddddmmttrrrr", Thumb32PCMask<0, 1, 1>()), // LSL (imm) / LSR (imm) / ASR(imm) / RRX / ROR (imm)
-        Thumb32InstGen("11101010010Snnnn0iiiddddmmttrrrr", Thumb32PCMask<1, 1, 1>()), // ORR (reg)
-        Thumb32InstGen("11101010011S11110iiiddddmmttrrrr", Thumb32PCMask<0, 1, 1>()), // MVN (reg)
-        Thumb32InstGen("11101010011Snnnn0iiiddddmmttrrrr", Thumb32PCMask<1, 1, 1>()), // ORN (reg)
-        Thumb32InstGen("111010101001nnnn0iii1111mmttrrrr", Thumb32PCMask<1, 0, 1>()), // TEQ (reg) 
-        Thumb32InstGen("11101010100Snnnn0iiiddddmmttrrrr", Thumb32PCMask<1, 1, 1>()), // EOR (reg)
-        Thumb32InstGen("111010101100nnnn0iiiddddmmt0rrrr", Thumb32PCMask<1, 1, 1>()), // PKH
-        Thumb32InstGen("111010110001nnnn0iii1111mmttrrrr", Thumb32PCMask<1, 0, 1>()), // CMN (reg) 
-        Thumb32InstGen("11101011000Snnnn0iiiddddmmttrrrr", Thumb32PCMask<1, 1, 1>()), // ADD (reg) 
-        Thumb32InstGen("11101011010Snnnn0iiiddddmmttrrrr", Thumb32PCMask<1, 1, 1>()), // ADC (reg) 
-        Thumb32InstGen("11101011011Snnnn0iiiddddmmttrrrr", Thumb32PCMask<1, 1, 1>()), // SBC (reg) 
-        Thumb32InstGen("111010111011nnnn0iii1111mmttrrrr", Thumb32PCMask<1, 0, 1>()), // CMP (reg) 
-        Thumb32InstGen("11101011101Snnnn0iiiddddmmttrrrr", Thumb32PCMask<1, 1, 1>()), // SUB (reg) 
-        Thumb32InstGen("11101011110Snnnn0iiiddddmmttrrrr", Thumb32PCMask<1, 1, 1>()), // RSB (reg) 
-        Thumb32InstGen("11110i10000011110kkkddddmmmmmmmm", Thumb32PCMask<0, 1, 0>()), // ADR after  
-        Thumb32InstGen("11110i100000nnnn0kkkddddmmmmmmmm", Thumb32PCMask<1, 1, 0>()), // ADDW
-        Thumb32InstGen("11110i100100kkkk0mmmddddaaaaaaaa", Thumb32PCMask<0, 1, 0>()), // MOVW
-        Thumb32InstGen("11110i10101011110kkkddddmmmmmmmm", Thumb32PCMask<0, 1, 0>()), // ADR before
-        Thumb32InstGen("11110i101010nnnn0kkkddddmmmmmmmm", Thumb32PCMask<1, 1, 0>()), // SUBW
-        Thumb32InstGen("11110i101100kkkk0mmmddddaaaaaaaa", Thumb32PCMask<0, 1, 0>()), // MOVT
-        Thumb32InstGen("1111001100s0nnnn0kkkddddii0mmmmm", [](u32 inst) {
-            return Common::Bits<12, 14>(inst) != 0b000 &&
-                   Common::Bits<6, 7>(inst) != 0b00 &&
-                   Thumb32PCMask<1, 1, 0>()(inst);
-        }), // SSAT
-        Thumb32InstGen("111100110100nnnn0kkkddddii0mmmmm", [](u32 inst) {
-            const u32 widthm = Common::Bits<0, 4>(inst);
-            const u32 lsb = (Common::Bits<12, 14>(inst) << 2) | Common::Bits<6, 7>(inst);
-            if (lsb + widthm >= Common::BitSize<u32>()) {
-                return false;
-            }
-            return Thumb32PCMask<1, 1, 0>()(inst);
-        }), // SBFX
-        Thumb32InstGen("111100110010nnnn0000dddd0000mmmm", Thumb32PCMask<1, 1, 0>()), // SSAT16
-        Thumb32InstGen("11110011011011110kkkddddii0mmmmm", [](u32 inst) {
-            const u32 msb = Common::Bits<0, 4>(inst);
-            const u32 lsb = (Common::Bits<12, 14>(inst) << 2) | Common::Bits<6, 7>(inst);
-            if (lsb > msb) {
-                return false;
-            }
-            return Thumb32PCMask<0, 1, 0>()(inst);
-        }), // BFC
-        Thumb32InstGen("111110000000nnnntttt1puwmmmmmmmm", [](u32 inst) {
-            const bool w = Common::Bit<8>(inst);
-            const bool u = Common::Bit<9>(inst);
-            const bool p = Common::Bit<10>(inst);
-            const u8 t = Common::Bits<12, 15>(inst);
-            const u8 n = Common::Bits<16, 19>(inst);
-            if (p && u && !w) {
-                return false;
-            }
-            if (n == 15 || (!p && !w)) {
-                return false;
-            }
-            if (t == 15 || (w && n == t)) {
-                return false;
-            }
-            return true;
-        }), // STRB (imm) 1
-        Thumb32InstGen("111110001000nnnnttttmmmmmmmmmmmm", [](u32 inst) {
-            const u8 t = Common::Bits<12, 15>(inst);
-            const u8 n = Common::Bits<16, 19>(inst);
-            return t != 15 && n != 15;
-        }), // STRB (imm) 2
+        Thumb32InstGen("11110x00010011110xxx00xxxxxxxxxx"), // MOV (imm)
+        Thumb32InstGen("11110x00001xnnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>), // BIC (imm)
+        Thumb32InstGen("11110x00000xnnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>), // AND (imm)
+        Thumb32InstGen("11110x00010xnnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>), // ORR (imm)
+        Thumb32InstGen("11110x000001nnnn0xxx1111xxxxxxxx"), // TST (imm)
+        Thumb32InstGen("11110x00011x11110xxxddddxxxxxxxx", T32PCMask<0, 0, 1, 0>), // MVN (imm)
+        Thumb32InstGen("11110x00011xnnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>), // ORN (imm)
+        Thumb32InstGen("11110x001001nnnn0xxx1111xxxxxxxx", T32PCMask<1, 0, 0, 0>), // TEQ (imm)
+        Thumb32InstGen("11110x00100xnnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>), // EOR (imm)
+        Thumb32InstGen("11110x010001nnnn0xxx1111xxxxxxxx", T32PCMask<1, 0, 0, 0>), // CMN (imm)
+        Thumb32InstGen("11110x01000xnnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>), // ADD (imm)
+        Thumb32InstGen("11110x01010xnnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>),// ADC (imm)
+        Thumb32InstGen("11110x01011xnnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>), // SBC (imm)
+        Thumb32InstGen("11110x011011nnnn0xxx1111xxxxxxxx", T32PCMask<1, 0, 0, 0>), // CMP (imm)
+        Thumb32InstGen("11110x01101xnnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>), // SUB (imm)
+        Thumb32InstGen("11110x01110xnnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>), // RSB (imm)
+        Thumb32InstGen("111010100001nnnn0xxx1111xxxxrrrr", T32PCMask<1, 0, 0, 1>), // TST (reg) 
+        Thumb32InstGen("11101010000xnnnn0xxxddddxxxxrrrr", T32PCMask<1, 0, 1, 1>), // AND (reg)
+        Thumb32InstGen("11101010001xnnnn0xxxddddxxxxrrrr", T32PCMask<1, 0, 1, 1>), // BIC (reg)
+        Thumb32InstGen("11101010010x11110xxxddddxxxxrrrr", T32PCMask<0, 0, 1, 1>), // LSL (imm) / LSR (imm) / ASR(imm) / RRX / ROR (imm)
+        Thumb32InstGen("11101010010xnnnn0xxxddddxxxxrrrr", T32PCMask<1, 0, 1, 1>), // ORR (reg)
+        Thumb32InstGen("11101010011x11110xxxddddxxxxrrrr", T32PCMask<0, 0, 1, 1>), // MVN (reg)
+        Thumb32InstGen("11101010011xnnnn0xxxddddxxxxrrrr", T32PCMask<1, 0, 1, 1>), // ORN (reg)
+        Thumb32InstGen("11101010100xnnnn0xxx1111xxxxrrrr", T32PCMask<1, 0, 0, 1>), // TEQ (reg) 
+        Thumb32InstGen("11101010100xnnnn0xxxddddxxxxrrrr", T32PCMask<1, 0, 1, 1>), // EOR (reg)
+        Thumb32InstGen("111010101100nnnn0xxxddddxxx0rrrr", T32PCMask<1, 0, 1, 1>), // PKH
+        Thumb32InstGen("111010110001nnnn0xxx1111xxxxrrrr", T32PCMask<1, 0, 0, 1>), // CMN (reg) 
+        Thumb32InstGen("11101011000xnnnn0xxxddddxxxxrrrr", T32PCMask<1, 0, 1, 1>), // ADD (reg) 
+        Thumb32InstGen("11101011010xnnnn0xxxddddxxxxrrrr", T32PCMask<1, 0, 1, 1>), // ADC (reg) 
+        Thumb32InstGen("11101011011xnnnn0xxxddddxxxxrrrr", T32PCMask<1, 0, 1, 1>), // SBC (reg) 
+        Thumb32InstGen("111010111011nnnn0xxx1111xxxxrrrr", T32PCMask<1, 0, 0, 1>), // CMP (reg) 
+        Thumb32InstGen("11101011101xnnnn0xxxddddxxxxrrrr", T32PCMask<1, 0, 1, 1>), // SUB (reg) 
+        Thumb32InstGen("11101011110xnnnn0xxxddddxxxxrrrr", T32PCMask<1, 0, 1, 1>), // RSB (reg) 
+        Thumb32InstGen("11110x10000011110xxxddddxxxxxxxx", T32PCMask<0, 0, 1, 0>), // ADR after  
+        Thumb32InstGen("11110x100000nnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>), // ADDW
+        Thumb32InstGen("11110x100100xxxx0xxxddddxxxxxxxx", T32PCMask<0, 0, 1, 0>), // MOVW
+        Thumb32InstGen("11110x10101011110xxxddddxxxxxxxx", T32PCMask<0, 0, 1, 0>), // ADR before
+        Thumb32InstGen("11110x101010nnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>), // SUBW
+        Thumb32InstGen("11110x101100xxxx0xxxddddxxxxxxxx", T32PCMask<0, 0, 1, 0>), // MOVT
+        Thumb32InstGen("111100110010nnnn0000dddd0000mmmm", T32PCMask<1, 0, 1, 0>), // SSAT16
+        Thumb32InstGen("111110001000nnnnttttxxxxxxxxxxxx", T32PCMask<1, 1, 0, 0>), // STRB (imm) 2
+        Thumb32InstGen("111110000000nnnntttt000000xxrrrr", T32PCMask<1, 1, 0, 1>), // STRB
+        Thumb32InstGen("1111001100s0nnnn0kkkddddii0mmmmm", T32PCMask<1, 0, 1, 0>), // SSAT
+        Thumb32InstGen("111100110100nnnn0kkkddddii0mmmmm", T32PCMask<1, 0, 1, 0>), // SBFX
+        Thumb32InstGen("11110011011011110kkkddddii0mmmmm", T32PCMask<0, 0, 1, 0>), // BFC
+        Thumb32InstGen("111110000000nnnntttt1puwmmmmmmmm", T32PCMask<1, 1, 0, 0>), // STRB (imm) 1
         Thumb32InstGen("1110100xx0W0nnnn0r0rrrrrrrrrrrrr", // STMIA / STMDB
                      [](u32 inst) {
             // Ensure that the undefined case of
             // the base register being within the list isn't hit when W is true.
             // In the spec, when LowestBit(reg_list) == r_n, it's defined, 
             // but unicorn sees it as an invalid instruction.
-            const u8 op = Common::Bits<23, 24>(inst);
+            const u32 op = Common::Bits<23, 24>(inst);
+            const u32 rn = Common::Bits<16, 19>(inst);
+            const bool W = Common::Bit<21>(inst);
+            const u32 reg_list = Common::Bits<0, 15>(inst);
+            // These are not STMIA or STMDB
             if (op == 0b11 || op == 0b00) {
                 return false;
             }
-            const u32 rn = Common::Bits<16, 19>(inst);
-            const bool W = Common::Bit<21>(inst);
-            const u16 reg_list = Common::Bits<0, 15>(inst);
             return rn != 15 && !(W && Common::Bit(rn, reg_list)) && Common::BitCount(reg_list) >= 2;
         }),
         Thumb32InstGen("1110100xx0W1nnnnrrrrrrrrrrrrrrrr", // LDMIA / LDMDB
                      [](u32 inst) {
-            const u8 op = Common::Bits<23, 24>(inst);
+            const u32 op = Common::Bits<23, 24>(inst);
+            const u32 rn = Common::Bits<16, 19>(inst);
+            const bool w = Common::Bit<21>(inst);
+            const u32 reg_list = Common::Bits<0, 15>(inst);
+            // These are not LDMIA or LDMDB
             if (op == 0b11 || op == 0b00) {
                 return false;
             }
-            const u32 rn = Common::Bits<16, 19>(inst);
-            const bool W = Common::Bit<21>(inst);
-            const u16 reg_list = Common::Bits<0, 15>(inst);
             return rn != 15 &&
-                !(W && Common::Bit(rn, reg_list)) && // Base register should not be in list when W is true
+                !(w && Common::Bit(rn, reg_list)) && // Base register should not be in list when w is true
                 !Common::Bit(15, reg_list) && // Prevent jump 
                 Common::BitCount(reg_list) >= 2;
         }),
