@@ -1070,6 +1070,23 @@ bool ThumbTranslatorVisitor::thumb32_STRB_imm_1(Reg n, Reg t, bool P, bool U, bo
     return true;
 }
 
+// STRB<c>.W <Rt,[<Rn>,#<imm12>]
+bool ThumbTranslatorVisitor::thumb32_STRB_imm_2(Reg n, Reg t, Imm<12> imm12) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (n == Reg::PC) {
+        return UndefinedInstruction();
+    }
+    if (t == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const auto address = Helper::GetAddress(ir, true, true, false, n, ir.Imm32(imm12.ZeroExtend()));
+    ir.WriteMemory8(address, ir.LeastSignificantByte(ir.GetRegister(t)));
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }

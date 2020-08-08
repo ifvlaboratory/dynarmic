@@ -433,7 +433,12 @@ TEST_CASE("Fuzz Thumb2 instructions set 1", "[JitX64][Thumb2]") {
                 return false;
             }
             return true;
-        }), // STRB
+        }), // STRB (imm) 1
+        Thumb32InstGen("111110001000nnnnttttmmmmmmmmmmmm", [](u32 inst) {
+            const u8 t = Common::Bits<12, 15>(inst);
+            const u8 n = Common::Bits<16, 19>(inst);
+            return t != 15 && n != 15;
+        }), // STRB (imm) 2
         Thumb32InstGen("1110100xx0W0nnnn0r0rrrrrrrrrrrrr", // STMIA / STMDB
                      [](u32 inst) {
             // Ensure that the undefined case of

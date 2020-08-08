@@ -240,6 +240,7 @@ struct ThumbTranslatorVisitor final {
     bool thumb32_SBFX(Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5> widthm);
     bool thumb32_BFC(Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5> msb);
     bool thumb32_STRB_imm_1(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_STRB_imm_2(Reg n, Reg t, Imm<12> imm12);
 
     bool thumb32_MOV_imm(Imm<1> i, bool S, Imm<3> imm3, Reg d, Imm<8> imm8);
     bool thumb32_BIC_imm(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
