@@ -38,16 +38,16 @@ struct ThumbTranslatorVisitor final {
     static u32 ThumbExpandImm(Imm<1> i, Imm<3> imm3, Imm<8> imm8) {
         const auto imm12 = concatenate(i, imm3, imm8);
         if (imm12.Bits<10, 11>() == 0) {
-            const u32 imm8 = imm12.Bits<0, 7>();
+            const u32 bytes = imm12.Bits<0, 7>();
             switch (imm12.Bits<8, 9>()) {
                 case 0b00:
-                    return imm8;
+                    return bytes;
                 case 0b01:
-                    return (imm8 << 16) | imm8;
+                    return (bytes << 16) | bytes;
                 case 0b10:
-                    return (imm8 << 24) | (imm8 << 8);
+                    return (bytes << 24) | (bytes << 8);
                 case 0b11:
-                    return Common::Replicate(imm8, 8);
+                    return Common::Replicate(bytes, 8);
             }
             assert(false);
         }
@@ -72,14 +72,13 @@ struct ThumbTranslatorVisitor final {
 
     IR::ResultAndCarry<IR::U32> DecodeShiftedReg(Reg n, Imm<3> imm3, Imm<2> imm2, Imm<2> t, IR::U1 carry_in) {
         const auto reg = ir.GetRegister(n);
+        u8 shift_n = static_cast<u8>(concatenate(imm3, imm2).ZeroExtend());
         switch (t.ZeroExtend()) {
             case 0b00: {
-                const auto shift_n = concatenate(imm3, imm2).ZeroExtend();
                 const auto result = ir.LogicalShiftLeft(reg, ir.Imm8(shift_n), carry_in);
                 return result;
             }
             case 0b01: {
-                auto shift_n = concatenate(imm3, imm2).ZeroExtend();
                 if (shift_n == 0) {
                     shift_n = 32;
                 }
@@ -87,15 +86,13 @@ struct ThumbTranslatorVisitor final {
                 return result;
             }
             case 0b10: {
-                auto shift_n = concatenate(imm3, imm2).ZeroExtend();
                 if (shift_n == 0) {
                     shift_n = 32;
                 }
                 const auto result = ir.ArithmeticShiftRight(reg, ir.Imm8(shift_n), carry_in);
                 return result;
             } 
-            case 0b11: {
-                auto shift_n = concatenate(imm3, imm2).ZeroExtend();
+            default: { /* 0b11 */
                 if (shift_n == 0) {
                     const auto result = ir.RotateRightExtended(reg, carry_in);
                     return result;
@@ -104,7 +101,6 @@ struct ThumbTranslatorVisitor final {
                 return result;
             }  
         }
-        assert(false);
     }
 
     A32::IREmitter ir;
