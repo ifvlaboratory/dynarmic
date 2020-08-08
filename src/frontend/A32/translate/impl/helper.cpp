@@ -94,4 +94,19 @@ void BFCHelper(A32::IREmitter& ir, Reg d, u32 lsbit, u32 msbit) {
     ir.SetRegister(d, result);
 }
 
+IR::U32 GetAddress(A32::IREmitter& ir, bool P, bool U, bool W, Reg n, IR::U32 offset) {
+    const bool index = P;
+    const bool add = U;
+    const bool wback = W;
+
+    const IR::U32 offset_addr = add ? ir.Add(ir.GetRegister(n), offset) : ir.Sub(ir.GetRegister(n), offset);
+    const IR::U32 address = index ? offset_addr : ir.GetRegister(n);
+
+    if (wback) {
+        ir.SetRegister(n, offset_addr);
+    }
+
+    return address;
+}
+
 } // namespace Dynarmic::A32

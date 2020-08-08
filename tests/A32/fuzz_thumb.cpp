@@ -417,6 +417,23 @@ TEST_CASE("Fuzz Thumb2 instructions set 1", "[JitX64][Thumb2]") {
             }
             return Thumb32PCMask<0, 1, 0>()(inst);
         }), // BFC
+        Thumb32InstGen("111110000000nnnntttt1puwmmmmmmmm", [](u32 inst) {
+            const bool w = Common::Bit<8>(inst);
+            const bool u = Common::Bit<9>(inst);
+            const bool p = Common::Bit<10>(inst);
+            const u8 t = Common::Bits<12, 15>(inst);
+            const u8 n = Common::Bits<16, 19>(inst);
+            if (p && u && !w) {
+                return false;
+            }
+            if (n == 15 || (!p && !w)) {
+                return false;
+            }
+            if (t == 15 || (w && n == t)) {
+                return false;
+            }
+            return true;
+        }), // STRB
         Thumb32InstGen("1110100xx0W0nnnn0r0rrrrrrrrrrrrr", // STMIA / STMDB
                      [](u32 inst) {
             // Ensure that the undefined case of

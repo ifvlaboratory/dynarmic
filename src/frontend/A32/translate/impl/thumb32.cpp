@@ -1051,6 +1051,25 @@ bool ThumbTranslatorVisitor::thumb32_BFC(Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5>
     return true;
 }
 
+// STRB<c> <Rt>, [<Rn>, # - <imm8>]
+// STRB<c> <Rt>, [<Rn>], # + / -<imm8>
+// STRB<c> <Rt>, [<Rn>, # + / -<imm8>]!
+bool ThumbTranslatorVisitor::thumb32_STRB_imm_1(Reg n, Reg t, bool P, bool U, bool W, Imm<8> imm8) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if ((!P && !W) || n == Reg::PC) {
+        return UndefinedInstruction();
+    }
+    if (t == Reg::PC || (W && n == t)) {
+        return UnpredictableInstruction();
+    }
+
+    const auto address = Helper::GetAddress(ir, P, U, W, n, ir.Imm32(imm8.ZeroExtend()));
+    ir.WriteMemory8(address, ir.LeastSignificantByte(ir.GetRegister(t)));
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }
