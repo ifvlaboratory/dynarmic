@@ -120,15 +120,7 @@ bool ArmTranslatorVisitor::arm_SBFX(Cond cond, Imm<5> widthm1, Reg d, Imm<5> lsb
         return true;
     }
 
-    constexpr size_t max_width = Common::BitSize<u32>();
-    const u32 width = widthm1_value + 1;
-    const u8 left_shift_amount = static_cast<u8>(max_width - width - lsb_value);
-    const u8 right_shift_amount = static_cast<u8>(max_width - width);
-    const IR::U32 operand = ir.GetRegister(n);
-    const IR::U32 tmp = ir.LogicalShiftLeft(operand, ir.Imm8(left_shift_amount));
-    const IR::U32 result = ir.ArithmeticShiftRight(tmp, ir.Imm8(right_shift_amount));
-
-    ir.SetRegister(d, result);
+    Helper::SBFXHelper(ir, d, n, lsb_value, widthm1_value);
     return true;
 }
 
