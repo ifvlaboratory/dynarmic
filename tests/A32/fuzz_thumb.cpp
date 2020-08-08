@@ -39,14 +39,16 @@ static A32::UserConfig GetUserConfig(ThumbTestEnv* testenv) {
 
 using WriteRecords = std::map<u32, u8>;
 
+using ThumbInstruction = boost::variant<u32, u16>;
+
 template <typename InstructionType>
 struct ThumbInstGen final {
 public:
         
     ThumbInstGen(const char* format, std::function<bool(InstructionType)> is_valid = [](InstructionType){ return true; }) : is_valid(is_valid) {
-        const int bitsize = Common::BitSize<InstructionType>();
+        const size_t bitsize = Common::BitSize<InstructionType>();
         REQUIRE(strlen(format) == bitsize);
-        for (int i = 0; i < bitsize; i++) {
+        for (size_t i = 0; i < bitsize; i++) {
             const InstructionType bit = 1 << ((bitsize-1) - i);
             switch (format[i]) {
             case '0':
@@ -62,17 +64,17 @@ public:
             }
         }
     }
-    InstructionType Generate() const {
+    ThumbInstruction Generate(u32 pc, bool is_last_inst) const {
         InstructionType inst;
-
         do {
-            const InstructionType random = RandInt<InstructionType>(0, Common::Replicate(0xF, 4));
+            const u32 initial = Common::Replicate(0xF, 4);
+            const InstructionType random = RandInt<InstructionType>(0, static_cast<InstructionType>(initial));
             inst = bits | (random & ~mask);
         } while (!is_valid(inst));
 
         ASSERT((inst & mask) == bits);
 
-        return inst;
+        return ThumbInstruction(inst);
     }
 private:
     InstructionType bits = 0;
@@ -159,8 +161,16 @@ static void RunInstance(size_t run_number, ThumbTestEnv& test_env, A32Unicorn<Th
         printf("Failed at execution number %zu\n", run_number);
 
         printf("\nInstruction Listing: \n");
-        for (size_t i = 0; i < 2*instruction_count; i++) {
-            printf("%04x %s\n", test_env.code_mem[i], A32::DisassembleThumb16(test_env.code_mem[i]).c_str());
+        u32 pc = 0;
+        for (size_t i = 0; i < instruction_count; i++) {
+            const u16 code = test_env.code_mem[pc/2];
+            if ((code & 0xF000) != 0xF000 && (code & 0xF800) != 0xE800) {
+                printf("%04x %s\n", code, A32::DisassembleThumb16(code).c_str());
+                pc += 2;
+            } else {
+                printf("%04x%04x thumb32\n", test_env.code_mem[pc/2], test_env.code_mem[pc/2+1]);
+                pc += 4;
+            }
         }
 
         printf("\nInitial Register Listing: \n");
@@ -211,34 +221,10 @@ static void RunInstance(size_t run_number, ThumbTestEnv& test_env, A32Unicorn<Th
     }
 }
 
-void FuzzJitThumb16(const size_t instruction_count, const size_t instructions_to_execute_count, const size_t run_count, const std::function<u16(int)> instruction_generator) {
-    ThumbTestEnv test_env;
-
-    // Prepare memory.
-    test_env.code_mem.resize(instruction_count + 1);
-    test_env.code_mem.back() = 0xE7FE; // b +#0
-
-    // Prepare test subjects
-    A32Unicorn uni{test_env};
-    A32::Jit jit{GetUserConfig(&test_env)};
-
-    for (size_t run_number = 0; run_number < run_count; run_number++) {
-        ThumbTestEnv::RegisterArray initial_regs;
-        std::generate_n(initial_regs.begin(), initial_regs.size() - 1, []{ return RandInt<u32>(0, 0xFFFFFFFF); });
-        initial_regs[15] = 0;
-
-        for (size_t i = 0; i < instruction_count; i++) {
-            test_env.code_mem[i] =  instruction_generator(i);
-        }
-        RunInstance(run_number, test_env, uni, jit, initial_regs, instruction_count, instructions_to_execute_count);
-    }
-}
-
-void FuzzJitThumb32(const size_t instruction_count, const size_t instructions_to_execute_count, const size_t run_count, const std::function<u32(int)> instruction_generator) {
+void FuzzJitThumb(const size_t instruction_count, const size_t instructions_to_execute_count, const size_t run_count, const std::function<ThumbInstruction(u32, bool)> instruction_generator) {
     ThumbTestEnv test_env;
     // Prepare memory.
     test_env.code_mem.resize(instruction_count * 2 + 1);
-    test_env.code_mem.back() = 0xE7FE; // b +#0
 
     // Prepare test subjects
     A32Unicorn uni{test_env};
@@ -249,11 +235,22 @@ void FuzzJitThumb32(const size_t instruction_count, const size_t instructions_to
         std::generate_n(initial_regs.begin(), initial_regs.size() - 1, []{ return RandInt<u32>(0, 0xFFFFFFFF); });
         initial_regs[15] = 0;
         
+        u32 pc = 0;
         for (size_t i = 0; i < instruction_count; i++) {
-            const auto insn = instruction_generator(i);
-            test_env.code_mem[2*i] = Common::Bits<16,31>(insn);
-            test_env.code_mem[2*i+1] = Common::Bits<0,15>(insn);
+            const auto insn = instruction_generator(pc, i == instruction_count - 1);
+            if (boost::get<u16>(&insn)) {
+                const u16 code = boost::get<u16>(insn);
+                test_env.code_mem[pc / 2] = static_cast<u16>(code);
+                pc += 2;
+            } else {
+                const u32 code = boost::get<u32>(insn);
+                test_env.code_mem[pc/2] = code >> 16;
+                pc += 2;
+                test_env.code_mem[pc/2] = static_cast<u16>(code);
+                pc += 2;
+            }
         }
+        test_env.code_mem[pc/2] = 0xE7FE; // b #+0
         RunInstance(run_number, test_env, uni, jit, initial_regs, instruction_count, instructions_to_execute_count);
     }
 }
@@ -303,18 +300,18 @@ TEST_CASE("Fuzz Thumb instructions set 1", "[JitX64][Thumb]") {
 #endif
     };
 
-    const auto instruction_select = [&](int) -> u16 {
+    const auto instruction_select = [&](u32 pc, bool is_last_inst) -> ThumbInstruction {
         size_t inst_index = RandInt<size_t>(0, instructions.size() - 1);
 
-        return instructions[inst_index].Generate();
+        return instructions[inst_index].Generate(pc, is_last_inst);
     };
 
     SECTION("single instructions") {
-        FuzzJitThumb16(1, 2, 10000, instruction_select);
+        FuzzJitThumb(1, 2, 10000, instruction_select);
     }
 
     SECTION("short blocks") {
-        FuzzJitThumb16(5, 6, 3000, instruction_select);
+        FuzzJitThumb(5, 6, 3000, instruction_select);
     }
 
     // TODO: Test longer blocks when Unicorn can consistently
@@ -343,19 +340,19 @@ TEST_CASE("Fuzz Thumb IT blocks", "[JitX64][Thumb]") {
         Thumb16InstGen("010001100hxxxxxx") // MOV (high registers)6 inst)
     };
 
-    const auto cond_instruction_select = [&](int i) -> u16 {
-        if (i == 2 || i == 7) {
+    const auto cond_instruction_select = [&](u32 pc, bool is_last_inst) -> ThumbInstruction {
+        if (pc == 4 || pc == 14) {
             // IT
             return Thumb16InstGen("10111111cccc1mmm",
-              [](u16 inst){ return Common::Bits<4, 7>(inst) != 0b1111 && Common::Bits<4, 7>(inst) != 0b1110; }).Generate();
+              [](u16 inst){ return Common::Bits<4, 7>(inst) != 0b1111 && Common::Bits<4, 7>(inst) != 0b1110; }).Generate(pc, is_last_inst);
         }
         const size_t inst_index = RandInt<size_t>(0, instructions.size() - 1);
 
-        return instructions[inst_index].Generate();
+        return instructions[inst_index].Generate(pc, is_last_inst);
     };
 
     SECTION("short blocks") {
-        FuzzJitThumb16(20, 21, 3000, cond_instruction_select);
+        FuzzJitThumb(20, 21, 3000, cond_instruction_select);
     }
 }
 
@@ -475,18 +472,18 @@ TEST_CASE("Fuzz Thumb2 instructions set 1", "[JitX64][Thumb2]") {
         }),
     };
 
-    const auto instruction_select = [&](int) -> u32 {
+    const auto instruction_select = [&](u32 pc, bool is_last_inst) -> ThumbInstruction {
         const size_t inst_index = RandInt<size_t>(0, instructions.size() - 1);
 
-        return instructions[inst_index].Generate();
+        return instructions[inst_index].Generate(pc, is_last_inst);
     };
 
     SECTION("single instructions") {
-        FuzzJitThumb32(1, 2, 10000, instruction_select);
+        FuzzJitThumb(1, 2, 10000, instruction_select);
     }
 
     SECTION("short blocks") {
-        FuzzJitThumb32(5, 6, 3000, instruction_select);
+        FuzzJitThumb(5, 6, 3000, instruction_select);
     }
 }
 
@@ -525,13 +522,13 @@ TEST_CASE("Fuzz Thumb instructions set 2 (affects PC)", "[JitX64][Thumb]") {
 #endif
     };
 
-    const auto instruction_select = [&](int) -> u16 {
+    const auto instruction_select = [&](u32 pc, bool is_last) -> ThumbInstruction {
         size_t inst_index = RandInt<size_t>(0, instructions.size() - 1);
 
-        return instructions[inst_index].Generate();
+        return instructions[inst_index].Generate(pc, is_last);
     };
 
-    FuzzJitThumb16(1, 1, 10000, instruction_select);
+    FuzzJitThumb(1, 1, 10000, instruction_select);
 }
 
 TEST_CASE("Verify fix for off by one error in MemoryRead32 worked", "[Thumb]") {
