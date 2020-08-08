@@ -154,7 +154,7 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_STRBT,          "STRBT",                    "111110000000--------1110--------"),
         INST(&V::thumb32_STRB_imm_1,     "STRB (imm)",               "111110000000nnnntttt1puwmmmmmmmm"),
         INST(&V::thumb32_STRB_imm_2,     "STRB (imm)",               "111110001000nnnnttttmmmmmmmmmmmm"),
-        //INST(&V::thumb32_STRB,           "STRB (reg)",               "111110000000--------000000------"),
+        INST(&V::thumb32_STRB,           "STRB (reg)",               "111110000000nnnntttt000000ssrrrr"),
         //INST(&V::thumb32_STRH_imm_1,     "STRH (imm)",               "111110000010--------1--1--------"),
         //INST(&V::thumb32_STRH_imm_2,     "STRH (imm)",               "111110000010--------1100--------"),
         //INST(&V::thumb32_STRH_imm_3,     "STRH (imm)",               "111110001010--------------------"),

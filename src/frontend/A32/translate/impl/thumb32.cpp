@@ -687,7 +687,7 @@ bool ThumbTranslatorVisitor::thumb32_EOR_reg(bool S, Reg n, Imm<3> imm3, Reg d, 
     if (!ConditionPassed()) {
         return true;
     }
-    if (m == Reg::PC || n == Reg::PC) {
+    if (d == Reg::PC || n == Reg::PC || m == Reg::PC) {
         return UnpredictableInstruction();
     }
 
@@ -1083,6 +1083,25 @@ bool ThumbTranslatorVisitor::thumb32_STRB_imm_2(Reg n, Reg t, Imm<12> imm12) {
     }
 
     const auto address = Helper::GetAddress(ir, true, true, false, n, ir.Imm32(imm12.ZeroExtend()));
+    ir.WriteMemory8(address, ir.LeastSignificantByte(ir.GetRegister(t)));
+    return true;
+}
+
+// STRB<c>.W <Rt>,[<Rn>,<Rm>{,LSL #<shift>}]
+bool ThumbTranslatorVisitor::thumb32_STRB(Reg n, Reg t, Imm<2> shift, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (n == Reg::PC) {
+        return UndefinedInstruction();
+    }
+    if (t == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const u8 shift_value = static_cast<u8>(shift.ZeroExtend());
+    const auto offset = ir.LogicalShiftLeft(ir.GetRegister(m), ir.Imm8(shift_value));
+    const auto address = Helper::GetAddress(ir, true, true, false, n, offset);
     ir.WriteMemory8(address, ir.LeastSignificantByte(ir.GetRegister(t)));
     return true;
 }
