@@ -23,11 +23,7 @@ bool ArmTranslatorVisitor::arm_BFC(Cond cond, Imm<5> msb, Reg d, Imm<5> lsb) {
 
     const u32 lsb_value = lsb.ZeroExtend();
     const u32 msb_value = msb.ZeroExtend();
-    const u32 mask = ~(Common::Ones<u32>(msb_value - lsb_value + 1) << lsb_value);
-    const IR::U32 operand = ir.GetRegister(d);
-    const IR::U32 result = ir.And(operand, ir.Imm32(mask));
-
-    ir.SetRegister(d, result);
+    Helper::BFCHelper(ir, d, lsb_value, msb_value);
     return true;
 }
 
