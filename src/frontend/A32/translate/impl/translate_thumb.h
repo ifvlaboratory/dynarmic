@@ -239,6 +239,36 @@ struct ThumbTranslatorVisitor final {
     bool thumb32_STRB_imm_2(Reg n, Reg t, Imm<12> imm12);
     bool thumb32_STRB(Reg n, Reg t, Imm<2> shift, Reg m);
 
+    bool thumb32_LDRB_lit(bool U, Reg t, Imm<12> imm12);
+    bool thumb32_STRH_imm_1(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_STRH_imm_3(Reg n, Reg t, Imm<12> imm12);
+    bool thumb32_STRH(Reg n, Reg t, Imm<2> shift, Reg m);
+    bool thumb32_STR_imm_1(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_STR_imm_3(Reg n, Reg t, Imm<12> imm12);
+    bool thumb32_STR_reg(Reg n, Reg t, Imm<2> shift, Reg m);
+
+    bool thumb32_LDRB_reg(Reg n, Reg t, Imm<2> shift, Reg m);
+    bool thumb32_LDRB_imm8(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_LDRB_imm12(Reg n, Reg t, Imm<12> imm12);
+    bool thumb32_LDRSB_lit(bool u, Reg t, Imm<12> imm12);
+    bool thumb32_LDRSB_reg(Reg n, Reg t, Imm<2> shift, Reg m);
+    bool thumb32_LDRSB_imm8(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_LDRSB_imm12(Reg n, Reg t, Imm<12> imm12);
+
+    bool thumb32_LDRH_lit(bool u, Reg t, Imm<12> imm12);
+    bool thumb32_LDRH_reg(Reg n, Reg t, Imm<2> shift, Reg m);
+    bool thumb32_LDRH_imm8(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_LDRH_imm12(Reg n, Reg t, Imm<12> imm12);
+    bool thumb32_LDRSH_lit(bool u, Reg t, Imm<12> imm12);
+    bool thumb32_LDRSH_reg(Reg n, Reg t, Imm<2> shift, Reg m);
+    bool thumb32_LDRSH_imm8(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_LDRSH_imm12(Reg n, Reg t, Imm<12> imm12);
+
+    bool thumb32_LDR_lit(bool u, Reg t, Imm<12> imm12);
+    bool thumb32_LDR_reg(Reg n, Reg t, Imm<2> shift, Reg m);
+    bool thumb32_LDR_imm8(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_LDR_imm12(Reg n, Reg t, Imm<12> imm12);
+
     bool thumb32_MOV_imm(Imm<1> i, bool S, Imm<3> imm3, Reg d, Imm<8> imm8);
     bool thumb32_BIC_imm(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
     bool thumb32_AND_imm(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);

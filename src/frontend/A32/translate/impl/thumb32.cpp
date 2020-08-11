@@ -1110,6 +1110,495 @@ bool ThumbTranslatorVisitor::thumb32_STRB(Reg n, Reg t, Imm<2> shift, Reg m) {
     return true;
 }
 
+// STRH<c> <Rt>,[<Rn>,#-<imm8>]
+// STRH<c> <Rt>,[<Rn>],#+/-<imm8>
+// STRH<c> <Rt>,[<Rn>,#+/-<imm8>]!
+bool ThumbTranslatorVisitor::thumb32_STRH_imm_1(Reg n, Reg t, bool P, bool U, bool W, Imm<8> imm8) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if ((!P && !W) || n == Reg::PC) {
+        return UndefinedInstruction();
+    }
+    if (t == Reg::PC || (W && n == t)) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 imm32 = imm8.ZeroExtend();
+    const auto offset = ir.Imm32(imm32);
+    const auto address = Helper::GetAddress(ir, P, U, W, n, offset);
+
+    ir.WriteMemory16(address, ir.LeastSignificantHalf(ir.GetRegister(t)));
+    return true;
+}
+
+// STRH<c>.W <Rt,[<Rn>,#<imm12>]
+bool ThumbTranslatorVisitor::thumb32_STRH_imm_3(Reg n, Reg t, Imm<12> imm12) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (n == Reg::PC) {
+        return UndefinedInstruction();
+    }
+    if (t == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 imm32 = imm12.ZeroExtend();
+    const auto offset = ir.Imm32(imm32);
+    const auto address = Helper::GetAddress(ir, true, true, false, n, offset);
+
+    ir.WriteMemory16(address, ir.LeastSignificantHalf(ir.GetRegister(t)));
+    return true;
+}
+
+// STR<c>.W <Rt>,[<Rn>,<Rm>{,LSL #<shift>}]
+bool ThumbTranslatorVisitor::thumb32_STRH(Reg n, Reg t, Imm<2> shift, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (n == Reg::PC) {
+        return UndefinedInstruction();
+    }
+    if (t == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const u8 shift_value = static_cast<u8>(shift.ZeroExtend());
+    const auto offset = ir.LogicalShiftLeft(ir.GetRegister(m), ir.Imm8(shift_value));
+    const auto address = Helper::GetAddress(ir, true, true, false, n, offset);
+    ir.WriteMemory16(address, ir.LeastSignificantHalf(ir.GetRegister(t)));
+    return true;
+}
+
+// STR<c> <Rt>,[<Rn>,#-<imm8>]
+// STR<c> <Rt>,[<Rn>],#+/-<imm8>
+// STR<c> <Rt>,[<Rn>,#+/-<imm8>]!
+bool ThumbTranslatorVisitor::thumb32_STR_imm_1(Reg n, Reg t, bool P, bool U, bool W, Imm<8> imm8) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if ((!P && !W) || n == Reg::PC) {
+        return UndefinedInstruction();
+    }
+    if (t == Reg::PC || (W && n == t)) {
+        return UnpredictableInstruction();
+    }
+
+    const auto address = Helper::GetAddress(ir, P, U, W, n, ir.Imm32(imm8.ZeroExtend()));
+    ir.WriteMemory32(address, ir.GetRegister(t));
+    return true;
+}
+
+// STR<c>.W <Rt>,[<Rn>,#<imm12>]
+bool ThumbTranslatorVisitor::thumb32_STR_imm_3(Reg n, Reg t, Imm<12> imm12) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (n == Reg::PC) {
+        return UndefinedInstruction();
+    }
+    if (t == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 imm32 = imm12.ZeroExtend();
+    const auto offset = ir.Imm32(imm32);
+    const auto address = Helper::GetAddress(ir, true, true, false, n, offset);
+
+    ir.WriteMemory32(address, ir.GetRegister(t));
+    return true;
+}
+
+// STR<c>.W <Rt>,[<Rn>,<Rm>{,LSL #<shift>}]
+bool ThumbTranslatorVisitor::thumb32_STR_reg(Reg n, Reg t, Imm<2> shift, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (n == Reg::PC) {
+        return UndefinedInstruction();
+    }
+    if (t == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const u8 shift_value = static_cast<u8>(shift.ZeroExtend());
+    const auto offset = ir.LogicalShiftLeft(ir.GetRegister(m), ir.Imm8(shift_value));
+    const auto address = Helper::GetAddress(ir, true, true, false, n, offset);
+    ir.WriteMemory32(address, ir.GetRegister(t));
+    return true;
+}
+
+// LDRB<c> <Rt>,[PC,#+/-<imm12>]
+bool ThumbTranslatorVisitor::thumb32_LDRB_lit(bool U, Reg t, Imm<12> imm12) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (t == Reg::SP) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 base = ir.AlignPC(4);
+    const u32 imm12_value = imm12.ZeroExtend();
+    const u32 address = U ? base + imm12_value : base - imm12_value;
+    const auto read_byte = ir.ZeroExtendByteToWord(ir.ReadMemory8(ir.Imm32(address)));
+    ir.SetRegister(t, read_byte);
+    return true;
+}
+
+// LDRB<c>.W <Rt>,[<Rn>,<Rm>{,LSL #<shift>}]
+bool ThumbTranslatorVisitor::thumb32_LDRB_reg(Reg n, Reg t, Imm<2> shift, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (m == Reg::PC || n == Reg::PC || t == Reg::SP) {
+        return UnpredictableInstruction();
+    }
+
+    const u8 shift_value = static_cast<u8>(shift.ZeroExtend());
+    const auto offset = ir.LogicalShiftLeft(ir.GetRegister(m), ir.Imm8(shift_value));
+    const auto address = Helper::GetAddress(ir, true, true, false, n, offset);
+    const auto data = ir.ZeroExtendByteToWord(ir.ReadMemory8(address));
+    ir.SetRegister(t, data);
+    return true;
+}
+
+// LDRB<c> <Rt>,[<Rn>,#-<imm8>]
+// LDRB<c> <Rt>, [<Rn>], # + / -<imm8>
+// LDRB<c> <Rt>, [<Rn>, # + / -<imm8>]!
+bool ThumbTranslatorVisitor::thumb32_LDRB_imm8(Reg n, Reg t, bool P, bool U, bool W, Imm<8> imm8) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if ((!P && !W) || n == Reg::PC) {
+        return UndefinedInstruction();
+    }
+    if (t == Reg::PC || (W && n == t)) {
+        return UnpredictableInstruction();
+    }
+
+    const auto address = Helper::GetAddress(ir, P, U, W, n, ir.Imm32(imm8.ZeroExtend()));
+    const auto data = ir.ZeroExtendByteToWord(ir.ReadMemory8(address));
+    ir.SetRegister(t, data);
+    return true;
+}
+
+// LDRB<c>.W <Rt,[<Rn>,#<imm12>]
+bool ThumbTranslatorVisitor::thumb32_LDRB_imm12(Reg n, Reg t, Imm<12> imm12) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (n == Reg::PC) {
+        return UndefinedInstruction();
+    }
+    if (t == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 imm32 = imm12.ZeroExtend();
+    const auto offset = ir.Imm32(imm32);
+    const auto address = Helper::GetAddress(ir, true, true, false, n, offset);
+    const auto data = ir.ZeroExtendByteToWord(ir.ReadMemory8(address));
+    ir.SetRegister(t, data);
+    return true;
+}
+
+// LDRSB<c> <Rt>,[PC,#+/-<imm12>]
+bool ThumbTranslatorVisitor::thumb32_LDRSB_lit(bool U, Reg t, Imm<12> imm12) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (t == Reg::SP) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 base = ir.AlignPC(4);
+    const u32 imm12_value = imm12.ZeroExtend();
+    const u32 address = U ? base + imm12_value : base - imm12_value;
+    const auto read_byte = ir.SignExtendByteToWord(ir.ReadMemory8(ir.Imm32(address)));
+    ir.SetRegister(t, read_byte);
+    return true;
+}
+
+// LDRSB<c>.W <Rt>,[<Rn>,<Rm>{,LSL #<shift>}]
+bool ThumbTranslatorVisitor::thumb32_LDRSB_reg(Reg n, Reg t, Imm<2> shift, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (m == Reg::PC || n == Reg::PC || t == Reg::SP) {
+        return UnpredictableInstruction();
+    }
+
+    const u8 shift_value = static_cast<u8>(shift.ZeroExtend());
+    const auto offset = ir.LogicalShiftLeft(ir.GetRegister(m), ir.Imm8(shift_value));
+    const auto address = Helper::GetAddress(ir, true, true, false, n, offset);
+    const auto data = ir.SignExtendByteToWord(ir.ReadMemory8(address));
+    ir.SetRegister(t, data);
+    return true;
+}
+
+// LDRSB<c> <Rt>,[<Rn>,#-<imm8>]
+// LDRSB<c> <Rt>, [<Rn>], # + / -<imm8>
+// LDRSB<c> <Rt>, [<Rn>, # + / -<imm8>]!
+bool ThumbTranslatorVisitor::thumb32_LDRSB_imm8(Reg n, Reg t, bool P, bool U, bool W, Imm<8> imm8) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if ((!P && !W) || n == Reg::PC) {
+        return UndefinedInstruction();
+    }
+    if (t == Reg::PC || (W && n == t)) {
+        return UnpredictableInstruction();
+    }
+
+    const auto address = Helper::GetAddress(ir, P, U, W, n, ir.Imm32(imm8.ZeroExtend()));
+    const auto data = ir.SignExtendByteToWord(ir.ReadMemory8(address));
+    ir.SetRegister(t, data);
+    return true;
+}
+
+// LDRSB<c> <Rt,[<Rn>,#<imm12>]
+bool ThumbTranslatorVisitor::thumb32_LDRSB_imm12(Reg n, Reg t, Imm<12> imm12) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (n == Reg::PC) {
+        return UndefinedInstruction();
+    }
+    if (t == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 imm32 = imm12.ZeroExtend();
+    const auto offset = ir.Imm32(imm32);
+    const auto address = Helper::GetAddress(ir, true, true, false, n, offset);
+    const auto data = ir.SignExtendByteToWord(ir.ReadMemory8(address));
+    ir.SetRegister(t, data);
+    return true;
+}
+
+// LDRH<c> <Rt>,[PC,#+/-<imm12>]
+bool ThumbTranslatorVisitor::thumb32_LDRH_lit(bool U, Reg t, Imm<12> imm12) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (t == Reg::SP) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 base = ir.AlignPC(4);
+    const u32 imm12_value = imm12.ZeroExtend();
+    const u32 address = U ? base + imm12_value : base - imm12_value;
+    const auto read_byte = ir.ZeroExtendHalfToWord(ir.ReadMemory16(ir.Imm32(address)));
+    ir.SetRegister(t, read_byte);
+    return true;
+}
+
+// LDRH<c>.W <Rt>,[<Rn>,<Rm>{,LSL #<shift>}]
+bool ThumbTranslatorVisitor::thumb32_LDRH_reg(Reg n, Reg t, Imm<2> shift, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (m == Reg::PC || n == Reg::PC || t == Reg::SP) {
+        return UnpredictableInstruction();
+    }
+
+    const u8 shift_value = static_cast<u8>(shift.ZeroExtend());
+    const auto offset = ir.LogicalShiftLeft(ir.GetRegister(m), ir.Imm8(shift_value));
+    const auto address = Helper::GetAddress(ir, true, true, false, n, offset);
+    const auto data = ir.ZeroExtendHalfToWord(ir.ReadMemory16(address));
+    ir.SetRegister(t, data);
+    return true;
+}
+
+// LDRH<c> <Rt>,[<Rn>,#-<imm8>]
+// LDRH<c> <Rt>, [<Rn>], # + / -<imm8>
+// LDRH<c> <Rt>, [<Rn>, # + / -<imm8>]!
+bool ThumbTranslatorVisitor::thumb32_LDRH_imm8(Reg n, Reg t, bool P, bool U, bool W, Imm<8> imm8) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if ((!P && !W) || n == Reg::PC) {
+        return UndefinedInstruction();
+    }
+    if (t == Reg::PC || (W && n == t)) {
+        return UnpredictableInstruction();
+    }
+
+    const auto address = Helper::GetAddress(ir, P, U, W, n, ir.Imm32(imm8.ZeroExtend()));
+    const auto data = ir.ZeroExtendHalfToWord(ir.ReadMemory16(address));
+    ir.SetRegister(t, data);
+    return true;
+}
+
+// LDRH<c>.W <Rt,[<Rn>,#<imm12>]
+bool ThumbTranslatorVisitor::thumb32_LDRH_imm12(Reg n, Reg t, Imm<12> imm12) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (n == Reg::PC) {
+        return UndefinedInstruction();
+    }
+    if (t == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 imm32 = imm12.ZeroExtend();
+    const auto offset = ir.Imm32(imm32);
+    const auto address = Helper::GetAddress(ir, true, true, false, n, offset);
+    const auto data = ir.ZeroExtendHalfToWord(ir.ReadMemory16(address));
+    ir.SetRegister(t, data);
+    return true;
+}
+
+// LDRSH<c> <Rt>,[PC,#+/-<imm12>]
+bool ThumbTranslatorVisitor::thumb32_LDRSH_lit(bool U, Reg t, Imm<12> imm12) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (t == Reg::SP) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 base = ir.AlignPC(4);
+    const u32 imm12_value = imm12.ZeroExtend();
+    const u32 address = U ? base + imm12_value : base - imm12_value;
+    const auto read_byte = ir.SignExtendHalfToWord(ir.ReadMemory16(ir.Imm32(address)));
+    ir.SetRegister(t, read_byte);
+    return true;
+}
+
+// LDRSH<c>.W <Rt>,[<Rn>,<Rm>{,LSL #<shift>}]
+bool ThumbTranslatorVisitor::thumb32_LDRSH_reg(Reg n, Reg t, Imm<2> shift, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (m == Reg::PC || n == Reg::PC || t == Reg::SP) {
+        return UnpredictableInstruction();
+    }
+
+    const u8 shift_value = static_cast<u8>(shift.ZeroExtend());
+    const auto offset = ir.LogicalShiftLeft(ir.GetRegister(m), ir.Imm8(shift_value));
+    const auto address = Helper::GetAddress(ir, true, true, false, n, offset);
+    const auto data = ir.SignExtendHalfToWord(ir.ReadMemory16(address));
+    ir.SetRegister(t, data);
+    return true;
+}
+
+// LDRSH<c> <Rt>,[<Rn>,#-<imm8>]
+// LDRSH<c> <Rt>, [<Rn>],#+/-<imm8>
+// LDRSH<c> <Rt>, [<Rn>,#+/-<imm8>]!
+bool ThumbTranslatorVisitor::thumb32_LDRSH_imm8(Reg n, Reg t, bool P, bool U, bool W, Imm<8> imm8) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if ((!P && !W) || n == Reg::PC) {
+        return UndefinedInstruction();
+    }
+    if (t == Reg::PC || (W && n == t)) {
+        return UnpredictableInstruction();
+    }
+
+    const auto address = Helper::GetAddress(ir, P, U, W, n, ir.Imm32(imm8.ZeroExtend()));
+    const auto data = ir.SignExtendHalfToWord(ir.ReadMemory16(address));
+    ir.SetRegister(t, data);
+    return true;
+}
+
+// LDRSH<c> <Rt,[<Rn>,#<imm12>]
+bool ThumbTranslatorVisitor::thumb32_LDRSH_imm12(Reg n, Reg t, Imm<12> imm12) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (n == Reg::PC) {
+        return UndefinedInstruction();
+    }
+    if (t == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 imm32 = imm12.ZeroExtend();
+    const auto offset = ir.Imm32(imm32);
+    const auto address = Helper::GetAddress(ir, true, true, false, n, offset);
+    const auto data = ir.SignExtendHalfToWord(ir.ReadMemory16(address));
+    ir.SetRegister(t, data);
+    return true;
+}
+
+// LDR<c>.W <Rt>,[PC,#+/-<imm12>]
+bool ThumbTranslatorVisitor::thumb32_LDR_lit(bool U, Reg t, Imm<12> imm12) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (t == Reg::SP) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 base = ir.AlignPC(4);
+    const u32 imm12_value = imm12.ZeroExtend();
+    const u32 address = U ? base + imm12_value : base - imm12_value;
+    const auto read_byte = ir.ReadMemory32(ir.Imm32(address));
+    ir.SetRegister(t, read_byte);
+    return true;
+}
+
+// LDR<c>.W <Rt>,[<Rn>,<Rm>{,LSL #<shift>}]
+bool ThumbTranslatorVisitor::thumb32_LDR_reg(Reg n, Reg t, Imm<2> shift, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (m == Reg::PC || n == Reg::PC || t == Reg::SP) {
+        return UnpredictableInstruction();
+    }
+
+    const u8 shift_value = static_cast<u8>(shift.ZeroExtend());
+    const auto offset = ir.LogicalShiftLeft(ir.GetRegister(m), ir.Imm8(shift_value));
+    const auto address = Helper::GetAddress(ir, true, true, false, n, offset);
+    const auto data = ir.ReadMemory32(address);
+    ir.SetRegister(t, data);
+    return true;
+}
+
+// LDR<c> <Rt>,[<Rn>,#-<imm8>]
+// LDR<c> <Rt>,[<Rn>],#+/-<imm8>
+// LDR<c> <Rt>,[<Rn>,#+/-<imm8>]!
+bool ThumbTranslatorVisitor::thumb32_LDR_imm8(Reg n, Reg t, bool P, bool U, bool W, Imm<8> imm8) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if ((!P && !W) || n == Reg::PC) {
+        return UndefinedInstruction();
+    }
+    if (t == Reg::PC || (W && n == t)) {
+        return UnpredictableInstruction();
+    }
+
+    const auto address = Helper::GetAddress(ir, P, U, W, n, ir.Imm32(imm8.ZeroExtend()));
+    const auto data = ir.ReadMemory32(address);
+    ir.SetRegister(t, data);
+    return true;
+}
+
+// LDR<c>.W <Rt>,[<Rn>,<Rm>{,LSL #<shift>}]
+bool ThumbTranslatorVisitor::thumb32_LDR_imm12(Reg n, Reg t, Imm<12> imm12) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (n == Reg::PC) {
+        return UndefinedInstruction();
+    }
+    if (t == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 imm32 = imm12.ZeroExtend();
+    const auto offset = ir.Imm32(imm32);
+    const auto address = Helper::GetAddress(ir, true, true, false, n, offset);
+    const auto data = ir.ReadMemory32(address);
+    ir.SetRegister(t, data);
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }
