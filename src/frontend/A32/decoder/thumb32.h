@@ -329,9 +329,8 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_MRC,            "MRC",                      "11101110---1---------------1----"),
 
         // Branch instructions
-        INST(&V::thumb32_BL_imm,         "BL (imm)",                 "11110vvvvvvvvvvv11111vvvvvvvvvvv"), // v4T
-        INST(&V::thumb32_BLX_imm,        "BLX (imm)",                "11110vvvvvvvvvvv11101vvvvvvvvvvv"), // v5T
-
+        INST(&V::thumb32_BL_imm,         "BL (imm)",                 "11110svvvvvvvvvv11i1jvvvvvvvvvvv"), // v4T
+        INST(&V::thumb32_BLX_imm,        "BLX (imm)",                "11110svvvvvvvvvv11i0jvvvvvvvvvvv"), // v5T
         // Misc instructions
         INST(&V::thumb32_UDF,            "UDF",                      "111101111111----1010------------"), // v6T2
 

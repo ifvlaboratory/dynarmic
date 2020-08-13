@@ -8,23 +8,27 @@
 namespace Dynarmic::A32 {
 
 // BL <label>
-bool ThumbTranslatorVisitor::thumb32_BL_imm(Imm<11> hi, Imm<11> lo) {
+bool ThumbTranslatorVisitor::thumb32_BL_imm(bool S, Imm<10> hi, bool j1, bool j2, Imm<11> lo) {
     const auto it = ir.current_location.IT();
     if (it.IsInITBlock() && !it.IsLastInITBlock()) {
         return UnpredictableInstruction();
     }
+
+    bool i1_value = !(j1 ^ S);
+    bool i2_value = !(j2 ^ S);
+    Imm<1> i1 = Imm<1>(i1_value);
+    Imm<1> i2 = Imm<1>(i2_value);
+    s32 imm32 = concatenate(Imm<1>(S), i1, i2, hi, lo, Imm<1>(0)).SignExtend();
+
     ir.PushRSB(ir.current_location.AdvancePC(4));
-    ir.SetRegister(Reg::LR, ir.Imm32((ir.current_location.PC() + 4) | 1));
-
-    const s32 imm32 = static_cast<s32>((concatenate(hi, lo).SignExtend<u32>() << 1) + 4);
-    const auto new_location = ir.current_location.AdvancePC(imm32);
-
+    ir.SetRegister(Reg::LR, ir.Imm32(ir.PC() | 1));
+    const auto new_location = ir.current_location.SetPC(ir.PC() + imm32);
     ir.SetTerm(IR::Term::LinkBlock{new_location});
     return false;
 }
 
 // BLX <label>
-bool ThumbTranslatorVisitor::thumb32_BLX_imm(Imm<11> hi, Imm<11> lo) {
+bool ThumbTranslatorVisitor::thumb32_BLX_imm(bool S, Imm<10> hi, bool j1, bool j2, Imm<11> lo) {
     const auto it = ir.current_location.IT();
     if (it.IsInITBlock() && !it.IsLastInITBlock()) {
         return UnpredictableInstruction();
@@ -33,10 +37,14 @@ bool ThumbTranslatorVisitor::thumb32_BLX_imm(Imm<11> hi, Imm<11> lo) {
         return UnpredictableInstruction();
     }
 
-    ir.PushRSB(ir.current_location.AdvancePC(4));
-    ir.SetRegister(Reg::LR, ir.Imm32((ir.current_location.PC() + 4) | 1));
+    bool i1_value = !(j1 ^ S);
+    bool i2_value = !(j2 ^ S);
+    Imm<1> i1 = Imm<1>(i1_value);
+    Imm<1> i2 = Imm<1>(i2_value);
+    s32 imm32 = concatenate(Imm<1>(S), i1, i2, hi, lo, Imm<1>(0)).SignExtend();
 
-    const s32 imm32 = static_cast<s32>(concatenate(hi, lo).SignExtend<u32>() << 1);
+    ir.PushRSB(ir.current_location.AdvancePC(4));
+    ir.SetRegister(Reg::LR, ir.Imm32(ir.PC() | 1));
     const auto new_location = ir.current_location
                                 .SetPC(ir.AlignPC(4) + imm32)
                                 .SetTFlag(false);
