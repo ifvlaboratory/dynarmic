@@ -52,6 +52,39 @@ bool ThumbTranslatorVisitor::thumb32_BLX_imm(bool S, Imm<10> hi, bool j1, bool j
     return false;
 }
 
+// B<c>.W <label>
+bool ThumbTranslatorVisitor::thumb32_B_cond(Imm<1> S, Cond cond, Imm<6> imm6, Imm<1> j1, Imm<1> j2, Imm<11> imm11) {
+    const auto it = ir.current_location.IT();
+    if (it.IsInITBlock()) {
+        return UnpredictableInstruction();
+    }
+
+    s32 imm32 = concatenate(S, j2, j1, imm6, imm11, Imm<1>(0)).SignExtend();
+    const auto then_location = ir.current_location.SetPC(ir.PC() + imm32);
+    const auto else_location = ir.current_location.AdvancePC(4);
+
+    ir.SetTerm(IR::Term::If{ cond, IR::Term::LinkBlock{ then_location }, IR::Term::LinkBlock{ else_location } });
+    return false;
+}
+
+// B<c>.W <label>
+bool ThumbTranslatorVisitor::thumb32_B(bool S, Imm<10> imm10, bool j1, bool j2, Imm<11> imm11) {
+    const auto it = ir.current_location.IT();
+    if (it.IsInITBlock() && !it.IsLastInITBlock()) {
+        return UnpredictableInstruction();
+    }
+
+    bool i1_value = !(j1 ^ S);
+    bool i2_value = !(j2 ^ S);
+    Imm<1> i1 = Imm<1>(i1_value);
+    Imm<1> i2 = Imm<1>(i2_value);
+    s32 imm32 = concatenate(Imm<1>(S), i1, i2, imm10, imm11, Imm<1>(0)).SignExtend();
+
+    const auto new_location = ir.current_location.SetPC(ir.PC() + imm32);
+    ir.SetTerm(IR::Term::LinkBlock{ new_location });
+    return false;
+}
+
 // MOV<c> <Rd>, #<const>
 bool ThumbTranslatorVisitor::thumb32_MOV_imm(Imm<1> i, bool S, Imm<3> imm3, Reg d, Imm<8> imm8) {
     if (!ConditionPassed()) {

@@ -287,6 +287,8 @@ struct ThumbTranslatorVisitor final {
     bool thumb32_RSB_imm(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
     bool thumb32_BL_imm(bool S, Imm<10> hi, bool j1, bool j2, Imm<11> lo);
     bool thumb32_BLX_imm(bool S, Imm<10> hi, bool j1, bool j2, Imm<11> lo);
+    bool thumb32_B_cond(Imm<1> S, Cond cond, Imm<6> imm6, Imm<1> j1, Imm<1> j2, Imm<11> imm11);
+    bool thumb32_B(bool S, Imm<10> imm10, bool j1, bool j2, Imm<11> imm11);
     bool thumb32_UDF();
 };
 

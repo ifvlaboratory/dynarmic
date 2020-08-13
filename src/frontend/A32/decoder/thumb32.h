@@ -145,11 +145,6 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_SMC,            "SMC",                      "111101111111----1000000000000000"),
         //INST(&V::thumb32_UDF,            "UDF",                      "111101111111----1010------------"),
 
-        //INST(&V::thumb32_BL,             "BL",                       "11110-----------11-1------------"),
-        //INST(&V::thumb32_BLX,            "BLX",                      "11110-----------11-0------------"),
-        //INST(&V::thumb32_B,              "B",                        "11110-----------10-1------------"),
-        //INST(&V::thumb32_B_cond,         "B (cond)",                 "11110-----------10-0------------"),
-
         // Store Single Data Item
         //INST(&V::thumb32_STRBT,          "STRBT",                    "111110000000--------1110--------"),
         INST(&V::thumb32_STRB_imm_1,     "STRB (imm)",               "111110000000nnnntttt1puwmmmmmmmm"),
@@ -331,6 +326,8 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         // Branch instructions
         INST(&V::thumb32_BL_imm,         "BL (imm)",                 "11110svvvvvvvvvv11i1jvvvvvvvvvvv"), // v4T
         INST(&V::thumb32_BLX_imm,        "BLX (imm)",                "11110svvvvvvvvvv11i0jvvvvvvvvvvv"), // v5T
+        INST(&V::thumb32_B_cond,         "B (cond)",                 "11110sccccmmmmmm10i0jvvvvvvvvvvv"),
+        INST(&V::thumb32_B,              "B",                        "11110svvvvvvvvvv10i1jvvvvvvvvvvv"),
         // Misc instructions
         INST(&V::thumb32_UDF,            "UDF",                      "111101111111----1010------------"), // v6T2
 
