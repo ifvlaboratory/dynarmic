@@ -68,8 +68,13 @@ void IREmitter::SetVector(ExtReg reg, const IR::U128& value) {
 
 void IREmitter::ALUWritePC(const IR::U32& value) {
     // This behaviour is ARM version-dependent.
+#ifdef DYNARMIC_USE_ARMV7
+    // The below implementation is for ARMv7
+    BXWritePC(value);
+#else
     // The below implementation is for ARMv6k
     BranchWritePC(value);
+#endif
 }
 
 void IREmitter::BranchWritePC(const IR::U32& value) {
@@ -88,7 +93,7 @@ void IREmitter::BXWritePC(const IR::U32& value) {
 
 void IREmitter::LoadWritePC(const IR::U32& value) {
     // This behaviour is ARM version-dependent.
-    // The below implementation is for ARMv6k
+    // The below implementation is for ARMv6k and ARMv7
     BXWritePC(value);
 }
 
