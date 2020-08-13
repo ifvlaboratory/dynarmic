@@ -1588,7 +1588,7 @@ bool ThumbTranslatorVisitor::thumb32_LDR_reg(Reg n, Reg t, Imm<2> shift, Reg m) 
     if (!ConditionPassed()) {
         return true;
     }
-    if (m == Reg::PC || n == Reg::PC || t == Reg::SP) {
+    if (m == Reg::PC || n == Reg::PC) {
         return UnpredictableInstruction();
     }
 
@@ -1596,6 +1596,16 @@ bool ThumbTranslatorVisitor::thumb32_LDR_reg(Reg n, Reg t, Imm<2> shift, Reg m) 
     const auto offset = ir.LogicalShiftLeft(ir.GetRegister(m), ir.Imm8(shift_value));
     const auto address = Helper::GetAddress(ir, true, true, false, n, offset);
     const auto data = ir.ReadMemory32(address);
+    if (t == Reg::PC) {
+        const auto it = ir.current_location.IT();
+        if (it.IsInITBlock() && !it.IsLastInITBlock()) {
+            return UnpredictableInstruction();
+        }
+        ir.ALUWritePC(data);
+        // Return to dispatch as we can't predict what PC is going to be. Stop compilation.
+        ir.SetTerm(IR::Term::FastDispatchHint{});
+        return false;
+    }
     ir.SetRegister(t, data);
     return true;
 }
@@ -1610,12 +1620,22 @@ bool ThumbTranslatorVisitor::thumb32_LDR_imm8(Reg n, Reg t, bool P, bool U, bool
     if ((!P && !W) || n == Reg::PC) {
         return UndefinedInstruction();
     }
-    if (t == Reg::PC || (W && n == t)) {
+    if ((W && n == t)) {
         return UnpredictableInstruction();
     }
 
     const auto address = Helper::GetAddress(ir, P, U, W, n, ir.Imm32(imm8.ZeroExtend()));
     const auto data = ir.ReadMemory32(address);
+    if (t == Reg::PC) {
+        const auto it = ir.current_location.IT();
+        if (it.IsInITBlock() && !it.IsLastInITBlock()) {
+            return UnpredictableInstruction();
+        }
+        ir.ALUWritePC(data);
+        // Return to dispatch as we can't predict what PC is going to be. Stop compilation.
+        ir.SetTerm(IR::Term::FastDispatchHint{});
+        return false;
+    }
     ir.SetRegister(t, data);
     return true;
 }
@@ -1628,14 +1648,21 @@ bool ThumbTranslatorVisitor::thumb32_LDR_imm12(Reg n, Reg t, Imm<12> imm12) {
     if (n == Reg::PC) {
         return UndefinedInstruction();
     }
-    if (t == Reg::PC) {
-        return UnpredictableInstruction();
-    }
 
     const u32 imm32 = imm12.ZeroExtend();
     const auto offset = ir.Imm32(imm32);
     const auto address = Helper::GetAddress(ir, true, true, false, n, offset);
     const auto data = ir.ReadMemory32(address);
+    if (t == Reg::PC) {
+        const auto it = ir.current_location.IT();
+        if (it.IsInITBlock() && !it.IsLastInITBlock()) {
+            return UnpredictableInstruction();
+        }
+        ir.ALUWritePC(data);
+        // Return to dispatch as we can't predict what PC is going to be. Stop compilation.
+        ir.SetTerm(IR::Term::FastDispatchHint{});
+        return false;
+    }
     ir.SetRegister(t, data);
     return true;
 }
