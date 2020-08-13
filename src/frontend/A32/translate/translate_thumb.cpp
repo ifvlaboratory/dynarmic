@@ -87,7 +87,8 @@ IR::Block TranslateThumb(LocationDescriptor descriptor, MemoryReadCodeFuncType m
             if (const auto decoder = DecodeThumb32<ThumbTranslatorVisitor>(thumb_instruction)) {
                 should_continue = decoder->get().call(visitor, thumb_instruction);
             } else {
-                should_continue = visitor.thumb32_UDF();
+                visitor.InterpretThisInstruction();
+                should_continue = true;
             }
         }
         
