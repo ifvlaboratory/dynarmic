@@ -1114,7 +1114,6 @@ template <size_t bitsize, auto callback>
 void A32EmitX64::ExclusiveReadMemory(A32EmitContext& ctx, IR::Inst* inst) {
     using T = mp::unsigned_integer_of_size<bitsize>;
 
-    ASSERT(conf.global_monitor != nullptr);
     auto args = ctx.reg_alloc.GetArgumentInfo(inst);
 
     ctx.reg_alloc.HostCall(inst, {}, args[0]);
@@ -1123,9 +1122,7 @@ void A32EmitX64::ExclusiveReadMemory(A32EmitContext& ctx, IR::Inst* inst) {
     code.mov(code.ABI_PARAM1, reinterpret_cast<u64>(&conf));
     code.CallLambda(
         [](A32::UserConfig& conf, u32 vaddr) -> T {
-            return conf.global_monitor->ReadAndMark<T>(conf.processor_id, vaddr, [&]() -> T {
-                return (conf.callbacks->*callback)(vaddr);
-            });
+            return (conf.callbacks->*callback)(vaddr);
         }
     );
 }
@@ -1134,7 +1131,6 @@ template <size_t bitsize, auto callback>
 void A32EmitX64::ExclusiveWriteMemory(A32EmitContext& ctx, IR::Inst* inst) {
     using T = mp::unsigned_integer_of_size<bitsize>;
 
-    ASSERT(conf.global_monitor != nullptr);
     auto args = ctx.reg_alloc.GetArgumentInfo(inst);
 
     ctx.reg_alloc.HostCall(inst, {}, args[0], args[1]);
@@ -1148,10 +1144,7 @@ void A32EmitX64::ExclusiveWriteMemory(A32EmitContext& ctx, IR::Inst* inst) {
     code.mov(code.ABI_PARAM1, reinterpret_cast<u64>(&conf));
     code.CallLambda(
         [](A32::UserConfig& conf, u32 vaddr, T value) -> u32 {
-            return conf.global_monitor->DoExclusiveOperation<T>(conf.processor_id, vaddr,
-                [&](T expected) -> bool {
-                    return (conf.callbacks->*callback)(vaddr, value, expected);
-                }) ? 0 : 1;
+            return (conf.callbacks->*callback)(vaddr, value, 0) ? 0 : 1;
         }
     );
     code.L(end);

@@ -1059,7 +1059,6 @@ void A64EmitX64::EmitA64WriteMemory128(A64EmitContext& ctx, IR::Inst* inst) {
 
 template<std::size_t bitsize, auto callback>
 void A64EmitX64::EmitExclusiveReadMemory(A64EmitContext& ctx, IR::Inst* inst) {
-    ASSERT(conf.global_monitor != nullptr);
     auto args = ctx.reg_alloc.GetArgumentInfo(inst);
 
     if constexpr (bitsize != 128) {
@@ -1071,9 +1070,7 @@ void A64EmitX64::EmitExclusiveReadMemory(A64EmitContext& ctx, IR::Inst* inst) {
         code.mov(code.ABI_PARAM1, reinterpret_cast<u64>(&conf));
         code.CallLambda(
             [](A64::UserConfig& conf, u64 vaddr) -> T {
-                return conf.global_monitor->ReadAndMark<T>(conf.processor_id, vaddr, [&]() -> T {
-                    return (conf.callbacks->*callback)(vaddr);
-                });
+                return (conf.callbacks->*callback)(vaddr);
             }
         );
     } else {
@@ -1088,9 +1085,7 @@ void A64EmitX64::EmitExclusiveReadMemory(A64EmitContext& ctx, IR::Inst* inst) {
         code.lea(code.ABI_PARAM3, ptr[rsp + ABI_SHADOW_SPACE]);
         code.CallLambda(
             [](A64::UserConfig& conf, u64 vaddr, A64::Vector& ret) {
-                ret = conf.global_monitor->ReadAndMark<A64::Vector>(conf.processor_id, vaddr, [&]() -> A64::Vector {
-                    return (conf.callbacks->*callback)(vaddr);
-                });
+                ret = (conf.callbacks->*callback)(vaddr);
             }
         );
         code.movups(result, xword[rsp + ABI_SHADOW_SPACE]);
@@ -1122,7 +1117,6 @@ void A64EmitX64::EmitA64ExclusiveReadMemory128(A64EmitContext& ctx, IR::Inst* in
 
 template<std::size_t bitsize, auto callback>
 void A64EmitX64::EmitExclusiveWriteMemory(A64EmitContext& ctx, IR::Inst* inst) {
-    ASSERT(conf.global_monitor != nullptr);
     auto args = ctx.reg_alloc.GetArgumentInfo(inst);
 
     if constexpr (bitsize != 128) {
@@ -1146,10 +1140,7 @@ void A64EmitX64::EmitExclusiveWriteMemory(A64EmitContext& ctx, IR::Inst* inst) {
 
         code.CallLambda(
             [](A64::UserConfig& conf, u64 vaddr, T value) -> u32 {
-                return conf.global_monitor->DoExclusiveOperation<T>(conf.processor_id, vaddr,
-                    [&](T expected) -> bool {
-                        return (conf.callbacks->*callback)(vaddr, value, expected);
-                    }) ? 0 : 1;
+                return (conf.callbacks->*callback)(vaddr, value, 0) ? 0 : 1;
             }
         );
     } else {
@@ -1158,10 +1149,7 @@ void A64EmitX64::EmitExclusiveWriteMemory(A64EmitContext& ctx, IR::Inst* inst) {
         code.movaps(xword[code.ABI_PARAM3], xmm1);
         code.CallLambda(
             [](A64::UserConfig& conf, u64 vaddr, A64::Vector& value) -> u32 {
-                return conf.global_monitor->DoExclusiveOperation<A64::Vector>(conf.processor_id, vaddr,
-                    [&](A64::Vector expected) -> bool {
-                        return (conf.callbacks->*callback)(vaddr, value, expected);
-                    }) ? 0 : 1;
+                return (conf.callbacks->*callback)(vaddr, value, {0,0}) ? 0 : 1;
             }
         );
         code.add(rsp, 16 + ABI_SHADOW_SPACE);
