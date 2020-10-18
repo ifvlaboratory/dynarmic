@@ -134,6 +134,8 @@ struct ThumbTranslatorVisitor final {
     bool thumb32_LDREXH(Reg n, Reg t);
     bool thumb32_PUSH(bool M, RegList reg_list);
     bool thumb32_B_cond(Imm<1> S, Cond cond, Imm<6> imm6, Imm<1> j1, Imm<2> j2, Imm<11> imm11);
+    bool thumb32_LDRH_reg(Reg n, Reg t, Imm<2> imm2, Reg m);
+    bool thumb32_LDRH_imm12(Reg n, Reg t, Imm<12> imm12);
     bool thumb32_UDF();
 };
 

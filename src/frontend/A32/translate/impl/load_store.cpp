@@ -951,7 +951,10 @@ bool ThumbTranslatorVisitor::thumb32_LDR_lit(bool U, Reg t, Imm<12> imm12) {
 
 // LDR <Rt>, [<Rn>], #+/-<Rm>
 bool ThumbTranslatorVisitor::thumb32_LDR_reg(Reg n, Reg t, Imm<2> imm2, Reg m) {
-    if (m == Reg::PC) {
+    if (n == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (m == Reg::R13 || m == Reg::PC) {
         return UnpredictableInstruction();
     }
 
@@ -1011,6 +1014,40 @@ bool ThumbTranslatorVisitor::thumb32_STRH_imm_3(Reg n, Reg t, Imm<12> imm12) {
     const auto address = GetAddress(ir, true, true, false, n, offset);
 
     ir.WriteMemory16(address, ir.LeastSignificantHalf(ir.GetRegister(t)));
+    return true;
+}
+
+// LDRH<c>.W <Rt>, [<Rn>, <Rm>{, LSL #<imm2>}]
+bool ThumbTranslatorVisitor::thumb32_LDRH_reg(Reg n, Reg t, Imm<2> imm2, Reg m) {
+    if (t == Reg::PC || n == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (t == Reg::R13 || m == Reg::PC || m == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+
+    const auto offset = EmitImmShift(ir.GetRegister(m), ShiftType::LSL, imm2, ir.Imm1(false)).result;
+    const auto address = GetAddress(ir, true, true, false, n, offset);
+    const auto data = ir.ZeroExtendHalfToWord(ir.ReadMemory16(address));
+
+    ir.SetRegister(t, data);
+    return true;
+}
+
+bool ThumbTranslatorVisitor::thumb32_LDRH_imm12(Reg n, Reg t, Imm<12> imm12) {
+    if (t == Reg::PC || t == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+    if (n == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 imm32 = imm12.ZeroExtend();
+    const auto offset = ir.Imm32(imm32);
+    const auto address = GetAddress(ir, true, true, false, n, offset);
+    const auto data = ir.ZeroExtendHalfToWord(ir.ReadMemory16(address));
+
+    ir.SetRegister(t, data);
     return true;
 }
 

@@ -192,10 +192,10 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
 
         // Load Halfword and Memory Hints
         //INST(&V::thumb32_LDRH_lit,       "LDRH (lit)",               "11111000-0111111----------------"),
-        //INST(&V::thumb32_LDRH_reg,       "LDRH (reg)",               "111110000011--------000000------"),
+        //INST(&V::thumb32_LDRH_reg,       "LDRH (reg)",               "111110000011nnnntttt000000vvmmmm"),
         //INST(&V::thumb32_LDRHT,          "LDRHT",                    "111110000011--------1110--------"),
         //INST(&V::thumb32_LDRH_imm8,      "LDRH (imm8)",              "111110000011--------1-----------"),
-        //INST(&V::thumb32_LDRH_imm12,     "LDRH (imm12)",             "111110001011--------------------"),
+        INST(&V::thumb32_LDRH_imm12,     "LDRH (imm12)",             "111110001011nnnnttttvvvvvvvvvvvv"),
         //INST(&V::thumb32_LDRSH_lit,      "LDRSH (lit)",              "11111001-0111111----------------"),
         //INST(&V::thumb32_LDRSH_reg,      "LDRSH (reg)",              "111110010011--------000000------"),
         //INST(&V::thumb32_LDRSHT,         "LDRSHT",                   "111110010011--------1110--------"),
