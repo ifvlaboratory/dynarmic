@@ -182,7 +182,8 @@ bool ThumbTranslatorVisitor::thumb32_MOVW_imm(Imm<1> imm1, Imm<4> imm4, Imm<3> i
         return UnpredictableInstruction();
     }
 
-    const IR::U32 imm = ir.Imm32(concatenate(imm4, imm1, imm3, imm8).ZeroExtend());
+    Imm<16> imm16 = concatenate(imm4, imm1, imm3, imm8);
+    const IR::U32 imm = ir.Imm32(imm16.ZeroExtend());
 
     ir.SetRegister(d, imm);
     return true;

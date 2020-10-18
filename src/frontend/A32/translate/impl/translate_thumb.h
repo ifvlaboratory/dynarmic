@@ -126,6 +126,7 @@ struct ThumbTranslatorVisitor final {
     bool thumb32_LDR_reg(Reg n, Reg t, Imm<2> imm2, Reg m);
     bool thumb32_LDR_imm12(Reg n, Reg d, Imm<12> imm12);
     bool thumb32_AND_imm(Imm<1> imm1, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_MOV_imm(Imm<1> imm1, bool S, Imm<3> imm3, Reg d, Imm<8> imm8);
     bool thumb32_ORR_imm(Imm<1> imm1, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
     bool thumb32_CMP_imm(Imm<1> imm1, Reg n, Imm<3> imm3, Imm<8> imm8);
     bool thumb32_UXTH(Reg d, SignExtendRotation rotate, Reg m);
