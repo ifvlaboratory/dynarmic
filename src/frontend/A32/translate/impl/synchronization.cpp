@@ -436,7 +436,7 @@ bool ArmTranslatorVisitor::arm_STREXH(Cond cond, Reg n, Reg d, Reg t) {
 }
 
 // STREXH<c> <Rd>, <Rt>, [<Rn>]
-bool ThumbTranslatorVisitor::thumb32_STREXH(Reg n, Reg d, Reg t) {
+bool ThumbTranslatorVisitor::thumb32_STREXH(Reg n, Reg t, Reg d) {
     if (d == Reg::R13 || d == Reg::PC) {
         return UnpredictableInstruction();
     }
