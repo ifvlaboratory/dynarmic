@@ -5,6 +5,7 @@
 
 #include "common/bit_util.h"
 #include "frontend/A32/translate/impl/translate_arm.h"
+#include "frontend/A32/translate/impl/translate_thumb.h"
 
 namespace Dynarmic::A32 {
 
@@ -172,6 +173,18 @@ bool ArmTranslatorVisitor::arm_UBFX(Cond cond, Imm<5> widthm1, Reg d, Imm<5> lsb
     const IR::U32 result = ir.And(ir.LogicalShiftRight(operand, ir.Imm8(u8(lsb_value))), mask);
 
     ir.SetRegister(d, result);
+    return true;
+}
+
+// MOVW<c> <Rd>, #<imm16>
+bool ThumbTranslatorVisitor::thumb32_MOVW_imm(Imm<1> imm1, Imm<4> imm4, Imm<3> imm3, Reg d, Imm<8> imm8) {
+    if (d == Reg::PC || d == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+
+    const IR::U32 imm = ir.Imm32(concatenate(imm4, imm1, imm3, imm8).ZeroExtend());
+
+    ir.SetRegister(d, imm);
     return true;
 }
 

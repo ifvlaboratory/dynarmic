@@ -99,7 +99,7 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         // Data Processing (Plain Binary Immediate)
         //INST(&V::thumb32_ADR,            "ADR",                      "11110-10000011110---------------"),
         //INST(&V::thumb32_ADD_imm_2,      "ADD (imm)",                "11110-100000----0---------------"),
-        //INST(&V::thumb32_MOVW_imm,       "MOVW (imm)",               "11110-100100----0---------------"),
+        INST(&V::thumb32_MOVW_imm,       "MOVW (imm)",               "11110v100100vvvv0vvvddddvvvvvvvv"),
         //INST(&V::thumb32_ADR,            "ADR",                      "11110-10101011110---------------"),
         //INST(&V::thumb32_SUB_imm_2,      "SUB (imm)",                "11110-101010----0---------------"),
         //INST(&V::thumb32_MOVT,           "MOVT",                     "11110-101100----0---------------"),
