@@ -4,6 +4,7 @@
  */
 
 #include "frontend/A32/translate/impl/translate_arm.h"
+#include "frontend/A32/translate/impl/translate_thumb.h"
 
 namespace Dynarmic::A32 {
 
@@ -929,6 +930,88 @@ bool ArmTranslatorVisitor::arm_STMIB(Cond cond, bool W, Reg n, RegList list) {
 
 bool ArmTranslatorVisitor::arm_STM_usr() {
     return InterpretThisInstruction();
+}
+
+// LDR <Rt>, [PC, #+/-<imm>]
+bool ThumbTranslatorVisitor::thumb32_LDR_lit(bool U, Reg t, Imm<12> imm12) {
+    const bool add = U;
+    const u32 base = ir.AlignPC(4);
+    const u32 address = add ? (base + imm12.ZeroExtend()) : (base - imm12.ZeroExtend());
+    const auto data = ir.ReadMemory32(ir.Imm32(address));
+
+    if (t == Reg::PC) {
+        ir.LoadWritePC(data);
+        ir.SetTerm(IR::Term::FastDispatchHint{});
+        return false;
+    }
+
+    ir.SetRegister(t, data);
+    return true;
+}
+
+// LDR <Rt>, [<Rn>], #+/-<Rm>
+bool ThumbTranslatorVisitor::thumb32_LDR_reg(Reg n, Reg t, Imm<2> imm2, Reg m) {
+    if (m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const auto offset = EmitImmShift(ir.GetRegister(m), ShiftType::LSL, imm2, ir.Imm1(false)).result;
+    const auto address = GetAddress(ir, true, true, false, n, offset);
+    const auto data = ir.ReadMemory32(address);
+
+    if (t == Reg::PC) {
+        ir.LoadWritePC(data);
+        ir.SetTerm(IR::Term::FastDispatchHint{});
+        return false;
+    }
+
+    ir.SetRegister(t, data);
+//    return UnpredictableInstruction();
+    return true;
+}
+
+// LDR<c>.W <Rt>, [<Rn>{, #<imm12>}]
+bool ThumbTranslatorVisitor::thumb32_LDR_imm12(Reg n, Reg t, Imm<12> imm12) {
+    if (n == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 imm32 = imm12.ZeroExtend();
+    const auto offset = ir.Imm32(imm32);
+    const auto address = GetAddress(ir, true, true, false, n, offset);
+    const auto data = ir.ReadMemory32(address);
+
+    if (t == Reg::PC) {
+        ir.LoadWritePC(data);
+
+        if (n == Reg::R13) {
+            ir.SetTerm(IR::Term::PopRSBHint{});
+        } else {
+            ir.SetTerm(IR::Term::FastDispatchHint{});
+        }
+
+        return false;
+    }
+
+    ir.SetRegister(t, data);
+    return true;
+}
+
+// STRH<c>.W <Rt>, [<Rn>{, #<imm12>}]
+bool ThumbTranslatorVisitor::thumb32_STRH_imm_3(Reg n, Reg t, Imm<12> imm12) {
+    if (n == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (t == Reg::PC || t == Reg::R13 || t == Reg::R14) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 imm32 = imm12.ZeroExtend();
+    const auto offset = ir.Imm32(imm32);
+    const auto address = GetAddress(ir, true, true, false, n, offset);
+
+    ir.WriteMemory16(address, ir.LeastSignificantHalf(ir.GetRegister(t)));
+    return true;
 }
 
 } // namespace Dynarmic::A32

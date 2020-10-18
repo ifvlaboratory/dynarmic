@@ -4,6 +4,7 @@
  */
 
 #include "frontend/A32/translate/impl/translate_arm.h"
+#include "frontend/A32/translate/impl/translate_thumb.h"
 
 namespace Dynarmic::A32 {
 
@@ -159,6 +160,22 @@ bool ArmTranslatorVisitor::arm_STC(Cond cond, bool p, bool u, bool d, bool w, Re
         if (wback) {
             ir.SetRegister(n, offset_address);
         }
+    }
+    return true;
+}
+
+// MRC{2} <coproc_no>, #<opc1>, <Rt>, <CRn>, <CRm>, #<opc2>
+bool ThumbTranslatorVisitor::thumb32_MRC(size_t opc1, CoprocReg CRn, Reg t, size_t coproc_no, size_t opc2, CoprocReg CRm) {
+    if ((coproc_no & 0b1110) == 0b1010) {
+        return thumb32_UDF();
+    }
+    
+    const auto word = ir.CoprocGetOneWord(coproc_no, false, opc1, CRn, CRm, opc2);
+    if (t != Reg::PC) {
+        ir.SetRegister(t, word);
+    } else {
+        const auto new_cpsr_nzcv = ir.And(word, ir.Imm32(0xF0000000));
+        ir.SetCpsrNZCV(new_cpsr_nzcv);
     }
     return true;
 }

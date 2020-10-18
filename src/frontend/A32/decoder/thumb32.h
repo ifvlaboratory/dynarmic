@@ -46,12 +46,12 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_LDRD_imm_1,     "LDRD (imm)",               "11101000-111--------------------"),
         //INST(&V::thumb32_LDRD_imm_2,     "LDRD (imm)",               "11101001-1-1--------------------"),
         //INST(&V::thumb32_STREXB,         "STREXB",                   "111010001100------------0100----"),
-        //INST(&V::thumb32_STREXH,         "STREXH",                   "111010001100------------0101----"),
+        INST(&V::thumb32_STREXH,         "STREXH",                   "111010001100nnnntttt11110101mmmm"),
         //INST(&V::thumb32_STREXD,         "STREXD",                   "111010001100------------0111----"),
         //INST(&V::thumb32_TBB,            "TBB",                      "111010001101------------0000----"),
         //INST(&V::thumb32_TBH,            "TBH",                      "111010001101------------0001----"),
         //INST(&V::thumb32_LDREXB,         "LDREXB",                   "111010001101------------0100----"),
-        //INST(&V::thumb32_LDREXH,         "LDREXH",                   "111010001101------------0101----"),
+        INST(&V::thumb32_LDREXH,         "LDREXH",                   "111010001101nnnntttt111101011111"),
         //INST(&V::thumb32_LDREXD,         "LDREXD",                   "111010001101------------0111----"),
 
         // Data Processing (Shifted Register)
@@ -80,10 +80,10 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
 
         // Data Processing (Modified Immediate)
         //INST(&V::thumb32_TST_imm,        "TST (imm)",                "11110-000001----0---1111--------"),
-        //INST(&V::thumb32_AND_imm,        "AND (imm)",                "11110-00000-----0---------------"),
+        INST(&V::thumb32_AND_imm,        "AND (imm)",                "11110v00000Snnnn0vvvddddvvvvvvvv"),
         //INST(&V::thumb32_BIC_imm,        "BIC (imm)",                "11110-00001-----0---------------"),
         //INST(&V::thumb32_MOV_imm,        "MOV (imm)",                "11110000010-11110---------------"),
-        //INST(&V::thumb32_ORR_imm,        "ORR (imm)",                "11110-00010-----0---------------"),
+        INST(&V::thumb32_ORR_imm,        "ORR (imm)",                "11110v00010Snnnn0vvvddddvvvvvvvv"),
         //INST(&V::thumb32_MVN_imm,        "MVN (imm)",                "11110000011-11110---------------"),
         //INST(&V::thumb32_ORN_imm,        "ORN (imm)",                "11110-00011-----0---------------"),
         //INST(&V::thumb32_TEQ_imm,        "TEQ (imm)",                "11110-001001----0---1111--------"),
@@ -92,7 +92,7 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_ADD_imm_1,      "ADD (imm)",                "11110-01000-----0---------------"),
         //INST(&V::thumb32_ADC_imm,        "ADC (imm)",                "11110-01010-----0---------------"),
         //INST(&V::thumb32_SBC_imm,        "SBC (imm)",                "11110-01011-----0---------------"),
-        //INST(&V::thumb32_CMP_imm,        "CMP (imm)",                "11110-011011----0---1111--------"),
+        INST(&V::thumb32_CMP_imm,        "CMP (imm)",                "11110v011011nnnn0vvv1111vvvvvvvv"),
         //INST(&V::thumb32_SUB_imm_1,      "SUB (imm)",                "11110-01101-----0---------------"),
         //INST(&V::thumb32_RSB_imm,        "RSB (imm)",                "11110-01110-----0---------------"),
 
@@ -161,7 +161,7 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_STRB,           "STRB (reg)",               "111110000000--------000000------"),
         //INST(&V::thumb32_STRH_imm_1,     "STRH (imm)",               "111110000010--------1--1--------"),
         //INST(&V::thumb32_STRH_imm_2,     "STRH (imm)",               "111110000010--------1100--------"),
-        //INST(&V::thumb32_STRH_imm_3,     "STRH (imm)",               "111110001010--------------------"),
+        INST(&V::thumb32_STRH_imm_3,     "STRH (imm)",               "111110001010nnnnttttvvvvvvvvvvvv"),
         //INST(&V::thumb32_STRHT,          "STRHT",                    "111110000010--------1110--------"),
         //INST(&V::thumb32_STRH,           "STRH (reg)",               "111110000010--------000000------"),
         //INST(&V::thumb32_STR_imm_1,      "STR (imm)",                "111110000100--------1--1--------"),
@@ -207,11 +207,11 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_NOP,            "NOP",                      "111110011011----1111------------"),
 
         // Load Word
-        //INST(&V::thumb32_LDR_lit,        "LDR (lit)",                "11111000-1011111----------------"),
+        INST(&V::thumb32_LDR_lit,        "LDR (lit)",                "11111000u1011111ttttvvvvvvvvvvvv"),
         //INST(&V::thumb32_LDRT,           "LDRT",                     "111110000101--------1110--------"),
-        //INST(&V::thumb32_LDR_reg,        "LDR (reg)",                "111110000101--------000000------"),
+        INST(&V::thumb32_LDR_reg,        "LDR (reg)",                "111110000101nnnntttt000000vvmmmm"),
         //INST(&V::thumb32_LDR_imm8,       "LDR (imm8)",               "111110000101--------1-----------"),
-        //INST(&V::thumb32_LDR_imm12,      "LDR (imm12)",              "111110001101--------------------"),
+        INST(&V::thumb32_LDR_imm12,      "LDR (imm12)",              "111110001101nnnnttttvvvvvvvvvvvv"),
 
         // Undefined
         //INST(&V::thumb32_UDF,            "UDF",                      "1111100--111--------------------"),
@@ -223,7 +223,7 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_ROR_reg,        "ROR (reg)",                "11111010011-----1111----0000----"),
         //INST(&V::thumb32_SXTH,           "SXTH",                     "11111010000011111111----1-------"),
         //INST(&V::thumb32_SXTAH,          "SXTAH",                    "111110100000----1111----1-------"),
-        //INST(&V::thumb32_UXTH,           "UXTH",                     "11111010000111111111----1-------"),
+        INST(&V::thumb32_UXTH,           "UXTH",                     "11111010000111111111dddd10rrmmmm"),
         //INST(&V::thumb32_UXTAH,          "UXTAH",                    "111110100001----1111----1-------"),
         //INST(&V::thumb32_SXTB16,         "SXTB16",                   "11111010001011111111----1-------"),
         //INST(&V::thumb32_SXTAB16,        "SXTAB16",                  "111110100010----1111----1-------"),
@@ -332,7 +332,7 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_MCR2,           "MCR2",                     "11111110---0---------------1----"),
         //INST(&V::thumb32_MCR,            "MCR",                      "11101110---0---------------1----"),
         //INST(&V::thumb32_MRC2,           "MRC2",                     "11111110---1---------------1----"),
-        //INST(&V::thumb32_MRC,            "MRC",                      "11101110---1---------------1----"),
+        INST(&V::thumb32_MRC,            "MRC",                      "11101110ooo1NNNNttttppppooo1MMMM"),
 
         // Branch instructions
         INST(&V::thumb32_BL_imm,         "BL (imm)",                 "11110vvvvvvvvvvv11111vvvvvvvvvvv"), // v4T

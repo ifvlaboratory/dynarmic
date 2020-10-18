@@ -4,6 +4,7 @@
  */
 
 #include "frontend/A32/translate/impl/translate_arm.h"
+#include "frontend/A32/translate/impl/translate_thumb.h"
 
 namespace Dynarmic::A32 {
 
@@ -431,6 +432,39 @@ bool ArmTranslatorVisitor::arm_STREXH(Cond cond, Reg n, Reg d, Reg t) {
     const auto value = ir.LeastSignificantHalf(ir.GetRegister(t));
     const auto passed = ir.ExclusiveWriteMemory16(address, value);
     ir.SetRegister(d, passed);
+    return true;
+}
+
+// STREXH<c> <Rd>, <Rt>, [<Rn>]
+bool ThumbTranslatorVisitor::thumb32_STREXH(Reg n, Reg d, Reg t) {
+    if (d == Reg::R13 || d == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (t == Reg::R13 || t == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (n == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == n || d == t) {
+        return UnpredictableInstruction();
+    }
+
+    const auto address = ir.GetRegister(n);
+    const auto value = ir.LeastSignificantHalf(ir.GetRegister(t));
+    const auto passed = ir.ExclusiveWriteMemory16(address, value);
+    ir.SetRegister(d, passed);
+    return true;
+}
+
+// LDREXH<c> <Rt>, [<Rn>]
+bool ThumbTranslatorVisitor::thumb32_LDREXH(Reg n, Reg t) {
+    if (t == Reg::PC || t == Reg::R13 || t == Reg::R14 || n == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const auto address = ir.GetRegister(n);
+    ir.SetRegister(t, ir.ZeroExtendHalfToWord(ir.ExclusiveReadMemory16(address)));
     return true;
 }
 

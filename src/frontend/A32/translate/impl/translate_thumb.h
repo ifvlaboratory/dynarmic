@@ -26,6 +26,13 @@ struct ThumbTranslatorVisitor final {
     A32::IREmitter ir;
     TranslationOptions options;
 
+    IR::U32 ThumbExpandImm(Imm<12> imm12, IR::U1 carry_in) {
+        return ThumbExpandImm_C(imm12, carry_in).result;
+    }
+
+    IR::ResultAndCarry<IR::U32> EmitImmShift(IR::U32 value, ShiftType type, Imm<2> imm2, IR::U1 carry_in);
+    IR::ResultAndCarry<IR::U32> ThumbExpandImm_C(Imm<12> imm12, IR::U1 carry_in);
+
     bool InterpretThisInstruction();
     bool UnpredictableInstruction();
     bool UndefinedInstruction();
@@ -114,6 +121,17 @@ struct ThumbTranslatorVisitor final {
     // thumb32
     bool thumb32_BL_imm(Imm<11> hi, Imm<11> lo);
     bool thumb32_BLX_imm(Imm<11> hi, Imm<11> lo);
+    bool thumb32_MRC(size_t opc1, CoprocReg CRn, Reg t, size_t coproc_no, size_t opc2, CoprocReg CRm);
+    bool thumb32_LDR_lit(bool U, Reg t, Imm<12> imm12);
+    bool thumb32_LDR_reg(Reg n, Reg t, Imm<2> imm2, Reg m);
+    bool thumb32_LDR_imm12(Reg n, Reg d, Imm<12> imm12);
+    bool thumb32_AND_imm(Imm<1> imm1, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_ORR_imm(Imm<1> imm1, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_CMP_imm(Imm<1> imm1, Reg n, Imm<3> imm3, Imm<8> imm8);
+    bool thumb32_UXTH(Reg d, SignExtendRotation rotate, Reg m);
+    bool thumb32_STRH_imm_3(Reg n, Reg t, Imm<12> imm12);
+    bool thumb32_STREXH(Reg n, Reg d, Reg t);
+    bool thumb32_LDREXH(Reg n, Reg t);
     bool thumb32_UDF();
 };
 

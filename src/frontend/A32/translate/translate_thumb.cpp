@@ -25,11 +25,25 @@ enum class ThumbInstSize {
 };
 
 bool IsThumb16(u16 first_part) {
-    return (first_part & 0xF800) <= 0xE800;
+    return (first_part & 0xF800) < 0xE800;
+}
+
+u32 last_pc = (u32) -1;
+u32 last_code;
+
+u32 ReadCode(u32 pc, MemoryReadCodeFuncType memory_read_code) {
+    if(pc == last_pc) {
+        return last_code;
+    }
+
+    u32 code = memory_read_code(pc);
+    last_pc = pc;
+    last_code = code;
+    return code;
 }
 
 std::tuple<u32, ThumbInstSize> ReadThumbInstruction(u32 arm_pc, MemoryReadCodeFuncType memory_read_code) {
-    u32 first_part = memory_read_code(arm_pc & 0xFFFFFFFC);
+    u32 first_part = ReadCode(arm_pc & 0xFFFFFFFC, memory_read_code);
     if ((arm_pc & 0x2) != 0) {
         first_part >>= 16;
     }
@@ -43,7 +57,7 @@ std::tuple<u32, ThumbInstSize> ReadThumbInstruction(u32 arm_pc, MemoryReadCodeFu
     // 32-bit thumb instruction
     // These always start with 0b11101, 0b11110 or 0b11111.
 
-    u32 second_part = memory_read_code((arm_pc + 2) & 0xFFFFFFFC);
+    u32 second_part = ReadCode((arm_pc + 2) & 0xFFFFFFFC, memory_read_code);
     if (((arm_pc + 2) & 0x2) != 0) {
         second_part >>= 16;
     }
@@ -143,6 +157,54 @@ bool ThumbTranslatorVisitor::RaiseException(Exception exception) {
     ir.ExceptionRaised(exception);
     ir.SetTerm(IR::Term::CheckHalt{IR::Term::ReturnToDispatch{}});
     return false;
+}
+
+IR::ResultAndCarry<IR::U32> ThumbTranslatorVisitor::EmitImmShift(IR::U32 value, ShiftType type, Imm<2> imm2, IR::U1 carry_in) {
+    u8 imm2_value = imm2.ZeroExtend<u8>();
+    switch (type) {
+    case ShiftType::LSL:
+        return ir.LogicalShiftLeft(value, ir.Imm8(imm2_value), carry_in);
+    case ShiftType::LSR:
+        imm2_value = imm2_value ? imm2_value : 32;
+        return ir.LogicalShiftRight(value, ir.Imm8(imm2_value), carry_in);
+    case ShiftType::ASR:
+        imm2_value = imm2_value ? imm2_value : 32;
+        return ir.ArithmeticShiftRight(value, ir.Imm8(imm2_value), carry_in);
+    case ShiftType::ROR:
+        if (imm2_value) {
+            return ir.RotateRight(value, ir.Imm8(imm2_value), carry_in);
+        } else {
+            return ir.RotateRightExtended(value, carry_in);
+        }
+    }
+    UNREACHABLE();
+}
+
+IR::ResultAndCarry<IR::U32> ThumbTranslatorVisitor::ThumbExpandImm_C(Imm<12> imm12, IR::U1 carry_in) {
+    if (imm12.Bits<10, 11>() == 0b00) {
+        u8 imm2_value = imm12.Bits<8, 9>();
+        IR::U32 imm32;
+        u8 imm8 = imm12.Bits<0, 7>();
+        switch (imm2_value) {
+            case 0b00:
+                imm32 = ir.Imm32(imm8);
+                break;
+            case 0b11:
+            case 0b01:
+            case 0b10:
+            default:
+                UNREACHABLE();
+        }
+        return { imm32, carry_in };
+    } else {
+        u32 value = 0x80U | imm12.Bits<0, 6>();
+        u32 imm5_value = imm12.Bits<7, 11>();
+        if (imm5_value) {
+            return ir.RotateRight(ir.Imm32(value), ir.Imm8(imm5_value), carry_in);
+        } else {
+            return ir.RotateRightExtended(ir.Imm32(value), carry_in);
+        }
+    }
 }
 
 } // namespace Dynarmic::A32
