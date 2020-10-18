@@ -881,7 +881,7 @@ bool ThumbTranslatorVisitor::thumb16_CBZ_CBNZ(bool nonzero, Imm<1> i, Imm<5> imm
     const auto [cond_pass, cond_fail] = [this, imm, nonzero] {
         const u32 target = ir.PC() + imm;
         const auto skip = IR::Term::LinkBlock{ir.current_location.AdvancePC(2)};
-        const auto branch = IR::Term::LinkBlock{ir.current_location.AdvancePC(target)};
+        const auto branch = IR::Term::LinkBlock{ir.current_location.SetPC(target)};
 
         if (nonzero) {
             return std::make_pair(skip, branch);
@@ -890,7 +890,7 @@ bool ThumbTranslatorVisitor::thumb16_CBZ_CBNZ(bool nonzero, Imm<1> i, Imm<5> imm
         }
     }();
 
-     ir.SetTerm(IR::Term::CheckBit{cond_pass, cond_fail});
+    ir.SetTerm(IR::Term::CheckBit{cond_pass, cond_fail});
     return false;
 }
 
