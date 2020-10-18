@@ -7,6 +7,20 @@
 
 namespace Dynarmic::A32 {
 
+// B<c>.W <label>
+bool ThumbTranslatorVisitor::thumb32_B_cond(Imm<1> S, Cond cond, Imm<6> imm6, Imm<1> j1, Imm<2> j2, Imm<11> imm11) {
+    if (cond == Cond::AL || cond == Cond::NV) {
+        return thumb16_UDF();
+    }
+
+    const s32 imm32 = static_cast<s32>((concatenate(S, j2, j1, imm6, imm11).SignExtend<u32>() << 1U) + 4);
+    const auto then_location = ir.current_location.AdvancePC(imm32);
+    const auto else_location = ir.current_location.AdvancePC(4);
+
+    ir.SetTerm(IR::Term::If{cond, IR::Term::LinkBlock{then_location}, IR::Term::LinkBlock{else_location}});
+    return false;
+}
+
 // BL <label>
 bool ThumbTranslatorVisitor::thumb32_BL_imm(Imm<11> hi, Imm<11> lo) {
     ir.PushRSB(ir.current_location.AdvancePC(4));

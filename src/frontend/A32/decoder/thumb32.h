@@ -151,7 +151,7 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_BL,             "BL",                       "11110-----------11-1------------"),
         //INST(&V::thumb32_BLX,            "BLX",                      "11110-----------11-0------------"),
         //INST(&V::thumb32_B,              "B",                        "11110-----------10-1------------"),
-        //INST(&V::thumb32_B_cond,         "B (cond)",                 "11110-----------10-0------------"),
+        INST(&V::thumb32_B_cond,         "B (cond)",                 "11110Sccccvvvvvv10j0jvvvvvvvvvvv"),
 
         // Store Single Data Item
         //INST(&V::thumb32_STRB_imm_1,     "STRB (imm)",               "111110000000--------1--1--------"),
