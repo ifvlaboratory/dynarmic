@@ -134,7 +134,7 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_LEAVEX,         "LEAVEX",                   "111100111011----10-0----0000----"),
         //INST(&V::thumb32_CLREX,          "CLREX",                    "111100111011----10-0----0010----"),
         //INST(&V::thumb32_DSB,            "DSB",                      "111100111011----10-0----0100----"),
-        //INST(&V::thumb32_DMB,            "DMB",                      "111100111011----10-0----0101----"),
+        INST(&V::thumb32_DMB,            "DMB",                      "1111001110111111100011110101oooo"),
         //INST(&V::thumb32_ISB,            "ISB",                      "111100111011----10-0----0110----"),
 
         //INST(&V::thumb32_BXJ,            "BXJ",                      "111100111100----1000111100000000"),
