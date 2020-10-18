@@ -1283,6 +1283,26 @@ bool ThumbTranslatorVisitor::thumb32_MOV_imm(Imm<1> imm1, bool S, Imm<3> imm3, R
     return true;
 }
 
+// MVN{S}<c> <Rd>, #<const>
+bool ThumbTranslatorVisitor::thumb32_MVN_imm(Imm<1> imm1, bool S, Imm<3> imm3, Reg d, Imm<8> imm8) {
+    if(d == Reg::R13 || d == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    Imm<12> imm12 = concatenate(imm1, imm3, imm8);
+    const auto imm_carry = ThumbExpandImm_C(imm12, ir.GetCFlag());
+    const auto result = ir.Not(imm_carry.result);
+
+    ir.SetRegister(d, result);
+    if (S) {
+        ir.SetNFlag(ir.MostSignificantBit(result));
+        ir.SetZFlag(ir.IsZero(result));
+        ir.SetCFlag(imm_carry.carry);
+    }
+
+    return true;
+}
+
 // ORR{S}<c> <Rd>, <Rn>, #<const>
 bool ThumbTranslatorVisitor::thumb32_ORR_imm(Imm<1> imm1, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8) {
     if(n == Reg::PC) {
