@@ -4,7 +4,6 @@
  */
 
 #include "frontend/A32/translate/impl/translate_arm.h"
-#include "frontend/A32/translate/impl/translate_thumb.h"
 
 namespace Dynarmic::A32 {
 
@@ -218,25 +217,6 @@ bool ArmTranslatorVisitor::arm_UXTH(Cond cond, Reg d, SignExtendRotation rotate,
 
     if (!ConditionPassed(cond)) {
         return true;
-    }
-
-    const auto rotated = Rotate(ir, m, rotate);
-    const auto result = ir.ZeroExtendHalfToWord(ir.LeastSignificantHalf(rotated));
-
-    ir.SetRegister(d, result);
-    return true;
-}
-
-// UXTH<c> <Rd>, <Rm>{, <rotation>}
-bool ThumbTranslatorVisitor::thumb32_UXTH(Reg d, SignExtendRotation rotate, Reg m) {
-    if (d == Reg::R13 || m == Reg::R13) {
-        return UnpredictableInstruction();
-    }
-    if (d == Reg::R14 || m == Reg::R14) {
-        return UnpredictableInstruction();
-    }
-    if (d == Reg::PC || m == Reg::PC) {
-        return UnpredictableInstruction();
     }
 
     const auto rotated = Rotate(ir, m, rotate);

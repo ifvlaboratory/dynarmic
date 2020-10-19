@@ -269,6 +269,31 @@ public:
         return "yield";
     }
 
+    std::string thumb16_IT(Imm<4> firstcond, Imm<4> mask) {
+        int until = -1;
+        std::string out = "it";
+        for (int i = 0; i < 4; i++) {
+            if (Common::Bit(i, mask.ZeroExtend())) {
+                until = i;
+                break;
+            }
+        }
+        if (until == -1) {
+            return "undefined";
+        }
+        for (int i = 3; i > until; i--) {
+            if (Common::Bit(i, mask.ZeroExtend()) == firstcond.Bit<0>()) {
+                out += 't';
+            } else {
+                out += 'e';
+            }
+        }
+        out += ' ';
+        out += A32::CondToString(static_cast<Cond>(firstcond.ZeroExtend()));
+        return out;
+   }
+
+    
     std::string thumb16_SXTH(Reg m, Reg d) {
         return fmt::format("sxth {}, {}", d, m);
     }

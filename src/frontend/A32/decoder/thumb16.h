@@ -93,6 +93,7 @@ std::optional<std::reference_wrapper<const Thumb16Matcher<V>>> DecodeThumb16(u16
         INST(&V::thumb16_WFE,            "WFE",                      "1011111100100000"), // v7
         INST(&V::thumb16_WFI,            "WFI",                      "1011111100110000"), // v7
         INST(&V::thumb16_YIELD,          "YIELD",                    "1011111100010000"), // v7
+        INST(&V::thumb16_IT,             "IT",                       "10111111ccccmmmm"),
 
         // Miscellaneous 16-bit instructions
         INST(&V::thumb16_SXTH,           "SXTH",                     "1011001000mmmddd"), // v6

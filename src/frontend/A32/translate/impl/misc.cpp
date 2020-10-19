@@ -5,7 +5,6 @@
 
 #include "common/bit_util.h"
 #include "frontend/A32/translate/impl/translate_arm.h"
-#include "frontend/A32/translate/impl/translate_thumb.h"
 
 namespace Dynarmic::A32 {
 
@@ -24,11 +23,7 @@ bool ArmTranslatorVisitor::arm_BFC(Cond cond, Imm<5> msb, Reg d, Imm<5> lsb) {
 
     const u32 lsb_value = lsb.ZeroExtend();
     const u32 msb_value = msb.ZeroExtend();
-    const u32 mask = ~(Common::Ones<u32>(msb_value - lsb_value + 1) << lsb_value);
-    const IR::U32 operand = ir.GetRegister(d);
-    const IR::U32 result = ir.And(operand, ir.Imm32(mask));
-
-    ir.SetRegister(d, result);
+    Helper::BFCHelper(ir, d, lsb_value, msb_value);
     return true;
 }
 
@@ -121,15 +116,7 @@ bool ArmTranslatorVisitor::arm_SBFX(Cond cond, Imm<5> widthm1, Reg d, Imm<5> lsb
         return true;
     }
 
-    constexpr size_t max_width = Common::BitSize<u32>();
-    const u32 width = widthm1_value + 1;
-    const u8 left_shift_amount = static_cast<u8>(max_width - width - lsb_value);
-    const u8 right_shift_amount = static_cast<u8>(max_width - width);
-    const IR::U32 operand = ir.GetRegister(n);
-    const IR::U32 tmp = ir.LogicalShiftLeft(operand, ir.Imm8(left_shift_amount));
-    const IR::U32 result = ir.ArithmeticShiftRight(tmp, ir.Imm8(right_shift_amount));
-
-    ir.SetRegister(d, result);
+    Helper::SBFXHelper(ir, d, n, lsb_value, widthm1_value);
     return true;
 }
 
@@ -173,19 +160,6 @@ bool ArmTranslatorVisitor::arm_UBFX(Cond cond, Imm<5> widthm1, Reg d, Imm<5> lsb
     const IR::U32 result = ir.And(ir.LogicalShiftRight(operand, ir.Imm8(u8(lsb_value))), mask);
 
     ir.SetRegister(d, result);
-    return true;
-}
-
-// MOVW<c> <Rd>, #<imm16>
-bool ThumbTranslatorVisitor::thumb32_MOVW_imm(Imm<1> imm1, Imm<4> imm4, Imm<3> imm3, Reg d, Imm<8> imm8) {
-    if (d == Reg::PC || d == Reg::R13) {
-        return UnpredictableInstruction();
-    }
-
-    Imm<16> imm16 = concatenate(imm4, imm1, imm3, imm8);
-    const IR::U32 imm = ir.Imm32(imm16.ZeroExtend());
-
-    ir.SetRegister(d, imm);
     return true;
 }
 

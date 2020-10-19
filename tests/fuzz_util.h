@@ -15,6 +15,7 @@ using Vector = std::array<u64, 2>;
 std::ostream& operator<<(std::ostream& o, Vector vec);
 Vector RandomVector();
 u32 RandomFpcr();
+bool ShouldTestA32Inst(u32 instruction, u32 pc, bool thumb, bool is_last_inst);
 
 struct InstructionGenerator final {
 public:

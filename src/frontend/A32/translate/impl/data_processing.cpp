@@ -4,7 +4,6 @@
  */
 
 #include "frontend/A32/translate/impl/translate_arm.h"
-#include "frontend/A32/translate/impl/translate_thumb.h"
 
 namespace Dynarmic::A32 {
 
@@ -1231,114 +1230,6 @@ bool ArmTranslatorVisitor::arm_TST_rsr(Cond cond, Reg n, Reg s, ShiftType shift,
     ir.SetNFlag(ir.MostSignificantBit(result));
     ir.SetZFlag(ir.IsZero(result));
     ir.SetCFlag(shifted.carry);
-    return true;
-}
-
-// AND{S}<c> <Rd>, <Rn>, #<const>
-bool ThumbTranslatorVisitor::thumb32_AND_imm(Imm<1> imm1, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8) {
-    if(d == Reg::R13 || (d == Reg::PC && !S) || n == Reg::R13 || n == Reg::R14 || n == Reg::PC) {
-        return UnpredictableInstruction();
-    }
-    Imm<12> imm12 = concatenate(imm1, imm3, imm8);
-    const auto imm_carry = ThumbExpandImm_C(imm12, ir.GetCFlag());
-    const auto result = ir.And(ir.GetRegister(n), imm_carry.result);
-    if (d == Reg::PC) {
-        if (S) {
-            // This is UNPREDICTABLE when in user-mode.
-            return UnpredictableInstruction();
-        }
-
-        ir.ALUWritePC(result);
-        ir.SetTerm(IR::Term::ReturnToDispatch{});
-        return false;
-    }
-
-    ir.SetRegister(d, result);
-    if (S) {
-        ir.SetNFlag(ir.MostSignificantBit(result));
-        ir.SetZFlag(ir.IsZero(result));
-        ir.SetCFlag(imm_carry.carry);
-    }
-
-    return true;
-}
-
-// MOV{S}<c>.W <Rd>, #<const>
-bool ThumbTranslatorVisitor::thumb32_MOV_imm(Imm<1> imm1, bool S, Imm<3> imm3, Reg d, Imm<8> imm8) {
-    if(d == Reg::R13 || d == Reg::PC) {
-        return UnpredictableInstruction();
-    }
-
-    Imm<12> imm12 = concatenate(imm1, imm3, imm8);
-    const auto imm_carry = ThumbExpandImm_C(imm12, ir.GetCFlag());
-    const auto result = imm_carry.result;
-
-    ir.SetRegister(d, result);
-    if (S) {
-        ir.SetNFlag(ir.MostSignificantBit(result));
-        ir.SetZFlag(ir.IsZero(result));
-        ir.SetCFlag(imm_carry.carry);
-    }
-
-    return true;
-}
-
-// MVN{S}<c> <Rd>, #<const>
-bool ThumbTranslatorVisitor::thumb32_MVN_imm(Imm<1> imm1, bool S, Imm<3> imm3, Reg d, Imm<8> imm8) {
-    if(d == Reg::R13 || d == Reg::PC) {
-        return UnpredictableInstruction();
-    }
-
-    Imm<12> imm12 = concatenate(imm1, imm3, imm8);
-    const auto imm_carry = ThumbExpandImm_C(imm12, ir.GetCFlag());
-    const auto result = ir.Not(imm_carry.result);
-
-    ir.SetRegister(d, result);
-    if (S) {
-        ir.SetNFlag(ir.MostSignificantBit(result));
-        ir.SetZFlag(ir.IsZero(result));
-        ir.SetCFlag(imm_carry.carry);
-    }
-
-    return true;
-}
-
-// ORR{S}<c> <Rd>, <Rn>, #<const>
-bool ThumbTranslatorVisitor::thumb32_ORR_imm(Imm<1> imm1, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8) {
-    if(n == Reg::PC) {
-        return UnpredictableInstruction();
-    }
-    if(d == Reg::R13 || d == Reg::R14 || d == Reg::PC || n == Reg::R13) {
-        return UnpredictableInstruction();
-    }
-    Imm<12> imm12 = concatenate(imm1, imm3, imm8);
-    const auto imm_carry = ThumbExpandImm_C(imm12, ir.GetCFlag());
-    const auto result = ir.Or(ir.GetRegister(n), imm_carry.result);
-
-    ir.SetRegister(d, result);
-    if (S) {
-        ir.SetNFlag(ir.MostSignificantBit(result));
-        ir.SetZFlag(ir.IsZero(result));
-        ir.SetCFlag(imm_carry.carry);
-    }
-
-    return true;
-}
-
-// CMP<c>.W <Rn>, #<const>
-bool ThumbTranslatorVisitor::thumb32_CMP_imm(Imm<1> imm1, Reg n, Imm<3> imm3, Imm<8> imm8) {
-    if(n == Reg::PC) {
-        return UnpredictableInstruction();
-    }
-
-    Imm<12> imm12 = concatenate(imm1, imm3, imm8);
-    const IR::U32 imm32 = ThumbExpandImm(imm12, ir.GetCFlag());
-    const auto result = ir.SubWithCarry(ir.GetRegister(n), imm32, ir.Imm1(true));
-
-    ir.SetNFlag(ir.MostSignificantBit(result.result));
-    ir.SetZFlag(ir.IsZero(result.result));
-    ir.SetCFlag(result.carry);
-    ir.SetVFlag(result.overflow);
     return true;
 }
 

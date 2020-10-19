@@ -22,31 +22,39 @@ public:
     }
 
     IR::Cond Cond() const {
-        return static_cast<IR::Cond>(Common::Bits<4, 7>(value));
-    }
-    void Cond(IR::Cond cond) {
-        value = Common::ModifyBits<4, 7>(value, static_cast<u8>(cond));
+        auto new_cond = Common::Bits<4, 7>(value);
+        new_cond = Common::ModifyBit<0>(new_cond, Common::Bit<4>(Flags()));
+        return static_cast<IR::Cond>(new_cond);
     }
 
-    u8 Mask() const {
-        return Common::Bits<0, 3>(value);
+    // IT<5:7>
+    IR::Cond Base() const {
+        return static_cast<IR::Cond>(Common::Bits<5, 7>(value));
     }
-    void Mask(u8 mask) {
-        value = Common::ModifyBits<0, 3>(value, mask);
+
+    void Base(u8 base) {
+        value = Common::ModifyBits<5, 7>(value, Common::Bits<0, 2>(base));
+    }
+
+    // IT<0:4>
+    u8 Flags() const {
+        return Common::Bits<0, 4>(value);
+    }
+    void Flags(u8 flags) {
+        value = Common::ModifyBits<0, 4>(value, flags);
     }
 
     bool IsInITBlock() const {
-        return Mask() != 0b0000;
+        return Flags() != 0b00000;
     }
-
     bool IsLastInITBlock() const {
-        return Mask() == 0b1000;
+        return Common::Bits<1, 4>(Flags()) == 0b1000;
     }
 
     ITState Advance() const {
         ITState result{*this};
-        result.Mask(result.Mask() << 1);
-        if (result.Mask() == 0) {
+        result.Flags(result.Flags() << 1);
+        if (result.Flags() == 0b10000) {
             return ITState{0};
         }
         return result;
