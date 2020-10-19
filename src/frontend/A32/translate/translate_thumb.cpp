@@ -28,22 +28,8 @@ bool IsThumb16(u16 first_part) {
     return (first_part & 0xF800) < 0xE800;
 }
 
-u32 last_pc = (u32) -1;
-u32 last_code;
-
-u32 ReadCode(u32 pc, MemoryReadCodeFuncType memory_read_code) {
-    if(pc == last_pc) {
-        return last_code;
-    }
-
-    u32 code = memory_read_code(pc);
-    last_pc = pc;
-    last_code = code;
-    return code;
-}
-
 std::tuple<u32, ThumbInstSize> ReadThumbInstruction(u32 arm_pc, MemoryReadCodeFuncType memory_read_code) {
-    u32 first_part = ReadCode(arm_pc & 0xFFFFFFFC, memory_read_code);
+    u32 first_part = memory_read_code(arm_pc & 0xFFFFFFFC);
     if ((arm_pc & 0x2) != 0) {
         first_part >>= 16;
     }
@@ -57,7 +43,7 @@ std::tuple<u32, ThumbInstSize> ReadThumbInstruction(u32 arm_pc, MemoryReadCodeFu
     // 32-bit thumb instruction
     // These always start with 0b11101, 0b11110 or 0b11111.
 
-    u32 second_part = ReadCode((arm_pc + 2) & 0xFFFFFFFC, memory_read_code);
+    u32 second_part = memory_read_code((arm_pc + 2) & 0xFFFFFFFC);
     if (((arm_pc + 2) & 0x2) != 0) {
         second_part >>= 16;
     }
