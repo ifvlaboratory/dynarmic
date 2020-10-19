@@ -9,7 +9,7 @@ namespace Dynarmic::A32 {
 
 static IR::U32 Rotate(A32::IREmitter& ir, Reg m, SignExtendRotation rotate) {
     const u8 rotate_by = static_cast<u8>(static_cast<size_t>(rotate) * 8);
-    return ir.RotateRight(ir.GetRegister(m), ir.Imm8(rotate_by), ir.Imm1(0)).result;
+    return ir.RotateRight(ir.GetRegister(m), ir.Imm8(rotate_by), ir.Imm1(false)).result;
 }
 
 // BL <label>
@@ -1754,16 +1754,17 @@ bool ThumbTranslatorVisitor::thumb32_LDREXH(Reg n, Reg t) {
     return true;
 }
 
-// UXTH<c> <Rd>, <Rm>{, <rotation>}
+// UXTH<c>.W <Rd>, <Rm>{, <rotation>}
 bool ThumbTranslatorVisitor::thumb32_UXTH(Reg d, SignExtendRotation rotate, Reg m) {
     if (d == Reg::R13 || m == Reg::R13) {
         return UnpredictableInstruction();
     }
-    if (d == Reg::R14 || m == Reg::R14) {
-        return UnpredictableInstruction();
-    }
     if (d == Reg::PC || m == Reg::PC) {
         return UnpredictableInstruction();
+    }
+
+    if (!ConditionPassed()) {
+        return true;
     }
 
     const auto rotated = Rotate(ir, m, rotate);

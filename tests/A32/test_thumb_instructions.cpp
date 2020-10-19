@@ -16,6 +16,52 @@ static Dynarmic::A32::UserConfig GetUserConfig(ThumbTestEnv* testenv) {
     return user_config;
 }
 
+TEST_CASE("thumb: UXTH", "[thumb]") {
+    ThumbTestEnv test_env;
+    Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
+    test_env.code_mem = {
+            0xb281, // uxth r1, r0
+            0xE7FE, // b +#0
+    };
+
+    jit.Regs()[0] = 0x12345678;
+    jit.Regs()[1] = 2;
+    jit.Regs()[15] = 0; // PC = 0
+    jit.SetCpsr(0x00000030); // Thumb, User-mode
+
+    test_env.ticks_left = 1;
+    jit.Run();
+
+    REQUIRE(jit.Regs()[0] == 0x12345678);
+    REQUIRE(jit.Regs()[1] == 0x5678);
+    REQUIRE(jit.Regs()[15] == 2);
+    REQUIRE(jit.Cpsr() == 0x00000030);
+}
+
+TEST_CASE("thumb2: UXTH", "[thumb2]") {
+    ThumbTestEnv test_env;
+    Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
+    test_env.code_mem = {
+            0xfa1f, 0xf180, // uxth.w r1, r0
+            0xfa1f, 0xf290, // uxth.w r2, r0, ror #8
+            0xE7FE, // b +#0
+    };
+
+    jit.Regs()[0] = 0x12345678;
+    jit.Regs()[1] = 2;
+    jit.Regs()[15] = 0; // PC = 0
+    jit.SetCpsr(0x00000030); // Thumb, User-mode
+
+    test_env.ticks_left = 2;
+    jit.Run();
+
+    REQUIRE(jit.Regs()[0] == 0x12345678);
+    REQUIRE(jit.Regs()[1] == 0x5678);
+    REQUIRE(jit.Regs()[2] == 0x3456);
+    REQUIRE(jit.Regs()[15] == 8);
+    REQUIRE(jit.Cpsr() == 0x00000030);
+}
+
 TEST_CASE("thumb: lsls r0, r1, #2", "[thumb]") {
     ThumbTestEnv test_env;
     Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
