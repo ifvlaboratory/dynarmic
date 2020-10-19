@@ -22,6 +22,34 @@ static Dynarmic::A32::UserConfig GetUserConfig(ThumbTestEnv* testenv) {
     return user_config;
 }
 
+TEST_CASE("thumb2: PUSH", "[thumb2]") {
+    ThumbTestEnv test_env;
+    Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
+    test_env.code_mem = {
+            0xe92d, 0x0018, // push.w {r3,r4}
+            0xbc03, // pop {r0,r1}
+            0xe92d, 0x0006, // push.w {r1,r2}
+            0xe7fe, // b #0
+    };
+
+    jit.Regs()[0] = 1;
+    jit.Regs()[1] = 2;
+    jit.Regs()[3] = 3;
+    jit.Regs()[4] = 4;
+    jit.Regs()[13] = 24; // SP = 24
+    jit.Regs()[15] = 0; // PC = 0
+    jit.SetCpsr(0x00000030); // Thumb, User-mode
+
+    test_env.ticks_left = 3;
+    jit.Run();
+
+    REQUIRE(jit.Regs()[0] == 3);
+    REQUIRE(jit.Regs()[1] == 4);
+    REQUIRE(jit.Regs()[13] == 16);
+    REQUIRE(jit.Regs()[15] == 10);
+    REQUIRE(jit.Cpsr() == 0x00000030);
+}
+
 TEST_CASE("thumb2: MRC", "[thumb2]") {
     cp15 = std::make_shared<DynarmicCP15>();
 

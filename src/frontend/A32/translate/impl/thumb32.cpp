@@ -60,6 +60,9 @@ bool ThumbTranslatorVisitor::thumb32_BLX_imm(bool S, Imm<10> hi, bool j1, bool j
 // PUSH<c>.W <registers>
 // reg_list cannot encode for R15.
 bool ThumbTranslatorVisitor::thumb32_PUSH(bool M, RegList reg_list) {
+    if (!ConditionPassed()) {
+        return true;
+    }
     if (M) {
         reg_list |= (1U << 14U);
     }
