@@ -292,7 +292,7 @@ struct ThumbTranslatorVisitor final {
     bool thumb32_SUB_imm_1(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
     bool thumb32_RSB_imm(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
 
-    bool thumb32_MRC(size_t opc1, CoprocReg CRn, Reg t, size_t coproc_no, size_t opc2, CoprocReg CRm);
+    bool thumb32_MRC(size_t opc1, CoprocReg CRn, Reg t, size_t coproc, size_t opc2, CoprocReg CRm);
     bool thumb32_DMB(Imm<4> option);
 
     bool thumb32_BL_imm(bool S, Imm<10> hi, bool j1, bool j2, Imm<11> lo);

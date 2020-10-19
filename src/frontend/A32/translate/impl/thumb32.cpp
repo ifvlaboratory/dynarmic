@@ -1705,19 +1705,17 @@ bool ThumbTranslatorVisitor::thumb32_DMB([[maybe_unused]] Imm<4> option) {
     return true;
 }
 
-// MRC{2} <coproc_no>, #<opc1>, <Rt>, <CRn>, <CRm>, #<opc2>
-bool ThumbTranslatorVisitor::thumb32_MRC(size_t opc1, CoprocReg CRn, Reg t, size_t coproc_no, size_t opc2, CoprocReg CRm) {
-    if ((coproc_no & 0b1110) == 0b1010) {
-        return thumb32_UDF();
+// MRC<c> <coproc>, <opc1>, <Rt>, <CRn>, <CRm>{, <opc2>}
+bool ThumbTranslatorVisitor::thumb32_MRC(size_t opc1, CoprocReg CRn, Reg t, size_t coproc, size_t opc2, CoprocReg CRm) {
+    if ((coproc & 0b1110U) == 0b1010) {
+        return UndefinedInstruction();
+    }
+    if(t == Reg::PC) {
+        return UndefinedInstruction();
     }
 
-    const auto word = ir.CoprocGetOneWord(coproc_no, false, opc1, CRn, CRm, opc2);
-    if (t != Reg::PC) {
-        ir.SetRegister(t, word);
-    } else {
-        const auto new_cpsr_nzcv = ir.And(word, ir.Imm32(0xF0000000));
-        ir.SetCpsrNZCV(new_cpsr_nzcv);
-    }
+    const auto word = ir.CoprocGetOneWord(coproc, false, opc1, CRn, CRm, opc2);
+    ir.SetRegister(t, word);
     return true;
 }
 

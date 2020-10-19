@@ -6,7 +6,9 @@ add_executable(dynarmic_tests
     A32/test_arm_disassembler.cpp
     A32/test_arm_instructions.cpp
     A32/test_thumb_instructions.cpp
+    A32/arm_dynarmic_cp15.cpp
     A32/testenv.h
+    A32/arm_dynarmic_cp15.h
     A64/a64.cpp
     A64/testenv.h
     cpu_info.cpp

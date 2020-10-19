@@ -9,11 +9,41 @@
 
 #include "common/common_types.h"
 #include "testenv.h"
+#include "arm_dynarmic_cp15.h"
+
+static std::shared_ptr<DynarmicCP15> cp15 = nullptr;
 
 static Dynarmic::A32::UserConfig GetUserConfig(ThumbTestEnv* testenv) {
     Dynarmic::A32::UserConfig user_config;
     user_config.callbacks = testenv;
+    if(cp15) {
+        user_config.coprocessors[15] = cp15;
+    }
     return user_config;
+}
+
+TEST_CASE("thumb2: MRC", "[thumb2]") {
+    cp15 = std::make_shared<DynarmicCP15>();
+
+    ThumbTestEnv test_env;
+    Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
+    test_env.code_mem = {
+            0xee1d, 0x0f70, // mrc p15, 0, r0, c13, c0, 3
+            0xE7FE, // b +#0
+    };
+
+    cp15->uro = 0x12345678;
+    jit.Regs()[0] = 1;
+    jit.Regs()[1] = 2;
+    jit.Regs()[15] = 0; // PC = 0
+    jit.SetCpsr(0x00000030); // Thumb, User-mode
+
+    test_env.ticks_left = 1;
+    jit.Run();
+
+    REQUIRE(jit.Regs()[0] == 0x12345678);
+    REQUIRE(jit.Regs()[15] == 4);
+    REQUIRE(jit.Cpsr() == 0x00000030);
 }
 
 TEST_CASE("thumb: UXTH", "[thumb]") {
