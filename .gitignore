@@ -6,3 +6,4 @@ docs/Doxygen/
 src/backend/x64/mig/
 .idea
 /cmake-build-debug/
+.DS_Store
