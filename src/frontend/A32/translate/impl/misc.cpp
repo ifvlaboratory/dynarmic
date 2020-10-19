@@ -23,11 +23,7 @@ bool ArmTranslatorVisitor::arm_BFC(Cond cond, Imm<5> msb, Reg d, Imm<5> lsb) {
 
     const u32 lsb_value = lsb.ZeroExtend();
     const u32 msb_value = msb.ZeroExtend();
-    const u32 mask = ~(Common::Ones<u32>(msb_value - lsb_value + 1) << lsb_value);
-    const IR::U32 operand = ir.GetRegister(d);
-    const IR::U32 result = ir.And(operand, ir.Imm32(mask));
-
-    ir.SetRegister(d, result);
+    Helper::BFCHelper(ir, d, lsb_value, msb_value);
     return true;
 }
 
@@ -120,15 +116,7 @@ bool ArmTranslatorVisitor::arm_SBFX(Cond cond, Imm<5> widthm1, Reg d, Imm<5> lsb
         return true;
     }
 
-    constexpr size_t max_width = Common::BitSize<u32>();
-    const u32 width = widthm1_value + 1;
-    const u8 left_shift_amount = static_cast<u8>(max_width - width - lsb_value);
-    const u8 right_shift_amount = static_cast<u8>(max_width - width);
-    const IR::U32 operand = ir.GetRegister(n);
-    const IR::U32 tmp = ir.LogicalShiftLeft(operand, ir.Imm8(left_shift_amount));
-    const IR::U32 result = ir.ArithmeticShiftRight(tmp, ir.Imm8(right_shift_amount));
-
-    ir.SetRegister(d, result);
+    Helper::SBFXHelper(ir, d, n, lsb_value, widthm1_value);
     return true;
 }
 

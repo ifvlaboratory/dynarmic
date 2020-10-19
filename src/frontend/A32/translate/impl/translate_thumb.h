@@ -11,8 +11,20 @@
 #include "frontend/A32/location_descriptor.h"
 #include "frontend/A32/translate/translate.h"
 #include "frontend/A32/types.h"
+#include "frontend/A32/translate/helper.h"
 
 namespace Dynarmic::A32 {
+
+enum class ConditionalState {
+    /// We haven't met any conditional instructions yet.
+    None,
+    /// Current instruction is with a new condition code. This marks the end of this basic block.
+    Break,
+    /// This basic block is made up solely of conditional instructions.
+    Translating,
+    /// This basic block is made up of conditional instructions followed by unconditional instructions.
+    Trailing,
+};
 
 enum class Exception;
 
@@ -22,10 +34,83 @@ struct ThumbTranslatorVisitor final {
     explicit ThumbTranslatorVisitor(IR::Block& block, LocationDescriptor descriptor, const TranslationOptions& options) : ir(block, descriptor), options(options) {
         ASSERT_MSG(descriptor.TFlag(), "The processor must be in Thumb mode");
     }
+    
+    static u32 ThumbExpandImm(Imm<1> i, Imm<3> imm3, Imm<8> imm8) {
+        const auto imm12 = concatenate(i, imm3, imm8);
+        if (imm12.Bits<10, 11>() == 0) {
+            const u32 bytes = imm12.Bits<0, 7>();
+            switch (imm12.Bits<8, 9>()) {
+                case 0b00:
+                    return bytes;
+                case 0b01:
+                    return (bytes << 16) | bytes;
+                case 0b10:
+                    return (bytes << 24) | (bytes << 8);
+                case 0b11:
+                    return Common::Replicate(bytes, 8);
+            }
+            assert(false);
+        }
+        const int rotate = imm12.Bits<7, 11>();
+        const Imm<8> unrotated_value = concatenate(Imm<1>(1), Imm<7>(imm12.Bits<0, 6>()));
+        return Common::RotateRight<u32>(unrotated_value.ZeroExtend(), rotate);
+    }
+    
+    struct ImmAndCarry {
+        u32 imm32;
+        IR::U1 carry;
+    };
+    
+    ImmAndCarry ThumbExpandImm_C(Imm<1> i, Imm<3> imm3, Imm<8> imm8, IR::U1 carry_in) {
+        const u32 imm32 = ThumbExpandImm(i, imm3, imm8);
+        auto carry_out = carry_in;
+        if (imm3.Bit<2>() != 0 || i != 0) {
+            carry_out = ir.Imm1(Common::Bit<31>(imm32));
+        }
+        return {imm32, carry_out};
+    }
+
+    IR::ResultAndCarry<IR::U32> DecodeShiftedReg(Reg n, Imm<3> imm3, Imm<2> imm2, Imm<2> t, IR::U1 carry_in) {
+        const auto reg = ir.GetRegister(n);
+        u8 shift_n = static_cast<u8>(concatenate(imm3, imm2).ZeroExtend());
+        switch (t.ZeroExtend()) {
+            case 0b00: {
+                const auto result = ir.LogicalShiftLeft(reg, ir.Imm8(shift_n), carry_in);
+                return result;
+            }
+            case 0b01: {
+                if (shift_n == 0) {
+                    shift_n = 32;
+                }
+                const auto result = ir.LogicalShiftRight(reg, ir.Imm8(shift_n), carry_in);
+                return result;
+            }
+            case 0b10: {
+                if (shift_n == 0) {
+                    shift_n = 32;
+                }
+                const auto result = ir.ArithmeticShiftRight(reg, ir.Imm8(shift_n), carry_in);
+                return result;
+            } 
+            default: { /* 0b11 */
+                if (shift_n == 0) {
+                    const auto result = ir.RotateRightExtended(reg, carry_in);
+                    return result;
+                }
+                const auto result = ir.RotateRight(reg, ir.Imm8(shift_n), carry_in);
+                return result;
+            }  
+        }
+    }
 
     A32::IREmitter ir;
     TranslationOptions options;
+    
+    ConditionalState cond_state = ConditionalState::None;
+    
+    bool is_thumb_16;
 
+    bool ConditionPassed();
     bool InterpretThisInstruction();
     bool UnpredictableInstruction();
     bool UndefinedInstruction();
@@ -110,10 +195,100 @@ struct ThumbTranslatorVisitor final {
     bool thumb16_SVC(Imm<8> imm8);
     bool thumb16_B_t1(Cond cond, Imm<8> imm8);
     bool thumb16_B_t2(Imm<11> imm11);
+    bool thumb16_IT(Cond firstcond, Imm<4> mask);
 
     // thumb32
-    bool thumb32_BL_imm(Imm<11> hi, Imm<11> lo);
-    bool thumb32_BLX_imm(Imm<11> hi, Imm<11> lo);
+    bool thumb32_STMIA(bool W, Reg n, RegList reg_list);
+    bool thumb32_LDMIA(bool W, Reg n, RegList reg_list);
+    bool thumb32_STMDB(bool W, Reg n, RegList reg_list);
+    bool thumb32_LDMDB(bool W, Reg n, RegList reg_list);
+
+    bool thumb32_TST_reg(Reg n, Imm<3> imm3, Imm<2> imm2, Imm<2> t, Reg m);
+    bool thumb32_AND_reg(bool S, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m);
+    bool thumb32_BIC_reg(bool S, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m);
+    bool thumb32_LSL_imm(bool S, Imm<3> imm3, Reg d, Imm<2> imm2, Reg m);
+    bool thumb32_LSR_imm(bool S, Imm<3> imm3, Reg d, Imm<2> imm2, Reg m);
+    bool thumb32_ASR_imm(bool S, Imm<3> imm3, Reg d, Imm<2> imm2, Reg m);
+    bool thumb32_RRX(bool S, Reg d, Reg m);
+    bool thumb32_ROR_imm(bool S, Imm<3> imm3, Reg d, Imm<2> imm2, Reg m);
+    bool thumb32_ORR_reg(bool S, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m);
+    bool thumb32_MVN_reg(bool S, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m);
+    bool thumb32_ORN_reg(bool S, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m);
+    bool thumb32_TEQ_reg(Reg n, Imm<3> imm3, Imm<2> imm2, Imm<2> t, Reg m);
+    bool thumb32_EOR_reg(bool S, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m);
+    bool thumb32_PKH(Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, bool tb, Reg m);
+    bool thumb32_CMN_reg(Reg n, Imm<3> imm3, Imm<2> imm2, Imm<2> t, Reg m);
+    bool thumb32_ADD_reg(bool S, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m);
+    bool thumb32_ADC_reg(bool S, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m);
+    bool thumb32_SBC_reg(bool S, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m);
+    bool thumb32_CMP_reg(Reg n, Imm<3> imm3, Imm<2> imm2, Imm<2> t, Reg m);
+    bool thumb32_SUB_reg(bool S, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m);
+    bool thumb32_RSB_reg(bool S, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m);
+
+    bool thumb32_ADR_after(Imm<1> i, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_ADD_imm_2(Imm<1> i, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_MOVW_imm(Imm<1> i, Imm<4> imm4, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_ADR_before(Imm<1> i, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_SUB_imm_2(Imm<1> i, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_MOVT(Imm<1> i, Imm<4> imm4, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_SSAT(bool sh, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5> sat_imm);
+    bool thumb32_SSAT16(Reg n, Reg d, Imm<5> sat_imm);
+    bool thumb32_SBFX(Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5> widthm);
+    bool thumb32_BFC(Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5> msb);
+    bool thumb32_STRB_imm_1(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_STRB_imm_2(Reg n, Reg t, Imm<12> imm12);
+    bool thumb32_STRB(Reg n, Reg t, Imm<2> shift, Reg m);
+
+    bool thumb32_LDRB_lit(bool U, Reg t, Imm<12> imm12);
+    bool thumb32_STRH_imm_1(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_STRH_imm_3(Reg n, Reg t, Imm<12> imm12);
+    bool thumb32_STRH(Reg n, Reg t, Imm<2> shift, Reg m);
+    bool thumb32_STR_imm_1(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_STR_imm_3(Reg n, Reg t, Imm<12> imm12);
+    bool thumb32_STR_reg(Reg n, Reg t, Imm<2> shift, Reg m);
+
+    bool thumb32_LDRB_reg(Reg n, Reg t, Imm<2> shift, Reg m);
+    bool thumb32_LDRB_imm8(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_LDRB_imm12(Reg n, Reg t, Imm<12> imm12);
+    bool thumb32_LDRSB_lit(bool u, Reg t, Imm<12> imm12);
+    bool thumb32_LDRSB_reg(Reg n, Reg t, Imm<2> shift, Reg m);
+    bool thumb32_LDRSB_imm8(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_LDRSB_imm12(Reg n, Reg t, Imm<12> imm12);
+
+    bool thumb32_LDRH_lit(bool u, Reg t, Imm<12> imm12);
+    bool thumb32_LDRH_reg(Reg n, Reg t, Imm<2> shift, Reg m);
+    bool thumb32_LDRH_imm8(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_LDRH_imm12(Reg n, Reg t, Imm<12> imm12);
+    bool thumb32_LDRSH_lit(bool u, Reg t, Imm<12> imm12);
+    bool thumb32_LDRSH_reg(Reg n, Reg t, Imm<2> shift, Reg m);
+    bool thumb32_LDRSH_imm8(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_LDRSH_imm12(Reg n, Reg t, Imm<12> imm12);
+
+    bool thumb32_LDR_lit(bool u, Reg t, Imm<12> imm12);
+    bool thumb32_LDR_reg(Reg n, Reg t, Imm<2> shift, Reg m);
+    bool thumb32_LDR_imm8(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_LDR_imm12(Reg n, Reg t, Imm<12> imm12);
+
+    bool thumb32_MOV_imm(Imm<1> i, bool S, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_BIC_imm(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_AND_imm(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_ORR_imm(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_TST_imm(Imm<1> i, Reg n, Imm<3> imm3, Imm<8> imm8);
+    bool thumb32_MVN_imm(Imm<1> i, bool S, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_ORN_imm(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_TEQ_imm(Imm<1> i, Reg n, Imm<3> imm3, Imm<8> imm8);
+    bool thumb32_EOR_imm(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_CMN_imm(Imm<1> i, Reg n, Imm<3> imm3, Imm<8> imm8);
+    bool thumb32_ADD_imm_1(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_ADC_imm(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_SBC_imm(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_CMP_imm(Imm<1> i, Reg n, Imm<3> imm3, Imm<8> imm8);
+    bool thumb32_SUB_imm_1(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_RSB_imm(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_BL_imm(bool S, Imm<10> hi, bool j1, bool j2, Imm<11> lo);
+    bool thumb32_BLX_imm(bool S, Imm<10> hi, bool j1, bool j2, Imm<11> lo);
+    bool thumb32_B_cond(Imm<1> S, Cond cond, Imm<6> imm6, Imm<1> j1, Imm<1> j2, Imm<11> imm11);
+    bool thumb32_B(bool S, Imm<10> imm10, bool j1, bool j2, Imm<11> imm11);
     bool thumb32_UDF();
 };
 

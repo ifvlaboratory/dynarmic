@@ -36,44 +36,6 @@
 namespace {
 using namespace Dynarmic;
 
-bool ShouldTestInst(u32 instruction, u32 pc, bool is_last_inst) {
-    const A32::LocationDescriptor location{pc, {}, {}};
-    IR::Block block{location};
-    const bool should_continue = A32::TranslateSingleInstruction(block, location, instruction);
-
-    if (!should_continue && !is_last_inst) {
-        return false;
-    }
-
-    if (auto terminal = block.GetTerminal(); boost::get<IR::Term::Interpret>(&terminal)) {
-        return false;
-    }
-
-    for (const auto& ir_inst : block) {
-        switch (ir_inst.GetOpcode()) {
-        case IR::Opcode::A32ExceptionRaised:
-        case IR::Opcode::A32CallSupervisor:
-        case IR::Opcode::A32CoprocInternalOperation:
-        case IR::Opcode::A32CoprocSendOneWord:
-        case IR::Opcode::A32CoprocSendTwoWords:
-        case IR::Opcode::A32CoprocGetOneWord:
-        case IR::Opcode::A32CoprocGetTwoWords:
-        case IR::Opcode::A32CoprocLoadWords:
-        case IR::Opcode::A32CoprocStoreWords:
-            return false;
-        // Currently unimplemented in Unicorn
-        case IR::Opcode::FPVectorRecipEstimate16:
-        case IR::Opcode::FPVectorRSqrtEstimate16:
-        case IR::Opcode::VectorPolynomialMultiplyLong64:
-            return false;
-        default:
-            continue;
-        }
-    }
-
-    return true;
-}
-
 u32 GenRandomInst(u32 pc, bool is_last_inst) {
     static const struct InstructionGeneratorInfo {
         std::vector<InstructionGenerator> generators;
@@ -139,7 +101,7 @@ u32 GenRandomInst(u32 pc, bool is_last_inst) {
             continue;
         }
 
-        if (ShouldTestInst(inst, pc, is_last_inst)) {
+        if (ShouldTestA32Inst(inst, pc, false, is_last_inst)) {
             return inst;
         }
     }

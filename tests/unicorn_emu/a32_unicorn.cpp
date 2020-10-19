@@ -42,16 +42,11 @@ template <class TestEnvironment>
 void A32Unicorn<TestEnvironment>::Run() {
     // Thumb execution mode requires the LSB to be set to 1.
     constexpr u64 pc_mask = std::is_same_v<TestEnvironment, ArmTestEnv> ? 0 : 1;
-    while (testenv.ticks_left > 0) {
-        const u32 pc = GetPC() | pc_mask;
-        if (auto cerr_ = uc_emu_start(uc, pc, END_ADDRESS, 0, 1)) {
-            ASSERT_MSG(false, "uc_emu_start failed @ {:08x} (code = {:08x}) with error {} ({})", pc, testenv.MemoryReadCode(pc), cerr_, uc_strerror(cerr_));
-        }
-        testenv.ticks_left--;
-        if (!testenv.interrupts.empty() || testenv.code_mem_modified_by_guest) {
-            return;
-        }
+    const u32 pc = GetPC() | pc_mask;
+    if (auto cerr_ = uc_emu_start(uc, pc, END_ADDRESS, 0, testenv.ticks_left)) {
+       ASSERT_MSG(false, "uc_emu_start failed @ {:08x} (code = {:08x}) with error {} ({})", pc, testenv.MemoryReadCode(pc), cerr_, uc_strerror(cerr_));
     }
+    testenv.ticks_left = 0;
 
     const bool T = Dynarmic::Common::Bit<5>(GetCpsr());
     const u32 new_pc = GetPC() | (T ? 1 : 0);
