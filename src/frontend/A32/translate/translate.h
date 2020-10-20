@@ -14,7 +14,7 @@ namespace Dynarmic::A32 {
 
 class LocationDescriptor;
 
-using MemoryReadCodeFuncType = std::function<u32(u32 vaddr)>;
+using MemoryReadCodeFuncType = std::function<u32(u32 vaddr, bool thumb)>;
 
 struct TranslationOptions {
     /// This changes what IR we emit when we translate an unpredictable instruction.

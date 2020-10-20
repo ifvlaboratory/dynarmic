@@ -25,15 +25,11 @@ enum class ThumbInstSize {
 };
 
 bool IsThumb16(u16 first_part) {
-    return (first_part & 0xF800) < 0xE800;
+    return (first_part & 0xF800U) < 0xE800;
 }
 
 std::tuple<u32, ThumbInstSize> ReadThumbInstruction(u32 arm_pc, MemoryReadCodeFuncType memory_read_code) {
-    u32 first_part = memory_read_code(arm_pc & 0xFFFFFFFC);
-    if ((arm_pc & 0x2) != 0) {
-        first_part >>= 16;
-    }
-    first_part &= 0xFFFF;
+    u32 first_part = memory_read_code(arm_pc & 0xFFFFFFFEU, true);
 
     if (IsThumb16(static_cast<u16>(first_part))) {
         // 16-bit thumb instruction
@@ -42,14 +38,8 @@ std::tuple<u32, ThumbInstSize> ReadThumbInstruction(u32 arm_pc, MemoryReadCodeFu
 
     // 32-bit thumb instruction
     // These always start with 0b11101, 0b11110 or 0b11111.
-
-    u32 second_part = memory_read_code((arm_pc + 2) & 0xFFFFFFFC);
-    if (((arm_pc + 2) & 0x2) != 0) {
-        second_part >>= 16;
-    }
-    second_part &= 0xFFFF;
-
-    return std::make_tuple(static_cast<u32>((first_part << 16) | second_part), ThumbInstSize::Thumb32);
+    u32 second_part = memory_read_code((arm_pc + 2) & 0xFFFFFFFEU, true);
+    return std::make_tuple(static_cast<u32>((first_part << 16U) | second_part), ThumbInstSize::Thumb32);
 }
 
 } // local namespace

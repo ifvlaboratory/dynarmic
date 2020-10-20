@@ -38,7 +38,7 @@ IR::Block TranslateArm(LocationDescriptor descriptor, MemoryReadCodeFuncType mem
     bool should_continue = true;
     do {
         const u32 arm_pc = visitor.ir.current_location.PC();
-        const u32 arm_instruction = memory_read_code(arm_pc);
+        const u32 arm_instruction = memory_read_code(arm_pc, false);
 
         if (const auto vfp_decoder = DecodeVFP<ArmTranslatorVisitor>(arm_instruction)) {
             should_continue = vfp_decoder->get().call(visitor, arm_instruction);

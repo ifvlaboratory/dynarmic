@@ -175,7 +175,9 @@ private:
             PerformCacheInvalidation();
         }
 
-        IR::Block ir_block = A32::Translate(A32::LocationDescriptor{descriptor}, [this](u32 vaddr) { return conf.callbacks->MemoryReadCode(vaddr); }, {conf.define_unpredictable_behaviour, conf.hook_hint_instructions});
+        IR::Block ir_block = A32::Translate(A32::LocationDescriptor{descriptor}, [this](u32 vaddr, bool thumb) {
+            return thumb ? conf.callbacks->MemoryReadThumbCode(vaddr) : conf.callbacks->MemoryReadCode(vaddr);
+        }, {conf.define_unpredictable_behaviour, conf.hook_hint_instructions});
         if (conf.HasOptimization(OptimizationFlag::GetSetElimination)) {
             Optimization::A32GetSetElimination(ir_block);
             Optimization::DeadCodeElimination(ir_block);
