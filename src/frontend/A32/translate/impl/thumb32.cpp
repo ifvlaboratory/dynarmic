@@ -70,21 +70,10 @@ bool ThumbTranslatorVisitor::thumb32_PUSH(bool M, RegList reg_list) {
         return UnpredictableInstruction();
     }
 
-    const u32 num_bytes_to_push = static_cast<u32>(4 * Common::BitCount(reg_list));
-    const auto final_address = ir.Sub(ir.GetRegister(Reg::SP), ir.Imm32(num_bytes_to_push));
+    const u32 num_bytes = static_cast<u32>(4 * Common::BitCount(reg_list));
+    const auto final_address = ir.Sub(ir.GetRegister(Reg::SP), ir.Imm32(num_bytes));
     auto address = final_address;
-    for (size_t i = 0; i < 16; i++) {
-        if (Common::Bit(i, reg_list)) {
-            // TODO: Deal with alignment
-            const auto Ri = ir.GetRegister(static_cast<Reg>(i));
-            ir.WriteMemory32(address, Ri);
-            address = ir.Add(address, ir.Imm32(4));
-        }
-    }
-
-    ir.SetRegister(Reg::SP, final_address);
-    // TODO(optimization): Possible location for an RSB push.
-    return true;
+    return Helper::STMHelper(ir, true, Reg::SP, reg_list, address, final_address);
 }
 
 // B<c>.W <label>
@@ -502,7 +491,8 @@ bool ThumbTranslatorVisitor::thumb32_STMDB(bool W, Reg n, RegList reg_list) {
 
     const u32 num_bytes = static_cast<u32>(4 * Common::BitCount(reg_list));
     const auto final_address = ir.Sub(ir.GetRegister(n), ir.Imm32(num_bytes));
-    return Helper::STMHelper(ir, W, n, reg_list, final_address, final_address);
+    auto address = final_address;
+    return Helper::STMHelper(ir, W, n, reg_list, address, final_address);
 }
 
 // LDMDB<c> <Rn>{!},<registers>
@@ -527,8 +517,8 @@ bool ThumbTranslatorVisitor::thumb32_LDMDB(bool W, Reg n, RegList reg_list) {
 
     const u32 num_bytes = static_cast<u32>(4 * Common::BitCount(reg_list));
     const auto final_address = ir.Sub(ir.GetRegister(n), ir.Imm32(num_bytes));
-//    auto address = final_address;
-    return Helper::LDMHelper(ir, W, n, reg_list, final_address, final_address);
+    auto address = final_address;
+    return Helper::LDMHelper(ir, W, n, reg_list, address, final_address);
 }
 
 // TST<c>.W <Rn>,<Rm>{,<shift>}
@@ -1704,12 +1694,18 @@ bool ThumbTranslatorVisitor::thumb32_LDR_imm12(Reg n, Reg t, Imm<12> imm12) {
 
 // DMB<c> <option>
 bool ThumbTranslatorVisitor::thumb32_DMB([[maybe_unused]] Imm<4> option) {
+    if (!ConditionPassed()) {
+        return true;
+    }
     ir.DataMemoryBarrier();
     return true;
 }
 
 // MRC<c> <coproc>, <opc1>, <Rt>, <CRn>, <CRm>{, <opc2>}
 bool ThumbTranslatorVisitor::thumb32_MRC(size_t opc1, CoprocReg CRn, Reg t, size_t coproc, size_t opc2, CoprocReg CRm) {
+    if (!ConditionPassed()) {
+        return true;
+    }
     if ((coproc & 0b1110U) == 0b1010) {
         return UndefinedInstruction();
     }
@@ -1724,6 +1720,9 @@ bool ThumbTranslatorVisitor::thumb32_MRC(size_t opc1, CoprocReg CRn, Reg t, size
 
 // STREXH<c> <Rd>, <Rt>, [<Rn>]
 bool ThumbTranslatorVisitor::thumb32_STREXH(Reg n, Reg t, Reg d) {
+    if (!ConditionPassed()) {
+        return true;
+    }
     if (d == Reg::R13 || d == Reg::PC) {
         return UnpredictableInstruction();
     }
@@ -1746,6 +1745,9 @@ bool ThumbTranslatorVisitor::thumb32_STREXH(Reg n, Reg t, Reg d) {
 
 // LDREXH<c> <Rt>, [<Rn>]
 bool ThumbTranslatorVisitor::thumb32_LDREXH(Reg n, Reg t) {
+    if (!ConditionPassed()) {
+        return true;
+    }
     if (t == Reg::PC || t == Reg::R13 || t == Reg::R14 || n == Reg::PC) {
         return UnpredictableInstruction();
     }
@@ -1757,15 +1759,14 @@ bool ThumbTranslatorVisitor::thumb32_LDREXH(Reg n, Reg t) {
 
 // UXTH<c>.W <Rd>, <Rm>{, <rotation>}
 bool ThumbTranslatorVisitor::thumb32_UXTH(Reg d, SignExtendRotation rotate, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
     if (d == Reg::R13 || m == Reg::R13) {
         return UnpredictableInstruction();
     }
     if (d == Reg::PC || m == Reg::PC) {
         return UnpredictableInstruction();
-    }
-
-    if (!ConditionPassed()) {
-        return true;
     }
 
     const auto rotated = Rotate(ir, m, rotate);
