@@ -76,6 +76,10 @@ public:
         MemoryWrite32(vaddr, static_cast<u32>(value));
         MemoryWrite32(vaddr + 4, static_cast<u32>(value >> 32));
     }
+    bool MemoryWriteExclusive16(u32 vaddr, std::uint16_t value, std::uint16_t /*expected*/) override {
+        MemoryWrite16(vaddr, value);
+        return true;
+    }
 
     void InterpreterFallback(u32 pc, size_t num_instructions) override { ASSERT_MSG(false, "InterpreterFallback({:08x}, {}) code = {:08x}", pc, num_instructions, MemoryReadCode(pc)); }
 
