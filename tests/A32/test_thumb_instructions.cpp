@@ -32,7 +32,7 @@ TEST_CASE("thumb2: LDRD (imm)", "[thumb2]") {
     ThumbTestEnv test_env;
     Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
     test_env.code_mem = {
-            0xe9d2, 0x0100, // ldrd r0, r1, [r2]
+            0xe9f2, 0x0102, // ldrd r0, r1, [r2, #0x8]!
             0xe7fe, // b #0
     };
 
@@ -45,8 +45,9 @@ TEST_CASE("thumb2: LDRD (imm)", "[thumb2]") {
     test_env.ticks_left = 1;
     jit.Run();
 
-    REQUIRE(jit.Regs()[0] == 0x7b7a7978);
-    REQUIRE(jit.Regs()[1] == 0x7f7e7d7c);
+    REQUIRE(jit.Regs()[0] == 0x83828180);
+    REQUIRE(jit.Regs()[1] == 0x87868584);
+    REQUIRE(jit.Regs()[2] == 0x80);
     REQUIRE(jit.Regs()[15] == 4);
     REQUIRE(jit.Cpsr() == 0x00000030);
 }
