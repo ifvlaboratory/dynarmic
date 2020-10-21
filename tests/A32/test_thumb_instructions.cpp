@@ -28,6 +28,29 @@ static Dynarmic::A32::UserConfig GetUserConfig(ThumbTestEnv* testenv) {
     return user_config;
 }
 
+TEST_CASE("thumb2: LDRD (imm)", "[thumb2]") {
+    ThumbTestEnv test_env;
+    Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
+    test_env.code_mem = {
+            0xe9d2, 0x0100, // ldrd r0, r1, [r2]
+            0xe7fe, // b #0
+    };
+
+    jit.Regs()[0] = 1;
+    jit.Regs()[1] = 2;
+    jit.Regs()[2] = 0x78;
+    jit.Regs()[15] = 0; // PC = 0
+    jit.SetCpsr(0x00000030); // Thumb, User-mode
+
+    test_env.ticks_left = 1;
+    jit.Run();
+
+    REQUIRE(jit.Regs()[0] == 0x7b7a7978);
+    REQUIRE(jit.Regs()[1] == 0x7f7e7d7c);
+    REQUIRE(jit.Regs()[15] == 4);
+    REQUIRE(jit.Cpsr() == 0x00000030);
+}
+
 TEST_CASE("thumb2: LDREXH", "[thumb2]") {
     monitor = new Dynarmic::ExclusiveMonitor(1);
 
@@ -47,16 +70,17 @@ TEST_CASE("thumb2: LDREXH", "[thumb2]") {
     jit.Regs()[15] = 0; // PC = 0
     jit.SetCpsr(0x00000030); // Thumb, User-mode
 
-    test_env.ticks_left = 1;
+    test_env.ticks_left = 4;
     jit.Run();
 
     REQUIRE(jit.Regs()[1] == 0x7978);
-    REQUIRE(jit.Regs()[3] == 0);
     REQUIRE(jit.Regs()[2] == 0x7b7a0001);
+    REQUIRE(jit.Regs()[3] == 0);
     REQUIRE(jit.Regs()[15] == 10);
     REQUIRE(jit.Cpsr() == 0x00000030);
 
     delete monitor;
+    monitor = nullptr;
 }
 
 TEST_CASE("thumb2: PUSH", "[thumb2]") {
@@ -109,6 +133,8 @@ TEST_CASE("thumb2: MRC", "[thumb2]") {
     REQUIRE(jit.Regs()[0] == 0x12345678);
     REQUIRE(jit.Regs()[15] == 4);
     REQUIRE(jit.Cpsr() == 0x00000030);
+
+    cp15 = nullptr;
 }
 
 TEST_CASE("thumb: UXTH", "[thumb]") {

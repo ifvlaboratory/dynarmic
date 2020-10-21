@@ -41,10 +41,6 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_LDREX,          "LDREX",                    "111010000101--------------------"),
         //INST(&V::thumb32_STRD_imm_1,     "STRD (imm)",               "11101000-110--------------------"),
         //INST(&V::thumb32_STRD_imm_2,     "STRD (imm)",               "11101001-1-0--------------------"),
-        //INST(&V::thumb32_LDRD_imm_1,     "LDRD (lit)",               "11101000-1111111----------------"),
-        //INST(&V::thumb32_LDRD_imm_2,     "LDRD (lit)",               "11101001-1-11111----------------"),
-        //INST(&V::thumb32_LDRD_imm_1,     "LDRD (imm)",               "11101000-111--------------------"),
-        //INST(&V::thumb32_LDRD_imm_2,     "LDRD (imm)",               "11101001-1-1--------------------"),
         //INST(&V::thumb32_STREXB,         "STREXB",                   "111010001100------------0100----"),
         INST(&V::thumb32_STREXH,         "STREXH",                   "111010001100nnnntttt11110101mmmm"),
         //INST(&V::thumb32_STREXD,         "STREXD",                   "111010001100------------0111----"),
@@ -53,6 +49,10 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_LDREXB,         "LDREXB",                   "111010001101------------0100----"),
         INST(&V::thumb32_LDREXH,         "LDREXH",                   "111010001101nnnntttt111101011111"),
         //INST(&V::thumb32_LDREXD,         "LDREXD",                   "111010001101------------0111----"),
+        //INST(&V::thumb32_LDRD_imm_1,     "LDRD (lit)",               "11101000-1111111----------------"),
+        //INST(&V::thumb32_LDRD_imm_2,     "LDRD (lit)",               "11101001-1-11111----------------"),
+        //INST(&V::thumb32_LDRD_imm_1,     "LDRD (imm)",               "11101000-111--------------------"),
+        INST(&V::thumb32_LDRD_imm_2,     "LDRD (imm)",               "1110100PU1W1nnnnttttddddvvvvvvvv"),
 
         // Data Processing (Shifted Register)
         INST(&V::thumb32_TST_reg,        "TST (reg)",                "111010100001nnnn0iii1111mmttrrrr"),

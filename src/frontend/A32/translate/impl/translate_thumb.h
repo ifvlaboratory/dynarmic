@@ -206,6 +206,7 @@ struct ThumbTranslatorVisitor final {
     bool thumb32_STMDB(bool W, Reg n, RegList reg_list);
     bool thumb32_LDMDB(bool W, Reg n, RegList reg_list);
 
+    bool thumb32_LDRD_imm_2(bool P, bool U, bool W, Reg n, Reg t1, Reg t2, Imm<8> imm8);
     bool thumb32_STREXH(Reg n, Reg d, Reg t);
     bool thumb32_LDREXH(Reg n, Reg t);
 

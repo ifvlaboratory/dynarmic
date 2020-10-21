@@ -1718,6 +1718,46 @@ bool ThumbTranslatorVisitor::thumb32_MRC(size_t opc1, CoprocReg CRn, Reg t, size
     return true;
 }
 
+// LDRD<c> <Rt>, <Rt2>, [<Rn>{, #+/-<imm>}]
+// LDRD<c> <Rt>, <Rt2>, [<Rn>], #+/-<imm>
+// LDRD<c> <Rt>, <Rt2>, [<Rn>, #+/-<imm>]!
+bool ThumbTranslatorVisitor::thumb32_LDRD_imm_2(bool P, bool U, bool W, Reg n, Reg t1, Reg t2, Imm<8> imm8) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    if (!P && !W) {
+        return UnpredictableInstruction();
+    }
+    if(n == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if(W && (n == t1 || n == t2)) {
+        return UnpredictableInstruction();
+    }
+    if(t1 == Reg::R13 || t1 == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if(t2 == Reg::R13 || t2 == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if(t1 == t2) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 imm32 = imm8.ZeroExtend() << 2U;
+
+    const auto offset = ir.Imm32(imm32);
+    const auto address_a = Helper::GetAddress(ir, P, U, W, n, offset);
+    const auto address_b = ir.Add(address_a, ir.Imm32(4));
+    const auto data_a = ir.ReadMemory32(address_a);
+    const auto data_b = ir.ReadMemory32(address_b);
+
+    ir.SetRegister(t1, data_a);
+    ir.SetRegister(t2, data_b);
+    return true;
+}
+
 // STREXH<c> <Rd>, <Rt>, [<Rn>]
 bool ThumbTranslatorVisitor::thumb32_STREXH(Reg n, Reg t, Reg d) {
     if (!ConditionPassed()) {
