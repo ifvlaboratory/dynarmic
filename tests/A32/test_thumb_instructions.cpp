@@ -28,6 +28,33 @@ static Dynarmic::A32::UserConfig GetUserConfig(ThumbTestEnv* testenv) {
     return user_config;
 }
 
+TEST_CASE("thumb2: STRD (imm)", "[thumb2]") {
+    ThumbTestEnv test_env;
+    Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
+    test_env.code_mem = {
+            0xe9e2, 0x0102, // strd r0, r1, [r2, #0x8]!
+            0xe9d2, 0x3400, // ldrd r3, r4, [r2]
+            0xe7fe, // b #0
+    };
+
+    jit.Regs()[0] = 0x12345678;
+    jit.Regs()[1] = 0x17654320;
+    jit.Regs()[2] = 0x78;
+    jit.Regs()[3] = 3;
+    jit.Regs()[4] = 4;
+    jit.Regs()[15] = 0; // PC = 0
+    jit.SetCpsr(0x00000030); // Thumb, User-mode
+
+    test_env.ticks_left = 2;
+    jit.Run();
+
+    REQUIRE(jit.Regs()[2] == 0x80);
+    REQUIRE(jit.Regs()[3] == 0x12345678);
+    REQUIRE(jit.Regs()[4] == 0x17654320);
+    REQUIRE(jit.Regs()[15] == 8);
+    REQUIRE(jit.Cpsr() == 0x00000030);
+}
+
 TEST_CASE("thumb2: LDRD (imm)", "[thumb2]") {
     ThumbTestEnv test_env;
     Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
