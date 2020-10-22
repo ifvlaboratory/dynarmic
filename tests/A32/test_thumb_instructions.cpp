@@ -28,6 +28,28 @@ static Dynarmic::A32::UserConfig GetUserConfig(ThumbTestEnv* testenv) {
     return user_config;
 }
 
+TEST_CASE("thumb2: VMOV (2xcore to f64)", "[thumb2]") {
+    ThumbTestEnv test_env;
+    Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
+    test_env.code_mem = {
+            0xec45, 0x4b31, // vmov d17, r4, r5
+            0xe7fe, // b #0
+    };
+
+    jit.Regs()[4] = 4;
+    jit.Regs()[5] = 5;
+    jit.Regs()[15] = 0; // PC = 0
+    jit.SetCpsr(0x00000030); // Thumb, User-mode
+
+    test_env.ticks_left = 1;
+    jit.Run();
+
+    REQUIRE(jit.ExtRegs()[34] == 4);
+    REQUIRE(jit.ExtRegs()[35] == 5);
+    REQUIRE(jit.Regs()[15] == 4);
+    REQUIRE(jit.Cpsr() == 0x00000030);
+}
+
 TEST_CASE("thumb2: STRD (imm)", "[thumb2]") {
     ThumbTestEnv test_env;
     Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};

@@ -18,6 +18,28 @@ static A32::UserConfig GetUserConfig(ArmTestEnv* testenv) {
     return user_config;
 }
 
+TEST_CASE("arm: VMOV (2xcore to f64)", "[arm][A32]") {
+    ArmTestEnv test_env;
+    A32::Jit jit{GetUserConfig(&test_env)};
+    test_env.code_mem = {
+            0xec454b31, // vmov d17, r4, r5
+            0xeafffffe, // b #0
+    };
+
+    jit.Regs()[4] = 4;
+    jit.Regs()[5] = 5;
+    jit.Regs()[15] = 0; // PC = 0
+    jit.SetCpsr(0x000001d0); // User-mode
+
+    test_env.ticks_left = 1;
+    jit.Run();
+
+    REQUIRE(jit.ExtRegs()[34] == 4);
+    REQUIRE(jit.ExtRegs()[35] == 5);
+    REQUIRE(jit.Regs()[15] == 4);
+    REQUIRE(jit.Cpsr() == 0x000001d0);
+}
+
 TEST_CASE("arm: Opt Failure: Const folding in MostSignificantWord", "[arm][A32]") {
     // This was a randomized test-case that was failing.
     // This was due to constant folding for MostSignificantWord

@@ -85,7 +85,7 @@ public:
 
     void CallSVC(std::uint32_t swi) override { ASSERT_MSG(false, "CallSVC({})", swi); }
 
-    void ExceptionRaised(u32 pc, Dynarmic::A32::Exception /*exception*/) override { ASSERT_MSG(false, "ExceptionRaised({:08x})", pc); }
+    void ExceptionRaised(u32 pc, Dynarmic::A32::Exception exception) override { ASSERT_MSG(false, "ExceptionRaised({:08x}), exception={}\n", pc, exception); }
 
     void AddTicks(std::uint64_t ticks) override {
         if (ticks > ticks_left) {
