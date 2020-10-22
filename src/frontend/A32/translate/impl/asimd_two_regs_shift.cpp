@@ -7,6 +7,7 @@
 #include "common/bit_util.h"
 
 #include "frontend/A32/translate/impl/translate_arm.h"
+#include "frontend/A32/translate/impl/translate_thumb.h"
 
 namespace Dynarmic::A32 {
 namespace {
@@ -31,7 +32,7 @@ enum class Signedness {
     Unsigned
 };
 
-IR::U128 PerformRoundingCorrection(ArmTranslatorVisitor& v, size_t esize, u64 round_value, IR::U128 original, IR::U128 shifted) {
+IR::U128 PerformRoundingCorrection(A32TranslatorVisitor& v, size_t esize, u64 round_value, IR::U128 original, IR::U128 shifted) {
     const auto round_const = v.ir.VectorBroadcast(esize, v.I(esize, round_value));
     const auto round_correction = v.ir.VectorEqual(esize, v.ir.VectorAnd(original, round_const), round_const);
     return v.ir.VectorSub(esize, shifted, round_correction);
@@ -57,7 +58,7 @@ std::pair<size_t, size_t> ElementSizeAndShiftAmount(bool right_shift, bool L, si
     }
 }
 
-bool ShiftRight(ArmTranslatorVisitor& v, bool U, bool D, size_t imm6, size_t Vd, bool L, bool Q, bool M, size_t Vm,
+bool ShiftRight(A32TranslatorVisitor& v, bool U, bool D, size_t imm6, size_t Vd, bool L, bool Q, bool M, size_t Vm,
                 Accumulating accumulate, Rounding rounding) {
     if (!L && Common::Bits<3, 5>(imm6) == 0) {
         return v.DecodeError();
@@ -141,6 +142,11 @@ bool ShiftRightNarrowing(ArmTranslatorVisitor& v, bool D, size_t imm6, size_t Vd
 } // Anonymous namespace
 
 bool ArmTranslatorVisitor::asimd_SHR(bool U, bool D, size_t imm6, size_t Vd, bool L, bool Q, bool M, size_t Vm) {
+    return ShiftRight(*this, U, D, imm6, Vd, L, Q, M, Vm,
+                      Accumulating::None, Rounding::None);
+}
+
+bool ThumbTranslatorVisitor::asimd_SHR(bool U, bool D, size_t imm6, size_t Vd, bool L, bool Q, bool M, size_t Vm) {
     return ShiftRight(*this, U, D, imm6, Vd, L, Q, M, Vm,
                       Accumulating::None, Rounding::None);
 }

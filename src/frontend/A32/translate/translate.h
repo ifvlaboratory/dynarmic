@@ -4,7 +4,11 @@
  */
 #pragma once
 
+#include <dynarmic/A32/config.h>
+
 #include "common/common_types.h"
+#include "frontend/A32/ir_emitter.h"
+#include "frontend/A32/types.h"
 
 namespace Dynarmic::IR {
 class Block;
@@ -26,6 +30,72 @@ struct TranslationOptions {
     /// If this is false, we treat the instruction as a NOP.
     /// If this is true, we emit an ExceptionRaised instruction.
     bool hook_hint_instructions = true;
+};
+
+struct ImmAndCarry {
+    u32 imm32;
+    IR::U1 carry;
+};
+
+enum class ConditionalState {
+    /// We haven't met any conditional instructions yet.
+    None,
+    /// Current instruction is a conditional. This marks the end of this basic block.
+    Break,
+    /// This basic block is made up solely of conditional instructions.
+    Translating,
+    /// This basic block is made up of conditional instructions followed by unconditional instructions.
+    Trailing,
+};
+
+struct A32TranslatorVisitor {
+
+    explicit A32TranslatorVisitor(IR::Block& block, LocationDescriptor descriptor, const TranslationOptions& options) : ir(block, descriptor), options(options) {
+    }
+
+    ConditionalState cond_state = ConditionalState::None;
+
+    A32::IREmitter ir;
+    TranslationOptions options;
+
+    // Creates an immediate of the given value
+    IR::UAny I(size_t bitsize, u64 value) {
+        switch (bitsize) {
+            case 8:
+                return ir.Imm8(static_cast<u8>(value));
+            case 16:
+                return ir.Imm16(static_cast<u16>(value));
+            case 32:
+                return ir.Imm32(static_cast<u32>(value));
+            case 64:
+                return ir.Imm64(value);
+            default:
+                ASSERT_FALSE("Imm - get: Invalid bitsize");
+        }
+    }
+
+    bool InterpretThisInstruction() {
+        ir.SetTerm(IR::Term::Interpret(ir.current_location));
+        return false;
+    }
+
+    bool DecodeError() {
+        ir.ExceptionRaised(Exception::DecodeError);
+        ir.SetTerm(IR::Term::CheckHalt{IR::Term::ReturnToDispatch{}});
+        return false;
+    }
+
+    bool UndefinedInstruction() {
+        ir.ExceptionRaised(Exception::UndefinedInstruction);
+        ir.SetTerm(IR::Term::CheckHalt{IR::Term::ReturnToDispatch{}});
+        return false;
+    }
+
+    bool UnpredictableInstruction() {
+        ir.ExceptionRaised(Exception::UnpredictableInstruction);
+        ir.SetTerm(IR::Term::CheckHalt{IR::Term::ReturnToDispatch{}});
+        return false;
+    }
 };
 
 /**

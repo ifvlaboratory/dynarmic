@@ -7,31 +7,18 @@
 
 #include "common/assert.h"
 #include "frontend/imm.h"
-#include "frontend/A32/ir_emitter.h"
 #include "frontend/A32/location_descriptor.h"
 #include "frontend/A32/translate/translate.h"
-#include "frontend/A32/types.h"
 #include "frontend/A32/translate/helper.h"
 
 namespace Dynarmic::A32 {
 
-enum class ConditionalState {
-    /// We haven't met any conditional instructions yet.
-    None,
-    /// Current instruction is with a new condition code. This marks the end of this basic block.
-    Break,
-    /// This basic block is made up solely of conditional instructions.
-    Translating,
-    /// This basic block is made up of conditional instructions followed by unconditional instructions.
-    Trailing,
-};
-
 enum class Exception;
 
-struct ThumbTranslatorVisitor final {
+struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
     using instruction_return_type = bool;
 
-    explicit ThumbTranslatorVisitor(IR::Block& block, LocationDescriptor descriptor, const TranslationOptions& options) : ir(block, descriptor), options(options) {
+    explicit ThumbTranslatorVisitor(IR::Block& block, LocationDescriptor descriptor, const TranslationOptions& options) : A32TranslatorVisitor(block, descriptor, options), is_thumb_16(false) {
         ASSERT_MSG(descriptor.TFlag(), "The processor must be in Thumb mode");
     }
     
@@ -55,11 +42,6 @@ struct ThumbTranslatorVisitor final {
         const Imm<8> unrotated_value = concatenate(Imm<1>(1), Imm<7>(imm12.Bits<0, 6>()));
         return Common::RotateRight<u32>(unrotated_value.ZeroExtend(), rotate);
     }
-    
-    struct ImmAndCarry {
-        u32 imm32;
-        IR::U1 carry;
-    };
     
     ImmAndCarry ThumbExpandImm_C(Imm<1> i, Imm<3> imm3, Imm<8> imm8, IR::U1 carry_in) {
         const u32 imm32 = ThumbExpandImm(i, imm3, imm8);
@@ -102,18 +84,10 @@ struct ThumbTranslatorVisitor final {
             }  
         }
     }
-
-    A32::IREmitter ir;
-    TranslationOptions options;
-    
-    ConditionalState cond_state = ConditionalState::None;
     
     bool is_thumb_16;
 
     bool ConditionPassed();
-    bool InterpretThisInstruction();
-    bool UnpredictableInstruction();
-    bool UndefinedInstruction();
     bool RaiseException(Exception exception);
 
     // thumb16
@@ -298,6 +272,7 @@ struct ThumbTranslatorVisitor final {
     bool thumb32_DMB(Imm<4> option);
 
     bool vfp_VMOV_2u32_f64(Reg t2, Reg t1, bool M, size_t Vm);
+    bool asimd_SHR(bool U, bool D, size_t imm6, size_t Vd, bool L, bool Q, bool M, size_t Vm);
 
     bool thumb32_BL_imm(bool S, Imm<10> hi, bool j1, bool j2, Imm<11> lo);
     bool thumb32_BLX_imm(bool S, Imm<10> hi, bool j1, bool j2, Imm<11> lo);

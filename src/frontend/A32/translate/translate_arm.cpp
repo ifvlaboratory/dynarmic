@@ -151,49 +151,11 @@ bool ArmTranslatorVisitor::ConditionPassed(Cond cond) {
     return true;
 }
 
-bool ArmTranslatorVisitor::InterpretThisInstruction() {
-    ir.SetTerm(IR::Term::Interpret(ir.current_location));
-    return false;
-}
-
-bool ArmTranslatorVisitor::UnpredictableInstruction() {
-    ir.ExceptionRaised(Exception::UnpredictableInstruction);
-    ir.SetTerm(IR::Term::CheckHalt{IR::Term::ReturnToDispatch{}});
-    return false;
-}
-
-bool ArmTranslatorVisitor::UndefinedInstruction() {
-    ir.ExceptionRaised(Exception::UndefinedInstruction);
-    ir.SetTerm(IR::Term::CheckHalt{IR::Term::ReturnToDispatch{}});
-    return false;
-}
-
-bool ArmTranslatorVisitor::DecodeError() {
-    ir.ExceptionRaised(Exception::DecodeError);
-    ir.SetTerm(IR::Term::CheckHalt{IR::Term::ReturnToDispatch{}});
-    return false;
-}
-
 bool ArmTranslatorVisitor::RaiseException(Exception exception) {
     ir.BranchWritePC(ir.Imm32(ir.current_location.PC() + 4));
     ir.ExceptionRaised(exception);
     ir.SetTerm(IR::Term::CheckHalt{IR::Term::ReturnToDispatch{}});
     return false;
-}
-
-IR::UAny ArmTranslatorVisitor::I(size_t bitsize, u64 value) {
-    switch (bitsize) {
-    case 8:
-        return ir.Imm8(static_cast<u8>(value));
-    case 16:
-        return ir.Imm16(static_cast<u16>(value));
-    case 32:
-        return ir.Imm32(static_cast<u32>(value));
-    case 64:
-        return ir.Imm64(value);
-    default:
-        ASSERT_FALSE("Imm - get: Invalid bitsize");
-    }
 }
 
 IR::ResultAndCarry<IR::U32> ArmTranslatorVisitor::EmitImmShift(IR::U32 value, ShiftType type, Imm<5> imm5, IR::U1 carry_in) {

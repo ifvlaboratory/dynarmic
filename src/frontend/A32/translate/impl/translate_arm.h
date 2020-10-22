@@ -8,53 +8,27 @@
 #include "common/assert.h"
 #include "common/bit_util.h"
 #include "frontend/imm.h"
-#include "frontend/A32/ir_emitter.h"
 #include "frontend/A32/location_descriptor.h"
 #include "frontend/A32/translate/translate.h"
-#include "frontend/A32/types.h"
 #include "frontend/A32/translate/helper.h"
 
 namespace Dynarmic::A32 {
 
 enum class Exception;
 
-enum class ConditionalState {
-    /// We haven't met any conditional instructions yet.
-    None,
-    /// Current instruction is a conditional. This marks the end of this basic block.
-    Break,
-    /// This basic block is made up solely of conditional instructions.
-    Translating,
-    /// This basic block is made up of conditional instructions followed by unconditional instructions.
-    Trailing,
-};
-
-struct ArmTranslatorVisitor final {
+struct ArmTranslatorVisitor final : public A32TranslatorVisitor {
     using instruction_return_type = bool;
 
-    explicit ArmTranslatorVisitor(IR::Block& block, LocationDescriptor descriptor, const TranslationOptions& options) : ir(block, descriptor), options(options) {
+    explicit ArmTranslatorVisitor(IR::Block& block, LocationDescriptor descriptor, const TranslationOptions& options) : A32TranslatorVisitor(block, descriptor, options) {
         ASSERT_MSG(!descriptor.TFlag(), "The processor must be in Arm mode");
     }
 
-    A32::IREmitter ir;
-    ConditionalState cond_state = ConditionalState::None;
-    TranslationOptions options;
-
     bool ConditionPassed(Cond cond);
-    bool InterpretThisInstruction();
-    bool UnpredictableInstruction();
-    bool UndefinedInstruction();
-    bool DecodeError();
     bool RaiseException(Exception exception);
 
     static u32 ArmExpandImm(int rotate, Imm<8> imm8) {
         return Common::RotateRight<u32>(imm8.ZeroExtend(), rotate * 2);
     }
-
-    struct ImmAndCarry {
-        u32 imm32;
-        IR::U1 carry;
-    };
 
     ImmAndCarry ArmExpandImm_C(int rotate, Imm<8> imm8, IR::U1 carry_in) {
         u32 imm32 = imm8.ZeroExtend();
@@ -65,9 +39,6 @@ struct ArmTranslatorVisitor final {
         }
         return {imm32, carry_out};
     }
-
-    // Creates an immediate of the given value
-    IR::UAny I(size_t bitsize, u64 value);
 
     IR::ResultAndCarry<IR::U32> EmitImmShift(IR::U32 value, ShiftType type, Imm<5> imm5, IR::U1 carry_in);
     IR::ResultAndCarry<IR::U32> EmitRegShift(IR::U32 value, ShiftType type, IR::U8 amount, IR::U1 carry_in);

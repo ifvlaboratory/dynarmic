@@ -238,25 +238,8 @@ bool ThumbTranslatorVisitor::ConditionPassed() {
     return true;
 }
 
-bool ThumbTranslatorVisitor::InterpretThisInstruction() {
-    ir.SetTerm(IR::Term::Interpret(ir.current_location));
-    return false;
-}
-
-bool ThumbTranslatorVisitor::UnpredictableInstruction() {
-    ir.ExceptionRaised(Exception::UnpredictableInstruction);
-    ir.SetTerm(IR::Term::CheckHalt{IR::Term::ReturnToDispatch{}});
-    return false;
-}
-
-bool ThumbTranslatorVisitor::UndefinedInstruction() {
-    ir.ExceptionRaised(Exception::UndefinedInstruction);
-    ir.SetTerm(IR::Term::CheckHalt{IR::Term::ReturnToDispatch{}});
-    return false;
-}
-
 bool ThumbTranslatorVisitor::RaiseException(Exception exception) {
-    ir.BranchWritePC(ir.Imm32(ir.current_location.PC() + 2)); // TODO: T32
+    ir.BranchWritePC(ir.Imm32(ir.current_location.PC() + (is_thumb_16 ? 2 : 4)));
     ir.ExceptionRaised(exception);
     ir.SetTerm(IR::Term::CheckHalt{IR::Term::ReturnToDispatch{}});
     return false;
