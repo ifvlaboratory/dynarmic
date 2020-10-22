@@ -1871,6 +1871,29 @@ bool ThumbTranslatorVisitor::vfp_VMOV_2u32_f64(Reg t2, Reg t1, bool M, size_t Vm
     return true;
 }
 
+// VMOV<c> <Rt>, <Rt2>, <Dm>
+bool ThumbTranslatorVisitor::vfp_VMOV_f64_2u32(Reg t2, Reg t1, bool M, size_t Vm) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    const auto m = ToExtReg(true, Vm, M);
+    if (t1 == Reg::PC || t2 == Reg::PC || m == ExtReg::S31) {
+        return UnpredictableInstruction();
+    }
+    if (t1 == Reg::R13 || t2 == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+    if (t1 == t2) {
+        return UnpredictableInstruction();
+    }
+
+    const auto value = ir.GetExtendedRegister(m);
+    ir.SetRegister(t1, ir.LeastSignificantWord(value));
+    ir.SetRegister(t2, ir.MostSignificantWord(value).result);
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }

@@ -328,8 +328,9 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_MRC2,           "MRC2",                     "11111110---1---------------1----"),
         INST(&V::thumb32_MRC,            "MRC",                      "11101110ooo1NNNNttttppppooo1MMMM"),
 
-        INST(&V::vfp_VMOV_2u32_f64, "VMOV (2xcore to f64)",  "111011000100uuuutttt101100M1mmmm"),
-        INST(&V::asimd_SHR,             "SHR",                      "111U11111Diiiiiidddd0000LQM1mmmm"), // ASIMD
+        INST(&V::vfp_VMOV_2u32_f64,      "VMOV (2xcore to f64)",  "111011000100uuuutttt101100M1mmmm"), // VFPv2
+        INST(&V::vfp_VMOV_f64_2u32,      "VMOV (f64 to 2xcore)",    "111011000101uuuutttt101100M1mmmm"), // VFPv2
+        INST(&V::asimd_SHR,              "SHR",                      "111U11111Diiiiiidddd0000LQM1mmmm"), // ASIMD
 
         // Branch instructions
         INST(&V::thumb32_BL_imm,         "BL (imm)",                 "11110svvvvvvvvvv11i1jvvvvvvvvvvv"), // v4T

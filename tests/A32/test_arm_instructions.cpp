@@ -24,6 +24,7 @@ TEST_CASE("arm: VMOV (2xcore to f64)", "[arm][A32]") {
     test_env.code_mem = {
             0xec454b31, // vmov d17, r4, r5
             0xf2f400b1, // vshr.s64 d16, d17, #0xc
+            0xec510b30, // vmov r0, r1, d16
             0xeafffffe, // b #0
     };
 
@@ -32,14 +33,16 @@ TEST_CASE("arm: VMOV (2xcore to f64)", "[arm][A32]") {
     jit.Regs()[15] = 0; // PC = 0
     jit.SetCpsr(0x000001d0); // User-mode
 
-    test_env.ticks_left = 2;
+    test_env.ticks_left = 3;
     jit.Run();
 
+    REQUIRE(jit.Regs()[0] == 0x41212345);
+    REQUIRE(jit.Regs()[1] == 0x00078563);
     REQUIRE(jit.ExtRegs()[32] == 0x41212345);
     REQUIRE(jit.ExtRegs()[33] == 0x00078563);
     REQUIRE(jit.ExtRegs()[34] == 0x12345678);
     REQUIRE(jit.ExtRegs()[35] == 0x78563412);
-    REQUIRE(jit.Regs()[15] == 8);
+    REQUIRE(jit.Regs()[15] == 12);
     REQUIRE(jit.Cpsr() == 0x000001d0);
 }
 
