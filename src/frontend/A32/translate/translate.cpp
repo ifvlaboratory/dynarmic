@@ -9,10 +9,10 @@
 
 namespace Dynarmic::A32 {
 
-IR::Block TranslateArm(LocationDescriptor descriptor, MemoryReadCodeFuncType memory_read_code, const TranslationOptions& options);
-IR::Block TranslateThumb(LocationDescriptor descriptor, MemoryReadCodeFuncType memory_read_code, const TranslationOptions& options);
+IR::Block TranslateArm(LocationDescriptor descriptor, const MemoryReadCodeFuncType& memory_read_code, const TranslationOptions& options);
+IR::Block TranslateThumb(LocationDescriptor descriptor, const MemoryReadCodeFuncType& memory_read_code, const TranslationOptions& options);
 
-IR::Block Translate(LocationDescriptor descriptor, MemoryReadCodeFuncType memory_read_code, const TranslationOptions& options) {
+IR::Block Translate(LocationDescriptor descriptor, const MemoryReadCodeFuncType& memory_read_code, const TranslationOptions& options) {
     return (descriptor.TFlag() ? TranslateThumb : TranslateArm)(descriptor, memory_read_code, options);
 }
 

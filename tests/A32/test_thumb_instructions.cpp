@@ -374,7 +374,7 @@ TEST_CASE("thumb: blx +#67712", "[thumb]") {
     test_env.ticks_left = 1;
     jit.Run();
 
-    REQUIRE(jit.Regs()[14] == (0x4 | 1));
+    REQUIRE(jit.Regs()[14] == (0x4U | 1U));
     REQUIRE(jit.Regs()[15] == 0x10880);
     REQUIRE(jit.Cpsr() == 0x00000010); // User-mode
 }
@@ -393,7 +393,7 @@ TEST_CASE("thumb: bl +#234584", "[thumb]") {
     test_env.ticks_left = 1;
     jit.Run();
 
-    REQUIRE(jit.Regs()[14] == (0x4 | 1));
+    REQUIRE(jit.Regs()[14] == (0x4U | 1U));
     REQUIRE(jit.Regs()[15] == 0x39458);
     REQUIRE(jit.Cpsr() == 0x00000030); // Thumb, User-mode
 }
@@ -412,7 +412,7 @@ TEST_CASE("thumb: bl -#42", "[thumb]") {
     test_env.ticks_left = 1;
     jit.Run();
 
-    REQUIRE(jit.Regs()[14] == (0x4 | 1));
+    REQUIRE(jit.Regs()[14] == (0x4U | 1U));
     REQUIRE(jit.Regs()[15] == 0xFFFFFFD6);
     REQUIRE(jit.Cpsr() == 0x00000030); // Thumb, User-mode
 }

@@ -53,7 +53,7 @@ public:
 
     ITState Advance() const {
         ITState result{*this};
-        result.Flags(result.Flags() << 1);
+        result.Flags(result.Flags() << 1U);
         if (result.Flags() == 0b10000) {
             return ITState{0};
         }

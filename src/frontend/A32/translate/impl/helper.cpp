@@ -20,10 +20,11 @@ bool LDMHelper(A32::IREmitter& ir, bool W, Reg n, RegList list, IR::U32 start_ad
     }
     if (Common::Bit<15>(list)) {
         ir.LoadWritePC(ir.ReadMemory32(address));
-        if (n == Reg::R13)
+        if (n == Reg::R13) {
             ir.SetTerm(IR::Term::PopRSBHint{});
-        else
+        } else {
             ir.SetTerm(IR::Term::FastDispatchHint{});
+        }
         return false;
     }
     return true;

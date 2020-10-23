@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include "common/assert.h"
 #include "common/bit_util.h"
 #include "frontend/imm.h"
 #include "frontend/A32/location_descriptor.h"
@@ -30,7 +29,7 @@ struct ArmTranslatorVisitor final : public A32TranslatorVisitor {
         return Common::RotateRight<u32>(imm8.ZeroExtend(), rotate * 2);
     }
 
-    ImmAndCarry ArmExpandImm_C(int rotate, Imm<8> imm8, IR::U1 carry_in) {
+    IR::ResultAndCarry<u32> ArmExpandImm_C(int rotate, Imm<8> imm8, IR::U1 carry_in) {
         u32 imm32 = imm8.ZeroExtend();
         auto carry_out = carry_in;
         if (rotate) {

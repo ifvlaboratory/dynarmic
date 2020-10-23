@@ -7,9 +7,7 @@
 
 #include <dynarmic/A32/config.h>
 
-#include "common/assert.h"
 #include "common/bit_util.h"
-#include "frontend/imm.h"
 #include "frontend/A32/decoder/thumb16.h"
 #include "frontend/A32/decoder/thumb32.h"
 #include "frontend/A32/ir_emitter.h"
@@ -28,9 +26,9 @@ bool IsThumb16(u16 first_part) {
     return (first_part & 0xF800U) < 0xE800;
 }
 
-std::tuple<u32, ThumbInstSize> ReadThumbInstruction(u32 arm_pc, MemoryReadCodeFuncType memory_read_code) {
-    u32 address = arm_pc & 0xFFFFFFFEU;
-    u32 first_part = memory_read_code(address, true);
+std::tuple<u32, ThumbInstSize> ReadThumbInstruction(u32 arm_pc, const MemoryReadCodeFuncType& memory_read_code) {
+    const u32 address = arm_pc & 0xFFFFFFFEU;
+    const u32 first_part = memory_read_code(address, true);
 
     if (IsThumb16(static_cast<u16>(first_part))) {
         // 16-bit thumb instruction
@@ -39,7 +37,7 @@ std::tuple<u32, ThumbInstSize> ReadThumbInstruction(u32 arm_pc, MemoryReadCodeFu
 
     // 32-bit thumb instruction
     // These always start with 0b11101, 0b11110 or 0b11111.
-    u32 second_part = memory_read_code(address + 2, true);
+    const u32 second_part = memory_read_code(address + 2, true);
     return std::make_tuple(static_cast<u32>((first_part << 16U) | second_part), ThumbInstSize::Thumb32);
 }
 
@@ -55,7 +53,7 @@ static bool CondCanContinue(ConditionalState cond_state, const A32::IREmitter& i
     return std::all_of(ir.block.begin(), ir.block.end(), [](const IR::Inst& inst) { return !inst.WritesToCPSR(); });
 }
 
-IR::Block TranslateThumb(LocationDescriptor descriptor, MemoryReadCodeFuncType memory_read_code, const TranslationOptions& options) {
+IR::Block TranslateThumb(LocationDescriptor descriptor, const MemoryReadCodeFuncType& memory_read_code, const TranslationOptions& options) {
     const bool single_step = descriptor.SingleStepping();
 
     IR::Block block{descriptor};
@@ -115,8 +113,8 @@ IR::Block TranslateThumb(LocationDescriptor descriptor, MemoryReadCodeFuncType m
 bool TranslateSingleThumbInstruction(IR::Block& block, LocationDescriptor descriptor, u32 thumb_instruction) {
     ThumbTranslatorVisitor visitor{block, descriptor, {}};
 
-    const bool is_thumb_16 = IsThumb16(thumb_instruction >> 16);
-    bool should_continue = true;
+    const bool is_thumb_16 = IsThumb16(thumb_instruction >> 16U);
+    bool should_continue;
     visitor.is_thumb_16 = is_thumb_16;
     if (is_thumb_16) {
         if (const auto decoder = DecodeThumb16<ThumbTranslatorVisitor>(static_cast<u16>(thumb_instruction))) {

@@ -7,7 +7,6 @@
 
 #include <dynarmic/A32/config.h>
 
-#include "common/assert.h"
 #include "frontend/A32/decoder/arm.h"
 #include "frontend/A32/decoder/asimd.h"
 #include "frontend/A32/decoder/vfp.h"
@@ -22,14 +21,15 @@ namespace Dynarmic::A32 {
 static bool CondCanContinue(ConditionalState cond_state, const A32::IREmitter& ir) {
     ASSERT_MSG(cond_state != ConditionalState::Break, "Should never happen.");
 
-    if (cond_state == ConditionalState::None)
+    if (cond_state == ConditionalState::None) {
         return true;
+    }
 
     // TODO: This is more conservative than necessary.
     return std::all_of(ir.block.begin(), ir.block.end(), [](const IR::Inst& inst) { return !inst.WritesToCPSR(); });
 }
 
-IR::Block TranslateArm(LocationDescriptor descriptor, MemoryReadCodeFuncType memory_read_code, const TranslationOptions& options) {
+IR::Block TranslateArm(LocationDescriptor descriptor, const MemoryReadCodeFuncType& memory_read_code, const TranslationOptions& options) {
     const bool single_step = descriptor.SingleStepping();
 
     IR::Block block{descriptor};
@@ -80,7 +80,7 @@ bool TranslateSingleArmInstruction(IR::Block& block, LocationDescriptor descript
 
     // TODO: Proper cond handling
 
-    bool should_continue = true;
+    bool should_continue;
     if (const auto vfp_decoder = DecodeVFP<ArmTranslatorVisitor>(arm_instruction)) {
         should_continue = vfp_decoder->get().call(visitor, arm_instruction);
     } else if (const auto asimd_decoder = DecodeASIMD<ArmTranslatorVisitor>(arm_instruction)) {

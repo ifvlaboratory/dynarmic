@@ -18,7 +18,6 @@
 #include "backend/x64/callback.h"
 #include "backend/x64/devirtualize.h"
 #include "backend/x64/jitstate_info.h"
-#include "common/assert.h"
 #include "common/cast_util.h"
 #include "common/common_types.h"
 #include "common/llvm_disassemble.h"
@@ -32,7 +31,7 @@ namespace Dynarmic::A32 {
 
 using namespace Backend::X64;
 
-static RunCodeCallbacks GenRunCodeCallbacks(A32::UserCallbacks* cb, CodePtr (*LookupBlock)(void* lookup_block_arg), void* arg) {
+static RunCodeCallbacks GenRunCodeCallbacks(A32::UserCallbacks* cb, CodePtr (*LookupBlock)(void* /*lookup_block_arg*/), void* arg) {
     return RunCodeCallbacks{
         std::make_unique<ArgCallback>(LookupBlock, reinterpret_cast<u64>(arg)),
         std::make_unique<ArgCallback>(Devirtualize<&A32::UserCallbacks::AddTicks>(cb)),
@@ -166,8 +165,9 @@ private:
 
     A32EmitX64::BlockDescriptor GetBasicBlock(IR::LocationDescriptor descriptor) {
         auto block = emitter.GetBasicBlock(descriptor);
-        if (block)
+        if (block) {
             return *block;
+        }
 
         constexpr size_t MINIMUM_REMAINING_CODESIZE = 1 * 1024 * 1024;
         if (block_of_code.SpaceRemaining() < MINIMUM_REMAINING_CODESIZE) {
@@ -175,9 +175,10 @@ private:
             PerformCacheInvalidation();
         }
 
-        IR::Block ir_block = A32::Translate(A32::LocationDescriptor{descriptor}, [this](u32 vaddr, bool thumb) {
+        MemoryReadCodeFuncType memory_read_code = [this](u32 vaddr, bool thumb) {
             return thumb ? conf.callbacks->MemoryReadThumbCode(vaddr) : conf.callbacks->MemoryReadCode(vaddr);
-        }, {conf.define_unpredictable_behaviour, conf.hook_hint_instructions});
+        };
+        IR::Block ir_block = A32::Translate(A32::LocationDescriptor{descriptor}, memory_read_code, {conf.define_unpredictable_behaviour, conf.hook_hint_instructions});
         if (conf.HasOptimization(OptimizationFlag::GetSetElimination)) {
             Optimization::A32GetSetElimination(ir_block);
             Optimization::DeadCodeElimination(ir_block);

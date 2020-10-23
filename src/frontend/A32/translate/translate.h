@@ -32,11 +32,6 @@ struct TranslationOptions {
     bool hook_hint_instructions = true;
 };
 
-struct ImmAndCarry {
-    u32 imm32;
-    IR::U1 carry;
-};
-
 enum class ConditionalState {
     /// We haven't met any conditional instructions yet.
     None,
@@ -105,7 +100,7 @@ struct A32TranslatorVisitor {
  * @param options Configures how certain instructions are translated.
  * @return A translated basic block in the intermediate representation.
  */
-IR::Block Translate(LocationDescriptor descriptor, MemoryReadCodeFuncType memory_read_code, const TranslationOptions& options);
+IR::Block Translate(LocationDescriptor descriptor, const MemoryReadCodeFuncType& memory_read_code, const TranslationOptions& options);
 
 /**
  * This function translates a single provided instruction into our intermediate representation.

@@ -698,15 +698,15 @@ bool ArmTranslatorVisitor::vfp_VMOV_imm(Cond cond, bool D, Imm<4> imm4H, size_t 
 
     if (sz) {
         const u64 sign = static_cast<u64>(imm8.Bit<7>());
-        const u64 exp = (imm8.Bit<6>() ? 0x3FC : 0x400) | imm8.Bits<4, 5, u64>();
-        const u64 fract = imm8.Bits<0, 3, u64>() << 48;
-        const u64 immediate = (sign << 63) | (exp << 52) | fract;
+        const u64 exp = (imm8.Bit<6>() ? 0x3FCU : 0x400U) | imm8.Bits<4, 5, u64>();
+        const u64 fract = imm8.Bits<0, 3, u64>() << 48U;
+        const u64 immediate = (sign << 63U) | (exp << 52U) | fract;
         ir.SetExtendedRegister(d, ir.Imm64(immediate));
     } else {
         const u32 sign = static_cast<u32>(imm8.Bit<7>());
-        const u32 exp = (imm8.Bit<6>() ? 0x7C : 0x80) | imm8.Bits<4, 5>();
-        const u32 fract = imm8.Bits<0, 3>() << 19;
-        const u32 immediate = (sign << 31) | (exp << 23) | fract;
+        const u32 exp = (imm8.Bit<6>() ? 0x7CU : 0x80U) | imm8.Bits<4, 5>();
+        const u32 fract = imm8.Bits<0, 3>() << 19U;
+        const u32 immediate = (sign << 31U) | (exp << 23U) | fract;
         ir.SetExtendedRegister(d, ir.Imm32(immediate));
     }
     return true;
@@ -1165,7 +1165,7 @@ bool ArmTranslatorVisitor::vfp_VMRS(Cond cond, Reg t) {
 // VPOP.{F32,F64} <list>
 bool ArmTranslatorVisitor::vfp_VPOP(Cond cond, bool D, size_t Vd, bool sz, Imm<8> imm8) {
     const ExtReg d = ToExtReg(sz, Vd, D);
-    const size_t regs = sz ? imm8.ZeroExtend() >> 1 : imm8.ZeroExtend();
+    const size_t regs = sz ? imm8.ZeroExtend() >> 1U : imm8.ZeroExtend();
 
     if (regs == 0 || RegNumber(d)+regs > 32) {
         return UnpredictableInstruction();
@@ -1179,7 +1179,7 @@ bool ArmTranslatorVisitor::vfp_VPOP(Cond cond, bool D, size_t Vd, bool sz, Imm<8
         return true;
     }
 
-    const u32 imm32 = imm8.ZeroExtend() << 2;
+    const u32 imm32 = imm8.ZeroExtend() << 2U;
     auto address = ir.GetRegister(Reg::SP);
     ir.SetRegister(Reg::SP, ir.Add(address, ir.Imm32(imm32)));
 
@@ -1206,7 +1206,7 @@ bool ArmTranslatorVisitor::vfp_VPOP(Cond cond, bool D, size_t Vd, bool sz, Imm<8
 // VPUSH.{F32,F64} <list>
 bool ArmTranslatorVisitor::vfp_VPUSH(Cond cond, bool D, size_t Vd, bool sz, Imm<8> imm8) {
     const ExtReg d = ToExtReg(sz, Vd, D);
-    const size_t regs = sz ? imm8.ZeroExtend() >> 1 : imm8.ZeroExtend();
+    const size_t regs = sz ? imm8.ZeroExtend() >> 1U : imm8.ZeroExtend();
 
     if (regs == 0 || RegNumber(d)+regs > 32) {
         return UnpredictableInstruction();
@@ -1220,7 +1220,7 @@ bool ArmTranslatorVisitor::vfp_VPUSH(Cond cond, bool D, size_t Vd, bool sz, Imm<
         return true;
     }
 
-    const u32 imm32 = imm8.ZeroExtend() << 2;
+    const u32 imm32 = imm8.ZeroExtend() << 2U;
     auto address = ir.Sub(ir.GetRegister(Reg::SP), ir.Imm32(imm32));
     ir.SetRegister(Reg::SP, address);
 
@@ -1250,7 +1250,7 @@ bool ArmTranslatorVisitor::vfp_VLDR(Cond cond, bool U, bool D, Reg n, size_t Vd,
         return true;
     }
 
-    const u32 imm32 = imm8.ZeroExtend() << 2;
+    const u32 imm32 = imm8.ZeroExtend() << 2U;
     const auto d = ToExtReg(sz, Vd, D);
     const auto base = n == Reg::PC ? ir.Imm32(ir.AlignPC(4)) : ir.GetRegister(n);
     const auto address = U ? ir.Add(base, ir.Imm32(imm32)) : ir.Sub(base, ir.Imm32(imm32));
@@ -1276,7 +1276,7 @@ bool ArmTranslatorVisitor::vfp_VSTR(Cond cond, bool U, bool D, Reg n, size_t Vd,
         return true;
     }
 
-    const u32 imm32 = imm8.ZeroExtend() << 2;
+    const u32 imm32 = imm8.ZeroExtend() << 2U;
     const auto d = ToExtReg(sz, Vd, D);
     const auto base = n == Reg::PC ? ir.Imm32(ir.AlignPC(4)) : ir.GetRegister(n);
     const auto address = U ? ir.Add(base, ir.Imm32(imm32)) : ir.Sub(base, ir.Imm32(imm32));
@@ -1325,7 +1325,7 @@ bool ArmTranslatorVisitor::vfp_VSTM_a1(Cond cond, bool p, bool u, bool D, bool w
         return true;
     }
 
-    const u32 imm32 = imm8.ZeroExtend() << 2;
+    const u32 imm32 = imm8.ZeroExtend() << 2U;
     auto address = u ? ir.GetRegister(n) : IR::U32(ir.Sub(ir.GetRegister(n), ir.Imm32(imm32)));
     if (w) {
         ir.SetRegister(n, u ? IR::U32(ir.Add(address, ir.Imm32(imm32))) : address);
@@ -1377,7 +1377,7 @@ bool ArmTranslatorVisitor::vfp_VSTM_a2(Cond cond, bool p, bool u, bool D, bool w
         return true;
     }
 
-    const u32 imm32 = imm8.ZeroExtend() << 2;
+    const u32 imm32 = imm8.ZeroExtend() << 2U;
     auto address = u ? ir.GetRegister(n) : IR::U32(ir.Sub(ir.GetRegister(n), ir.Imm32(imm32)));
     if (w) {
         ir.SetRegister(n, u ? IR::U32(ir.Add(address, ir.Imm32(imm32))) : address);
@@ -1420,7 +1420,7 @@ bool ArmTranslatorVisitor::vfp_VLDM_a1(Cond cond, bool p, bool u, bool D, bool w
         return true;
     }
 
-    const u32 imm32 = imm8.ZeroExtend() << 2;
+    const u32 imm32 = imm8.ZeroExtend() << 2U;
     auto address = u ? ir.GetRegister(n) : IR::U32(ir.Sub(ir.GetRegister(n), ir.Imm32(imm32)));
     if (w) {
         ir.SetRegister(n, u ? IR::U32(ir.Add(address, ir.Imm32(imm32))) : address);
@@ -1470,7 +1470,7 @@ bool ArmTranslatorVisitor::vfp_VLDM_a2(Cond cond, bool p, bool u, bool D, bool w
         return true;
     }
 
-    const u32 imm32 = imm8.ZeroExtend() << 2;
+    const u32 imm32 = imm8.ZeroExtend() << 2U;
     auto address = u ? ir.GetRegister(n) : IR::U32(ir.Sub(ir.GetRegister(n), ir.Imm32(imm32)));
     if (w) {
         ir.SetRegister(n, u ? IR::U32(ir.Add(address, ir.Imm32(imm32))) : address);

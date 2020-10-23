@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: 0BSD
  */
 
-#include "common/assert.h"
 #include "frontend/A32/ir_emitter.h"
 #include "frontend/A32/types.h"
 #include "frontend/ir/opcodes.h"
@@ -203,8 +202,9 @@ IR::UAny IREmitter::ReadMemory(size_t bitsize, const IR::U32& vaddr) {
         return ReadMemory32(vaddr);
     case 64:
         return ReadMemory64(vaddr);
+    default:
+        ASSERT_FALSE("Invalid bitsize");
     }
-    ASSERT_FALSE("Invalid bitsize");
 }
 
 IR::U8 IREmitter::ReadMemory8(const IR::U32& vaddr) {
@@ -261,8 +261,9 @@ void IREmitter::WriteMemory(size_t bitsize, const IR::U32& vaddr, const IR::UAny
         return WriteMemory32(vaddr, value);
     case 64:
         return WriteMemory64(vaddr, value);
+    default:
+        ASSERT_FALSE("Invalid bitsize");
     }
-    ASSERT_FALSE("Invalid bitsize");
 }
 
 void IREmitter::WriteMemory8(const IR::U32& vaddr, const IR::U8& value) {

@@ -185,7 +185,7 @@ bool ArmTranslatorVisitor::arm_AND_imm(Cond cond, bool S, Reg n, Reg d, int rota
     }
 
     const auto imm_carry = ArmExpandImm_C(rotate, imm8, ir.GetCFlag());
-    const auto result = ir.And(ir.GetRegister(n), ir.Imm32(imm_carry.imm32));
+    const auto result = ir.And(ir.GetRegister(n), ir.Imm32(imm_carry.result));
     if (d == Reg::PC) {
         if (S) {
             // This is UNPREDICTABLE when in user-mode.
@@ -268,7 +268,7 @@ bool ArmTranslatorVisitor::arm_BIC_imm(Cond cond, bool S, Reg n, Reg d, int rota
     }
 
     const auto imm_carry = ArmExpandImm_C(rotate, imm8, ir.GetCFlag());
-    const auto result = ir.And(ir.GetRegister(n), ir.Not(ir.Imm32(imm_carry.imm32)));
+    const auto result = ir.And(ir.GetRegister(n), ir.Not(ir.Imm32(imm_carry.result)));
     if (d == Reg::PC) {
         if (S) {
             // This is UNPREDICTABLE when in user-mode.
@@ -460,7 +460,7 @@ bool ArmTranslatorVisitor::arm_EOR_imm(Cond cond, bool S, Reg n, Reg d, int rota
     }
 
     const auto imm_carry = ArmExpandImm_C(rotate, imm8, ir.GetCFlag());
-    const auto result = ir.Eor(ir.GetRegister(n), ir.Imm32(imm_carry.imm32));
+    const auto result = ir.Eor(ir.GetRegister(n), ir.Imm32(imm_carry.result));
     if (d == Reg::PC) {
         if (S) {
             // This is UNPREDICTABLE when in user-mode.
@@ -544,7 +544,7 @@ bool ArmTranslatorVisitor::arm_MOV_imm(Cond cond, bool S, Reg d, int rotate, Imm
     }
 
     const auto imm_carry = ArmExpandImm_C(rotate, imm8, ir.GetCFlag());
-    const auto result = ir.Imm32(imm_carry.imm32);
+    const auto result = ir.Imm32(imm_carry.result);
     if (d == Reg::PC) {
         if (S) {
             // This is UNPREDICTABLE when in user-mode.
@@ -626,7 +626,7 @@ bool ArmTranslatorVisitor::arm_MVN_imm(Cond cond, bool S, Reg d, int rotate, Imm
     }
 
     const auto imm_carry = ArmExpandImm_C(rotate, imm8, ir.GetCFlag());
-    const auto result = ir.Not(ir.Imm32(imm_carry.imm32));
+    const auto result = ir.Not(ir.Imm32(imm_carry.result));
     if (d == Reg::PC) {
         if (S) {
             // This is UNPREDICTABLE when in user-mode.
@@ -710,7 +710,7 @@ bool ArmTranslatorVisitor::arm_ORR_imm(Cond cond, bool S, Reg n, Reg d, int rota
     }
 
     const auto imm_carry = ArmExpandImm_C(rotate, imm8, ir.GetCFlag());
-    const auto result = ir.Or(ir.GetRegister(n), ir.Imm32(imm_carry.imm32));
+    const auto result = ir.Or(ir.GetRegister(n), ir.Imm32(imm_carry.result));
     if (d == Reg::PC) {
         if (S) {
             // This is UNPREDICTABLE when in user-mode.
@@ -1136,7 +1136,7 @@ bool ArmTranslatorVisitor::arm_TEQ_imm(Cond cond, Reg n, int rotate, Imm<8> imm8
     }
 
     const auto imm_carry = ArmExpandImm_C(rotate, imm8, ir.GetCFlag());
-    const auto result = ir.Eor(ir.GetRegister(n), ir.Imm32(imm_carry.imm32));
+    const auto result = ir.Eor(ir.GetRegister(n), ir.Imm32(imm_carry.result));
 
     ir.SetNFlag(ir.MostSignificantBit(result));
     ir.SetZFlag(ir.IsZero(result));
@@ -1188,7 +1188,7 @@ bool ArmTranslatorVisitor::arm_TST_imm(Cond cond, Reg n, int rotate, Imm<8> imm8
     }
 
     const auto imm_carry = ArmExpandImm_C(rotate, imm8, ir.GetCFlag());
-    const auto result = ir.And(ir.GetRegister(n), ir.Imm32(imm_carry.imm32));
+    const auto result = ir.And(ir.GetRegister(n), ir.Imm32(imm_carry.result));
 
     ir.SetNFlag(ir.MostSignificantBit(result));
     ir.SetZFlag(ir.IsZero(result));

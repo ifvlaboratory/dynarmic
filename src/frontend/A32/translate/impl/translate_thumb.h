@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include "common/assert.h"
 #include "frontend/imm.h"
 #include "frontend/A32/location_descriptor.h"
 #include "frontend/A32/translate/translate.h"
@@ -30,9 +29,9 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
                 case 0b00:
                     return bytes;
                 case 0b01:
-                    return (bytes << 16) | bytes;
+                    return (bytes << 16U) | bytes;
                 case 0b10:
-                    return (bytes << 24) | (bytes << 8);
+                    return (bytes << 24U) | (bytes << 8U);
                 case 0b11:
                     return Common::Replicate(bytes, 8);
             }
@@ -42,8 +41,8 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
         const Imm<8> unrotated_value = concatenate(Imm<1>(1), Imm<7>(imm12.Bits<0, 6>()));
         return Common::RotateRight<u32>(unrotated_value.ZeroExtend(), rotate);
     }
-    
-    ImmAndCarry ThumbExpandImm_C(Imm<1> i, Imm<3> imm3, Imm<8> imm8, IR::U1 carry_in) {
+
+    IR::ResultAndCarry<u32> ThumbExpandImm_C(Imm<1> i, Imm<3> imm3, Imm<8> imm8, IR::U1 carry_in) {
         const u32 imm32 = ThumbExpandImm(i, imm3, imm8);
         auto carry_out = carry_in;
         if (imm3.Bit<2>() != 0 || i != 0) {

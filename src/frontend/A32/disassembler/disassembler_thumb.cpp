@@ -7,7 +7,6 @@
 #include <string>
 
 #include <fmt/format.h>
-#include <fmt/ostream.h>
 
 #include "common/bit_util.h"
 #include "common/string_util.h"
@@ -149,7 +148,7 @@ public:
     }
 
     std::string thumb16_LDR_literal(Reg t, Imm<8> imm8) {
-        const u32 imm32 = imm8.ZeroExtend() << 2;
+        const u32 imm32 = imm8.ZeroExtend() << 2U;
         return fmt::format("ldr {}, [pc, #{}]", t, imm32);
     }
 
@@ -186,12 +185,12 @@ public:
     }
 
     std::string thumb16_STR_imm_t1(Imm<5> imm5, Reg n, Reg t) {
-        const u32 imm32 = imm5.ZeroExtend() << 2;
+        const u32 imm32 = imm5.ZeroExtend() << 2U;
         return fmt::format("str {}, [{}, #{}]", t, n, imm32);
     }
 
     std::string thumb16_LDR_imm_t1(Imm<5> imm5, Reg n, Reg t) {
-        const u32 imm32 = imm5.ZeroExtend() << 2;
+        const u32 imm32 = imm5.ZeroExtend() << 2U;
         return fmt::format("ldr {}, [{}, #{}]", t, n, imm32);
     }
 
@@ -206,42 +205,42 @@ public:
     }
 
     std::string thumb16_STRH_imm(Imm<5> imm5, Reg n, Reg t) {
-        const u32 imm32 = imm5.ZeroExtend() << 1;
+        const u32 imm32 = imm5.ZeroExtend() << 1U;
         return fmt::format("strh {}, [{}, #{}]", t, n, imm32);
     }
 
     std::string thumb16_LDRH_imm(Imm<5> imm5, Reg n, Reg t) {
-        const u32 imm32 = imm5.ZeroExtend() << 1;
+        const u32 imm32 = imm5.ZeroExtend() << 1U;
         return fmt::format("ldrh {}, [{}, #{}]", t, n, imm32);
     }
 
     std::string thumb16_STR_imm_t2(Reg t, Imm<8> imm8) {
-        const u32 imm32 = imm8.ZeroExtend() << 2;
+        const u32 imm32 = imm8.ZeroExtend() << 2U;
         return fmt::format("str {}, [sp, #{}]", t, imm32);
     }
 
     std::string thumb16_LDR_imm_t2(Reg t, Imm<8> imm8) {
-        const u32 imm32 = imm8.ZeroExtend() << 2;
+        const u32 imm32 = imm8.ZeroExtend() << 2U;
         return fmt::format("ldr {}, [sp, #{}]", t, imm32);
     }
 
     std::string thumb16_ADR(Reg d, Imm<8> imm8) {
-        const u32 imm32 = imm8.ZeroExtend() << 2;
+        const u32 imm32 = imm8.ZeroExtend() << 2U;
         return fmt::format("adr {}, +#{}", d, imm32);
     }
 
     std::string thumb16_ADD_sp_t1(Reg d, Imm<8> imm8) {
-        const u32 imm32 = imm8.ZeroExtend() << 2;
+        const u32 imm32 = imm8.ZeroExtend() << 2U;
         return fmt::format("add {}, sp, #{}", d, imm32);
     }
 
     std::string thumb16_ADD_sp_t2(Imm<7> imm7) {
-        const u32 imm32 = imm7.ZeroExtend() << 2;
+        const u32 imm32 = imm7.ZeroExtend() << 2U;
         return fmt::format("add sp, sp, #{}", imm32);
     }
 
     std::string thumb16_SUB_sp(Imm<7> imm7) {
-        const u32 imm32 = imm7.ZeroExtend() << 2;
+        const u32 imm32 = imm7.ZeroExtend() << 2U;
         return fmt::format("sub sp, sp, #{}", imm32);
     }
 
@@ -311,12 +310,12 @@ public:
     }
 
     std::string thumb16_PUSH(bool M, RegList reg_list) {
-        if (M) reg_list |= 1 << 14;
+        if (M) reg_list |= 1U << 14U;
         return fmt::format("push {{{}}}", RegListToString(reg_list));
     }
 
     std::string thumb16_POP(bool P, RegList reg_list) {
-        if (P) reg_list |= 1 << 15;
+        if (P) reg_list |= 1U << 15U;
         return fmt::format("pop {{{}}}", RegListToString(reg_list));
     }
 
@@ -377,7 +376,7 @@ public:
     }
 
     std::string thumb16_B_t1(Cond cond, Imm<8> imm8) {
-        const s32 imm32 = static_cast<s32>((imm8.SignExtend<u32>() << 1) + 4);
+        const s32 imm32 = static_cast<s32>((imm8.SignExtend<u32>() << 1U) + 4);
         return fmt::format("b{} {}#{}",
                            CondToString(cond),
                            Common::SignToChar(imm32),
@@ -385,7 +384,7 @@ public:
     }
 
     std::string thumb16_B_t2(Imm<11> imm11) {
-        const s32 imm32 = static_cast<s32>((imm11.SignExtend<u32>() << 1) + 4);
+        const s32 imm32 = static_cast<s32>((imm11.SignExtend<u32>() << 1U) + 4);
         return fmt::format("b {}#{}",
                            Common::SignToChar(imm32),
                            abs(imm32));
