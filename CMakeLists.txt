@@ -99,6 +99,11 @@ else()
         list(APPEND DYNARMIC_CXX_FLAGS
              -Wfatal-errors)
     endif()
+
+    if (UNIX AND NOT APPLE)
+        list(APPEND DYNARMIC_CXX_FLAGS
+             -Wno-unused-but-set-variable)
+    endif()
 endif()
 
 # Arch detection
