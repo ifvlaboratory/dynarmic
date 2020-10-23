@@ -1948,6 +1948,24 @@ bool ThumbTranslatorVisitor::thumb32_PLD_imm12(bool W,
     return RaiseException(exception);
 }
 
+// MLA<c> <Rd>, <Rn>, <Rm>, <Ra>
+bool ThumbTranslatorVisitor::thumb32_MLA(Reg n, Reg a, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    if (d == Reg::PC || n == Reg::PC || m == Reg::PC || a == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || n == Reg::R13 || m == Reg::R13 || a == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+
+    const auto result = ir.Add(ir.Mul(ir.GetRegister(n), ir.GetRegister(m)), ir.GetRegister(a));
+    ir.SetRegister(d, result);
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }

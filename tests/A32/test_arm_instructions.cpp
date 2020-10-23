@@ -25,6 +25,28 @@ static A32::UserConfig GetUserConfig(ArmTestEnv* testenv) {
     return user_config;
 }
 
+TEST_CASE("arm: MLA", "[arm][A32]") {
+    ArmTestEnv test_env;
+    Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
+    test_env.code_mem = {
+            0xe0230293, // mla r3, r3, r2, r0
+            0xeafffffe, // b #0
+    };
+
+    jit.Regs()[0] = 1;
+    jit.Regs()[2] = 2;
+    jit.Regs()[3] = 3;
+    jit.Regs()[15] = 0; // PC = 0
+    jit.SetCpsr(0x000001d0); // User-mode
+
+    test_env.ticks_left = 1;
+    jit.Run();
+
+    REQUIRE(jit.Regs()[3] == 7);
+    REQUIRE(jit.Regs()[15] == 4);
+    REQUIRE(jit.Cpsr() == 0x000001d0);
+}
+
 TEST_CASE("arm: LDREX", "[arm][A32]") {
     monitor = new Dynarmic::ExclusiveMonitor(1);
 
