@@ -1966,6 +1966,24 @@ bool ThumbTranslatorVisitor::thumb32_MLA(Reg n, Reg a, Reg d, Reg m) {
     return true;
 }
 
+// CLZ<c> <Rd>, <Rm>
+bool ThumbTranslatorVisitor::thumb32_CLZ(Reg m1, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    if(m1 != m) {
+        return UnpredictableInstruction();
+    }
+
+    if (d == Reg::R13 || d == Reg::PC || m == Reg::R13 || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    ir.SetRegister(d, ir.CountLeadingZeros(ir.GetRegister(m)));
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }
