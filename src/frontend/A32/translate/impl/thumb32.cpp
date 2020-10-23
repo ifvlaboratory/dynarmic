@@ -2024,6 +2024,31 @@ bool ThumbTranslatorVisitor::thumb32_CLZ(Reg m1, Reg d, Reg m) {
     return true;
 }
 
+// LSR{S}<c>.W <Rd>, <Rn>, <Rm>
+bool ThumbTranslatorVisitor::thumb32_LSR_reg(bool S, Reg n, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    if(d == Reg::PC || n == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if(d == Reg::R13 || n == Reg::R13 || m == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+    const auto shift_n = ir.LeastSignificantByte(ir.GetRegister(m));
+    const auto cpsr_c = ir.GetCFlag();
+    const auto result = ir.LogicalShiftRight(ir.GetRegister(n), shift_n, cpsr_c);
+
+    ir.SetRegister(d, result.result);
+    if (S) {
+        ir.SetNFlag(ir.MostSignificantBit(result.result));
+        ir.SetZFlag(ir.IsZero(result.result));
+        ir.SetCFlag(result.carry);
+    }
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }
