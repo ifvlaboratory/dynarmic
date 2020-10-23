@@ -1934,6 +1934,20 @@ bool ThumbTranslatorVisitor::thumb32_STREX(Reg n, Reg t, Reg d, Imm<8> imm8) {
     return true;
 }
 
+// PLD{W}<c> [<Rn>, #<imm12>]
+bool ThumbTranslatorVisitor::thumb32_PLD_imm12(bool W,
+                                       [[maybe_unused]] Reg n,
+                                       [[maybe_unused]] Imm<12> imm12) {
+    if (!options.hook_hint_instructions) {
+        return true;
+    }
+
+    bool is_pldw = W;
+    const auto exception = !is_pldw ? Exception::PreloadData
+                             : Exception::PreloadDataWithIntentToWrite;
+    return RaiseException(exception);
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }

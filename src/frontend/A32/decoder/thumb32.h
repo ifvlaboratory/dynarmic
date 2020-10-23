@@ -168,7 +168,7 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_PLD_lit,        "PLD (lit)",                "11111000-00111111111------------"),
         //INST(&V::thumb32_PLD_reg,        "PLD (reg)",                "111110000001----1111000000------"),
         //INST(&V::thumb32_PLD_imm8,       "PLD (imm8)",               "1111100000-1----11111100--------"),
-        //INST(&V::thumb32_PLD_imm12,      "PLD (imm12)",              "111110001001----1111------------"),
+        INST(&V::thumb32_PLD_imm12,      "PLD (imm12)",              "1111100010W1nnnn1111vvvvvvvvvvvv"),
         //INST(&V::thumb32_PLI_lit,        "PLI (lit)",                "11111001-00111111111------------"),
         //INST(&V::thumb32_PLI_reg,        "PLI (reg)",                "111110010001----1111000000------"),
         //INST(&V::thumb32_PLI_imm8,       "PLI (imm8)",               "111110010001----11111100--------"),
