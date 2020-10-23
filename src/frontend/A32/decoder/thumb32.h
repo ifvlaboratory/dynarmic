@@ -302,7 +302,7 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_SMULL,          "SMULL",                    "111110111000------------0000----"),
         //INST(&V::thumb32_SDIV,           "SDIV",                     "111110111001------------1111----"),
         //INST(&V::thumb32_UMULL,          "UMULL",                    "111110111010------------0000----"),
-        //INST(&V::thumb32_UDIV,           "UDIV",                     "111110111011------------1111----"),
+        INST(&V::thumb32_UDIV,           "UDIV",                     "111110111011nnnn1111dddd1111mmmm"),
         //INST(&V::thumb32_SMLAL,          "SMLAL",                    "111110111100------------0000----"),
         //INST(&V::thumb32_SMLALXY,        "SMLALXY",                  "111110111100------------10------"),
         //INST(&V::thumb32_SMLALD,         "SMLALD",                   "111110111100------------110-----"),
