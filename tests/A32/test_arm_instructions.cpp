@@ -32,19 +32,22 @@ TEST_CASE("arm: LDREX", "[arm][A32]") {
     Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
     test_env.code_mem = {
             0xe1943f9f, // ldrex r3, [r4]
+            0xe1841f99, // strex r1, sb, [r4]
             0xeafffffe, // b #0
     };
 
+    jit.Regs()[1] = 7;
     jit.Regs()[3] = 3;
     jit.Regs()[4] = 0x78;
     jit.Regs()[15] = 0; // PC = 0
     jit.SetCpsr(0x000001d0); // User-mode
 
-    test_env.ticks_left = 1;
+    test_env.ticks_left = 2;
     jit.Run();
 
+    REQUIRE(jit.Regs()[1] == 0);
     REQUIRE(jit.Regs()[3] == 0x7b7a7978);
-    REQUIRE(jit.Regs()[15] == 4);
+    REQUIRE(jit.Regs()[15] == 8);
     REQUIRE(jit.Cpsr() == 0x000001d0);
 
     delete monitor;

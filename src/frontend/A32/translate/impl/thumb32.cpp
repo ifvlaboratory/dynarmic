@@ -1911,6 +1911,29 @@ bool ThumbTranslatorVisitor::thumb32_LDREX(Reg n, Reg t, Imm<8> imm8) {
     return true;
 }
 
+// STREX<c> <Rd>, <Rt>, [<Rn>{, #<imm>}]
+bool ThumbTranslatorVisitor::thumb32_STREX(Reg n, Reg t, Reg d, Imm<8> imm8) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    if (n == Reg::PC || d == Reg::R13 || d == Reg::PC || t == Reg::R13 || t == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    if (d == n || d == t) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 imm32 = imm8.ZeroExtend() << 2U;
+    const auto offset = ir.Imm32(imm32);
+    const auto address = Helper::GetAddress(ir, true, true, false, n, offset);
+    const auto value = ir.GetRegister(t);
+    const auto passed = ir.ExclusiveWriteMemory32(address, value);
+    ir.SetRegister(d, passed);
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }

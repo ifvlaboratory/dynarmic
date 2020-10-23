@@ -37,7 +37,7 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_RFE_2,          "RFE",                      "1110100110-1--------------------"),
 
         // Load/Store Dual, Load/Store Exclusive, Table Branch
-        //INST(&V::thumb32_STREX,          "STREX",                    "111010000100--------------------"),
+        INST(&V::thumb32_STREX,          "STREX",                    "111010000100nnnnttttddddvvvvvvvv"),
         INST(&V::thumb32_LDREX,          "LDREX",                    "111010000101nnnntttt1111vvvvvvvv"),
         //INST(&V::thumb32_STREXB,         "STREXB",                   "111010001100------------0100----"),
         INST(&V::thumb32_STREXH,         "STREXH",                   "111010001100nnnntttt11110101mmmm"),
