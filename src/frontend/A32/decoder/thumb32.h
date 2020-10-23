@@ -211,7 +211,7 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_UDF,            "UDF",                      "1111100--111--------------------"),
 
         // Data Processing (register)
-        //INST(&V::thumb32_LSL_reg,        "LSL (reg)",                "11111010000-----1111----0000----"),
+        INST(&V::thumb32_LSL_reg,        "LSL (reg)",                "11111010000Snnnn1111dddd0000mmmm"),
         INST(&V::thumb32_LSR_reg,        "LSR (reg)",                "11111010001Snnnn1111dddd0000mmmm"),
         //INST(&V::thumb32_ASR_reg,        "ASR (reg)",                "11111010010-----1111----0000----"),
         //INST(&V::thumb32_ROR_reg,        "ROR (reg)",                "11111010011-----1111----0000----"),
