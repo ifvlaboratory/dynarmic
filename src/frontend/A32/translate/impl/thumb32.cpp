@@ -1984,6 +1984,28 @@ bool ThumbTranslatorVisitor::thumb32_MUL(Reg n, Reg d, Reg m) {
     return true;
 }
 
+// MLS<c> <Rd>, <Rn>, <Rm>, <Ra>
+bool ThumbTranslatorVisitor::thumb32_MLS(Reg n, Reg a, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    if (d == Reg::PC || a == Reg::PC || m == Reg::PC || n == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || a == Reg::R13 || m == Reg::R13 || n == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+
+    const IR::U32 operand1 = ir.GetRegister(n);
+    const IR::U32 operand2 = ir.GetRegister(m);
+    const IR::U32 operand3 = ir.GetRegister(a);
+    const IR::U32 result = ir.Sub(operand3, ir.Mul(operand1, operand2));
+
+    ir.SetRegister(d, result);
+    return true;
+}
+
 // CLZ<c> <Rd>, <Rm>
 bool ThumbTranslatorVisitor::thumb32_CLZ(Reg m1, Reg d, Reg m) {
     if (!ConditionPassed()) {
