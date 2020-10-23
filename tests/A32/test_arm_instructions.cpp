@@ -5,17 +5,50 @@
 
 #include <catch.hpp>
 #include <dynarmic/A32/a32.h>
+#include <dynarmic/exclusive_monitor.h>
 
 #include "A32/testenv.h"
 #include "frontend/A32/location_descriptor.h"
 
 using namespace Dynarmic;
 
+static Dynarmic::ExclusiveMonitor *monitor = nullptr;
+
 static A32::UserConfig GetUserConfig(ArmTestEnv* testenv) {
     A32::UserConfig user_config;
     user_config.optimizations &= ~OptimizationFlag::FastDispatch;
     user_config.callbacks = testenv;
+    user_config.processor_id = 0;
+    if(monitor) {
+        user_config.global_monitor = monitor;
+    }
     return user_config;
+}
+
+TEST_CASE("arm: LDREX", "[arm][A32]") {
+    monitor = new Dynarmic::ExclusiveMonitor(1);
+
+    ArmTestEnv test_env;
+    Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
+    test_env.code_mem = {
+            0xe1943f9f, // ldrex r3, [r4]
+            0xeafffffe, // b #0
+    };
+
+    jit.Regs()[3] = 3;
+    jit.Regs()[4] = 0x78;
+    jit.Regs()[15] = 0; // PC = 0
+    jit.SetCpsr(0x000001d0); // User-mode
+
+    test_env.ticks_left = 1;
+    jit.Run();
+
+    REQUIRE(jit.Regs()[3] == 0x7b7a7978);
+    REQUIRE(jit.Regs()[15] == 4);
+    REQUIRE(jit.Cpsr() == 0x000001d0);
+
+    delete monitor;
+    monitor = nullptr;
 }
 
 TEST_CASE("arm: VMOV (2xcore to f64)", "[arm][A32]") {

@@ -28,6 +28,32 @@ static Dynarmic::A32::UserConfig GetUserConfig(ThumbTestEnv* testenv) {
     return user_config;
 }
 
+TEST_CASE("thumb2: LDREX", "[thumb2]") {
+    monitor = new Dynarmic::ExclusiveMonitor(1);
+
+    ThumbTestEnv test_env;
+    Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
+    test_env.code_mem = {
+            0xe854, 0x3f00, // ldrex r3, [r4]
+            0xe7fe, // b #0
+    };
+
+    jit.Regs()[3] = 3;
+    jit.Regs()[4] = 0x78;
+    jit.Regs()[15] = 0; // PC = 0
+    jit.SetCpsr(0x00000030); // Thumb, User-mode
+
+    test_env.ticks_left = 1;
+    jit.Run();
+
+    REQUIRE(jit.Regs()[3] == 0x7b7a7978);
+    REQUIRE(jit.Regs()[15] == 4);
+    REQUIRE(jit.Cpsr() == 0x00000030);
+
+    delete monitor;
+    monitor = nullptr;
+}
+
 TEST_CASE("thumb2: VMOV (2xcore to f64)", "[thumb2]") {
     ThumbTestEnv test_env;
     Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};

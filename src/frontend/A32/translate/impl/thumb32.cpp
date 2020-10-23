@@ -1894,6 +1894,23 @@ bool ThumbTranslatorVisitor::vfp_VMOV_f64_2u32(Reg t2, Reg t1, bool M, size_t Vm
     return true;
 }
 
+// LDREX<c> <Rt>, [<Rn>{, #<imm>}]
+bool ThumbTranslatorVisitor::thumb32_LDREX(Reg n, Reg t, Imm<8> imm8) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    if (t == Reg::R13 || t == Reg::PC || n == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 imm32 = imm8.ZeroExtend() << 2U;
+    const auto offset = ir.Imm32(imm32);
+    const auto address = Helper::GetAddress(ir, true, true, false, n, offset);
+    ir.SetRegister(t, ir.ExclusiveReadMemory32(address));
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }

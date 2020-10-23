@@ -184,6 +184,7 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
     bool thumb32_LDRD_imm_2(bool P, bool U, bool W, Reg n, Reg t1, Reg t2, Imm<8> imm8);
     bool thumb32_STREXH(Reg n, Reg d, Reg t);
     bool thumb32_LDREXH(Reg n, Reg t);
+    bool thumb32_LDREX(Reg n, Reg t, Imm<8> imm8);
 
     bool thumb32_TST_reg(Reg n, Imm<3> imm3, Imm<2> imm2, Imm<2> t, Reg m);
     bool thumb32_AND_reg(bool S, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m);
