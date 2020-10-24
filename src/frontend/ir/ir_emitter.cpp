@@ -55,8 +55,9 @@ UAny IREmitter::LeastSignificant(size_t bitsize, const U32U64& value) {
     case 64:
         ASSERT(value.GetType() == Type::U64);
         return value;
+    default:
+        ASSERT_FALSE("Invalid bitsize");
     }
-    ASSERT_FALSE("Invalid bitsize");
 }
 
 U32 IREmitter::LeastSignificantWord(const U64& value) {

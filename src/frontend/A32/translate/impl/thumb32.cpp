@@ -2074,6 +2074,25 @@ bool ThumbTranslatorVisitor::thumb32_LSL_reg(bool S, Reg n, Reg d, Reg m) {
     return true;
 }
 
+// TBH<c> [<Rn>, <Rm>, LSL #1]
+bool ThumbTranslatorVisitor::thumb32_TBH(Reg n, Reg m) {
+    const auto it = ir.current_location.IT();
+    if (it.IsInITBlock() && !it.IsLastInITBlock()) {
+        return UnpredictableInstruction();
+    }
+
+    if(n == Reg::R13 || m == Reg::R13 || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const auto index = ir.LogicalShiftLeft(ir.GetRegister(m), ir.Imm8(1), ir.Imm1(false));
+    const auto table_address = ir.Add(ir.GetRegister(n), index.result);
+    const auto pc_relative = ir.SignExtendHalfToWord(ir.ReadMemory16(table_address));
+    ir.BranchWritePC(ir.Add(ir.GetRegister(Reg::PC), ir.Add(pc_relative, pc_relative)));
+    ir.SetTerm(IR::Term::FastDispatchHint{});
+    return false;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }

@@ -15,7 +15,7 @@ bool ArmTranslatorVisitor::arm_B(Cond cond, Imm<24> imm24) {
         return true;
     }
 
-    const u32 imm32 = Common::SignExtend<26, u32>(imm24.ZeroExtend() << 2) + 8;
+    const u32 imm32 = Common::SignExtend<26, u32>(imm24.ZeroExtend() << 2U) + 8;
     const auto new_location = ir.current_location.AdvancePC(imm32);
     ir.SetTerm(IR::Term::LinkBlock{new_location});
     return false;
@@ -30,7 +30,7 @@ bool ArmTranslatorVisitor::arm_BL(Cond cond, Imm<24> imm24) {
     ir.PushRSB(ir.current_location.AdvancePC(4));
     ir.SetRegister(Reg::LR, ir.Imm32(ir.current_location.PC() + 4));
 
-    const u32 imm32 = Common::SignExtend<26, u32>(imm24.ZeroExtend() << 2) + 8;
+    const u32 imm32 = Common::SignExtend<26, u32>(imm24.ZeroExtend() << 2U) + 8;
     const auto new_location = ir.current_location.AdvancePC(imm32);
     ir.SetTerm(IR::Term::LinkBlock{new_location});
     return false;
@@ -41,7 +41,7 @@ bool ArmTranslatorVisitor::arm_BLX_imm(bool H, Imm<24> imm24) {
     ir.PushRSB(ir.current_location.AdvancePC(4));
     ir.SetRegister(Reg::LR, ir.Imm32(ir.current_location.PC() + 4));
 
-    const u32 imm32 = Common::SignExtend<26, u32>((imm24.ZeroExtend() << 2)) + (H ? 2 : 0) + 8;
+    const u32 imm32 = Common::SignExtend<26, u32>((imm24.ZeroExtend() << 2U)) + (H ? 2 : 0) + 8;
     const auto new_location = ir.current_location.AdvancePC(imm32).SetTFlag(true);
     ir.SetTerm(IR::Term::LinkBlock{new_location});
     return false;

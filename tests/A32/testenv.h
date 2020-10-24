@@ -39,6 +39,16 @@ public:
         return infinite_loop; // B .
     }
 
+    std::uint16_t MemoryReadThumbCode(u32 vaddr) override {
+        const size_t index = vaddr / sizeof(InstructionType);
+        if (index < code_mem.size()) {
+            u16 value;
+            std::memcpy(&value, &code_mem[index], sizeof(u16));
+            return value;
+        }
+        return (std::uint16_t) (infinite_loop >> 16U); // B .
+    }
+
     std::uint8_t MemoryRead8(u32 vaddr) override {
         if (vaddr < sizeof(InstructionType) * code_mem.size()) {
             return reinterpret_cast<u8*>(code_mem.data())[vaddr];
@@ -89,7 +99,7 @@ public:
 
     void CallSVC(std::uint32_t swi) override { ASSERT_MSG(false, "CallSVC({})", swi); }
 
-    void ExceptionRaised(u32 pc, Dynarmic::A32::Exception exception) override { ASSERT_MSG(false, "ExceptionRaised({:08x}), exception={}\n", pc, exception); }
+    void ExceptionRaised(u32 pc, Dynarmic::A32::Exception exception) override { ASSERT_MSG(false, "ExceptionRaised({:08x}) code = {:08x}, exception={}\n", pc, MemoryReadCode(pc), exception); }
 
     void AddTicks(std::uint64_t ticks) override {
         if (ticks > ticks_left) {
