@@ -2087,10 +2087,48 @@ bool ThumbTranslatorVisitor::thumb32_TBH(Reg n, Reg m) {
 
     const auto index = ir.LogicalShiftLeft(ir.GetRegister(m), ir.Imm8(1), ir.Imm1(false));
     const auto table_address = ir.Add(ir.GetRegister(n), index.result);
-    const auto pc_relative = ir.SignExtendHalfToWord(ir.ReadMemory16(table_address));
-    ir.BranchWritePC(ir.Add(ir.GetRegister(Reg::PC), ir.Add(pc_relative, pc_relative)));
+    const auto half_word = ir.SignExtendHalfToWord(ir.ReadMemory16(table_address));
+    const auto pc_relative = ir.LogicalShiftLeft(half_word, ir.Imm8(1), ir.Imm1(false));
+
+    ir.BranchWritePC(ir.Add(ir.GetRegister(Reg::PC), pc_relative.result));
     ir.SetTerm(IR::Term::FastDispatchHint{});
     return false;
+}
+
+// RBIT<c> <Rd>, <Rm>
+bool ThumbTranslatorVisitor::thumb32_RBIT(Reg m1, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if(m1 != m) {
+        return UnpredictableInstruction();
+    }
+
+    if (d == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || m == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+
+    const IR::U32 swapped = ir.ByteReverseWord(ir.GetRegister(m));
+
+    // ((x & 0xF0F0F0F0) >> 4) | ((x & 0x0F0F0F0F) << 4)
+    const IR::U32 first_lsr = ir.LogicalShiftRight(ir.And(swapped, ir.Imm32(0xF0F0F0F0)), ir.Imm8(4));
+    const IR::U32 first_lsl = ir.LogicalShiftLeft(ir.And(swapped, ir.Imm32(0x0F0F0F0F)), ir.Imm8(4));
+    const IR::U32 corrected = ir.Or(first_lsl, first_lsr);
+
+    // ((x & 0x88888888) >> 3) | ((x & 0x44444444) >> 1) |
+    // ((x & 0x22222222) << 1) | ((x & 0x11111111) << 3)
+    const IR::U32 second_lsr = ir.LogicalShiftRight(ir.And(corrected, ir.Imm32(0x88888888)), ir.Imm8(3));
+    const IR::U32 third_lsr = ir.LogicalShiftRight(ir.And(corrected, ir.Imm32(0x44444444)), ir.Imm8(1));
+    const IR::U32 second_lsl = ir.LogicalShiftLeft(ir.And(corrected, ir.Imm32(0x22222222)), ir.Imm8(1));
+    const IR::U32 third_lsl = ir.LogicalShiftLeft(ir.And(corrected, ir.Imm32(0x11111111)), ir.Imm8(3));
+
+    const IR::U32 result = ir.Or(ir.Or(ir.Or(second_lsr, third_lsr), second_lsl), third_lsl);
+
+    ir.SetRegister(d, result);
+    return true;
 }
 
 bool ThumbTranslatorVisitor::thumb32_UDF() {

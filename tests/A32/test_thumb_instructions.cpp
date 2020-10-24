@@ -588,3 +588,24 @@ TEST_CASE("thumb2: TBH", "[thumb2]") {
     REQUIRE(jit.Regs()[15] == 0x140);
     REQUIRE(jit.Cpsr() == 0x00000030);
 }
+
+TEST_CASE("thumb2: RBIT", "[thumb2]") {
+    ThumbTestEnv test_env;
+    Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
+    test_env.code_mem = {
+            0xfa91, 0xf0a1, // rbit r0, r1
+            0xe7fe, // b #0
+    };
+
+    jit.Regs()[0] = 1;
+    jit.Regs()[1] = 0x12345678;
+    jit.Regs()[15] = 0; // PC = 0
+    jit.SetCpsr(0x00000030); // Thumb, User-mode
+
+    test_env.ticks_left = 1;
+    jit.Run();
+
+    REQUIRE(jit.Regs()[0] == 0x1e6a2c48);
+    REQUIRE(jit.Regs()[15] == 4);
+    REQUIRE(jit.Cpsr() == 0x00000030);
+}

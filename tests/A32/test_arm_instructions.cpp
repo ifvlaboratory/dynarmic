@@ -721,3 +721,24 @@ TEST_CASE("arm: LSL (reg)", "[arm][A32]") {
     REQUIRE(jit.Regs()[15] == 4);
     REQUIRE(jit.Cpsr() == 0x000001d0);
 }
+
+TEST_CASE("arm: RBIT", "[arm][A32]") {
+    ArmTestEnv test_env;
+    Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
+    test_env.code_mem = {
+            0xe6ff0f31, // rbit r0, r1
+            0xeafffffe, // b #0
+    };
+
+    jit.Regs()[0] = 1;
+    jit.Regs()[1] = 0x12345678;
+    jit.Regs()[15] = 0; // PC = 0
+    jit.SetCpsr(0x000001d0); // User-mode
+
+    test_env.ticks_left = 1;
+    jit.Run();
+
+    REQUIRE(jit.Regs()[0] == 0x1e6a2c48);
+    REQUIRE(jit.Regs()[15] == 4);
+    REQUIRE(jit.Cpsr() == 0x000001d0);
+}

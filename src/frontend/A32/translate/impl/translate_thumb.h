@@ -175,6 +175,7 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
 
     bool thumb32_PLD_imm12(bool W, Reg n, Imm<12> imm12);
 
+    bool thumb32_RBIT(Reg m1, Reg d, Reg m);
     bool thumb32_CLZ(Reg m1, Reg d, Reg m);
 
     bool thumb32_MUL(Reg n, Reg d, Reg m);
