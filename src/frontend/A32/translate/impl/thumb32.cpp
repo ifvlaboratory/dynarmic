@@ -2131,6 +2131,34 @@ bool ThumbTranslatorVisitor::thumb32_RBIT(Reg m1, Reg d, Reg m) {
     return true;
 }
 
+// UBFX<c> <Rd>, <Rn>, #<lsb>, #<width>
+bool ThumbTranslatorVisitor::thumb32_UBFX(Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5> widthm1) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    if (d == Reg::PC || n == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || n == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 lsb_value = concatenate(imm3, imm2).ZeroExtend();
+    const u32 widthm1_value = widthm1.ZeroExtend();
+    const u32 msb = lsb_value + widthm1_value;
+    if (msb >= Common::BitSize<u32>()) {
+        return UnpredictableInstruction();
+    }
+
+    const IR::U32 operand = ir.GetRegister(n);
+    const IR::U32 mask = ir.Imm32(Common::Ones<u32>(widthm1_value + 1));
+    const IR::U32 result = ir.And(ir.LogicalShiftRight(operand, ir.Imm8(u8(lsb_value))), mask);
+
+    ir.SetRegister(d, result);
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }

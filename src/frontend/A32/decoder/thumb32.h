@@ -111,7 +111,7 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_USAT,           "USAT",                     "11110-111000----0---------------"),
         //INST(&V::thumb32_USAT16,         "USAT16",                   "11110-111010----0000----00------"),
         //INST(&V::thumb32_USAT,           "USAT",                     "11110-111010----0---------------"),
-        //INST(&V::thumb32_UBFX,           "UBFX",                     "11110-111100----0---------------"),
+        INST(&V::thumb32_UBFX,           "UBFX",                     "111100111100nnnn0vvvddddvv0wwwww"),
 
         // Branches and Miscellaneous Control
         //INST(&V::thumb32_MSR_banked,     "MSR (banked)",             "11110011100-----10-0------1-----"),
