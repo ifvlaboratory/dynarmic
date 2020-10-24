@@ -631,7 +631,7 @@ TEST_CASE("thumb2: UBFX", "[thumb2]") {
     REQUIRE(jit.Cpsr() == 0x00000030);
 }
 
-TEST_CASE("thumb2: VBIC, VMOV, VMVN, VORR (immediate)", "[thumb2]") {
+TEST_CASE("thumb2: VBIC, VMOV, VMVN, VORR", "[thumb2]") {
     ThumbTestEnv test_env;
     Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
     test_env.code_mem = {
