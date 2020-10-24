@@ -763,3 +763,25 @@ TEST_CASE("arm: UBFX", "[arm][A32]") {
     REQUIRE(jit.Regs()[15] == 4);
     REQUIRE(jit.Cpsr() == 0x000001d0);
 }
+
+TEST_CASE("arm: VBIC, VMOV, VMVN, VORR (immediate)", "[arm][A32]") {
+    ArmTestEnv test_env;
+    Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
+    test_env.code_mem = {
+            0xf2c00010, // vmov.i32 d16, #0
+            0xeafffffe, // b #0
+    };
+
+    jit.ExtRegs()[32] = 32;
+    jit.ExtRegs()[33] = 33;
+    jit.Regs()[15] = 0; // PC = 0
+    jit.SetCpsr(0x000001d0); // User-mode
+
+    test_env.ticks_left = 1;
+    jit.Run();
+
+    REQUIRE(jit.ExtRegs()[32] == 0);
+    REQUIRE(jit.ExtRegs()[33] == 0);
+    REQUIRE(jit.Regs()[15] == 4);
+    REQUIRE(jit.Cpsr() == 0x000001d0);
+}
