@@ -2159,6 +2159,37 @@ bool ThumbTranslatorVisitor::thumb32_UBFX(Reg n, Imm<3> imm3, Reg d, Imm<2> imm2
     return true;
 }
 
+// VSTR<c> <Dd>, [<Rn>{, #+/-<imm>}]
+// VSTR<c> <Sd>, [<Rn>{, #+/-<imm>}]
+bool ThumbTranslatorVisitor::vfp_VSTR(bool U, bool D, Reg n, size_t Vd, bool sz, Imm<8> imm8) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    if(n == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 imm32 = imm8.ZeroExtend() << 2U;
+    const auto d = ToExtReg(sz, Vd, D);
+    const auto base = n == Reg::PC ? ir.Imm32(ir.AlignPC(4)) : ir.GetRegister(n);
+    const auto address = U ? ir.Add(base, ir.Imm32(imm32)) : ir.Sub(base, ir.Imm32(imm32));
+    if (sz) {
+        const auto reg_d = ir.GetExtendedRegister(d);
+        auto lo = ir.LeastSignificantWord(reg_d);
+        auto hi = ir.MostSignificantWord(reg_d).result;
+        if (ir.current_location.EFlag()) {
+            std::swap(lo, hi);
+        }
+        ir.WriteMemory32(address, lo);
+        ir.WriteMemory32(ir.Add(address, ir.Imm32(4)), hi);
+    } else {
+        ir.WriteMemory32(address, ir.GetExtendedRegister(d));
+    }
+
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }

@@ -652,3 +652,29 @@ TEST_CASE("thumb2: VBIC, VMOV, VMVN, VORR (immediate)", "[thumb2]") {
     REQUIRE(jit.Regs()[15] == 4);
     REQUIRE(jit.Cpsr() == 0x00000030);
 }
+
+TEST_CASE("thumb2: VSTR", "[thumb2]") {
+    ThumbTestEnv test_env;
+    Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
+    test_env.code_mem = {
+            0xedcd, 0x0b00, // vstr d16, [sp]
+            0xe9dd, 0x0100, // ldrd r0, r1, [sp]
+            0xe7fe, // b #0
+    };
+
+    jit.Regs()[0] = 1;
+    jit.Regs()[1] = 2;
+    jit.ExtRegs()[32] = 32;
+    jit.ExtRegs()[33] = 33;
+    jit.Regs()[13] = 0x10; // SP
+    jit.Regs()[15] = 0; // PC = 0
+    jit.SetCpsr(0x00000030); // Thumb, User-mode
+
+    test_env.ticks_left = 2;
+    jit.Run();
+
+    REQUIRE(jit.Regs()[0] == 32);
+    REQUIRE(jit.Regs()[1] == 33);
+    REQUIRE(jit.Regs()[15] == 8);
+    REQUIRE(jit.Cpsr() == 0x00000030);
+}
