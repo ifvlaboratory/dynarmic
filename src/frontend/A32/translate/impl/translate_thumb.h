@@ -172,6 +172,7 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
 
     // thumb32
     bool thumb32_UXTH(Reg d, SignExtendRotation rotate, Reg m);
+    bool thumb32_UXTAB(Reg n, Reg d, SignExtendRotation rotate, Reg m);
 
     bool thumb32_PLD_imm12(bool W, Reg n, Imm<12> imm12);
 

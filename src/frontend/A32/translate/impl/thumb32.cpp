@@ -2190,6 +2190,26 @@ bool ThumbTranslatorVisitor::vfp_VSTR(bool U, bool D, Reg n, size_t Vd, bool sz,
     return true;
 }
 
+// UXTAB<c> <Rd>, <Rn>, <Rm>{, <rotation>}
+bool ThumbTranslatorVisitor::thumb32_UXTAB(Reg n, Reg d, SignExtendRotation rotate, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (d == Reg::PC || m == Reg::PC || n == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || m == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+
+    const auto rotated = Rotate(ir, m, rotate);
+    const auto reg_n = ir.GetRegister(n);
+    const auto result = ir.Add(reg_n, ir.ZeroExtendByteToWord(ir.LeastSignificantByte(rotated)));
+
+    ir.SetRegister(d, result);
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }
