@@ -183,6 +183,7 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
     bool thumb32_MLA(Reg n, Reg a, Reg d, Reg m);
     bool thumb32_MLS(Reg n, Reg a, Reg d, Reg m);
 
+    bool thumb32_UMULL(Reg n, Reg dLo, Reg dHi, Reg m);
     bool thumb32_UDIV(Reg n, Reg d, Reg m);
 
     bool thumb32_PUSH(bool M, RegList reg_list);

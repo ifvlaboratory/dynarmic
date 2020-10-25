@@ -2238,6 +2238,34 @@ bool ThumbTranslatorVisitor::vfp_VDUP(Imm<1> B, bool Q, size_t Vd, Reg t, bool D
     return true;
 }
 
+// UMULL<c> <RdLo>, <RdHi>, <Rn>, <Rm>
+bool ThumbTranslatorVisitor::thumb32_UMULL(Reg n, Reg dLo, Reg dHi, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    if (dLo == Reg::PC || dHi == Reg::PC || n == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (dLo == Reg::R13 || dHi == Reg::R13 || n == Reg::R13 || m == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+
+    if (dLo == dHi) {
+        return UnpredictableInstruction();
+    }
+
+    const auto n64 = ir.ZeroExtendWordToLong(ir.GetRegister(n));
+    const auto m64 = ir.ZeroExtendWordToLong(ir.GetRegister(m));
+    const auto result = ir.Mul(n64, m64);
+    const auto lo = ir.LeastSignificantWord(result);
+    const auto hi = ir.MostSignificantWord(result).result;
+
+    ir.SetRegister(dLo, lo);
+    ir.SetRegister(dHi, hi);
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }
