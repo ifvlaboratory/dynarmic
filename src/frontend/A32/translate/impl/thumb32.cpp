@@ -2210,6 +2210,34 @@ bool ThumbTranslatorVisitor::thumb32_UXTAB(Reg n, Reg d, SignExtendRotation rota
     return true;
 }
 
+// VDUP<c>.{8,16,32} <Qd>, <Rt>
+// VDUP<c>.{8,16,32} <Dd>, <Rt>
+bool ThumbTranslatorVisitor::vfp_VDUP(Imm<1> B, bool Q, size_t Vd, Reg t, bool D, Imm<1> E) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    if (Q && Common::Bit<0>(Vd)) {
+        return UndefinedInstruction();
+    }
+    if (t == Reg::R15 || t == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+
+    const auto d = ToVector(Q, Vd, D);
+    const size_t BE = concatenate(B, E).ZeroExtend();
+    const size_t esize = 32u >> BE;
+
+    if (BE == 0b11) {
+        return UndefinedInstruction();
+    }
+
+    const auto scalar = ir.LeastSignificant(esize, ir.GetRegister(t));
+    const auto result = ir.VectorBroadcast(esize, scalar);
+    ir.SetVector(d, result);
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }

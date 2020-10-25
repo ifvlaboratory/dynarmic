@@ -832,3 +832,24 @@ TEST_CASE("arm: UXTAB", "[arm][A32]") {
     REQUIRE(jit.Regs()[15] == 4);
     REQUIRE(jit.Cpsr() == 0x000001d0);
 }
+
+TEST_CASE("arm: VDUP (from core)", "[arm][A32]") {
+    ArmTestEnv test_env;
+    Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
+    test_env.code_mem = {
+            0xee800b90, // vdup.32 d16, r0
+            0xeafffffe, // b #0
+    };
+
+    jit.Regs()[0] = 0xff;
+    jit.Regs()[15] = 0; // PC = 0
+    jit.SetCpsr(0x000001d0); // User-mode
+
+    test_env.ticks_left = 1;
+    jit.Run();
+
+    REQUIRE(jit.ExtRegs()[32] == 0xff);
+    REQUIRE(jit.ExtRegs()[33] == 0xff);
+    REQUIRE(jit.Regs()[15] == 4);
+    REQUIRE(jit.Cpsr() == 0x000001d0);
+}
