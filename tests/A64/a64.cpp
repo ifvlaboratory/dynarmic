@@ -634,3 +634,20 @@ TEST_CASE("A64: Optimization failure when folding ADD", "[a64]") {
     REQUIRE(jit.GetPstate() == 0x20000000);
     REQUIRE(jit.GetVector(30) == Vector{0xf7f6f5f4, 0});
 }
+
+TEST_CASE("A64: IC IVAU", "[a64]") {
+    A64TestEnv env;
+    A64::Jit jit{A64::UserConfig{&env}};
+
+    env.code_mem.emplace_back(0xd50b7522); // IC IVAU, X2
+    env.code_mem.emplace_back(0x14000000); // B .
+
+    jit.SetRegister(2, 2);
+    jit.SetPC(0);
+
+    env.ticks_left = 1;
+    jit.Run();
+
+    REQUIRE(jit.GetRegister(2) == 2);
+    REQUIRE(jit.GetPC() == 4);
+}
