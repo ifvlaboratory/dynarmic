@@ -2216,6 +2216,9 @@ bool ThumbTranslatorVisitor::thumb32_UXTAB(Reg n, Reg d, SignExtendRotation rota
     if (!ConditionPassed()) {
         return true;
     }
+    if (n == Reg::PC) {
+        return UnpredictableInstruction();
+    }
     if (d == Reg::PC || m == Reg::PC || n == Reg::R13) {
         return UnpredictableInstruction();
     }
