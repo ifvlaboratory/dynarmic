@@ -2116,6 +2116,26 @@ bool ThumbTranslatorVisitor::thumb32_TBH(Reg n, Reg m) {
     return false;
 }
 
+// REV<c> <Rd>, <Rm>
+bool ThumbTranslatorVisitor::thumb32_REV(Reg m1, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if(m1 != m) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || m == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+
+    const auto result = ir.ByteReverseWord(ir.GetRegister(m));
+    ir.SetRegister(d, result);
+    return true;
+}
+
 // RBIT<c> <Rd>, <Rm>
 bool ThumbTranslatorVisitor::thumb32_RBIT(Reg m1, Reg d, Reg m) {
     if (!ConditionPassed()) {
