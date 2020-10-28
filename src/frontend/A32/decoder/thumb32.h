@@ -42,7 +42,7 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_STREXB,         "STREXB",                   "111010001100------------0100----"),
         INST(&V::thumb32_STREXH,         "STREXH",                   "111010001100nnnntttt11110101mmmm"),
         //INST(&V::thumb32_STREXD,         "STREXD",                   "111010001100------------0111----"),
-        //INST(&V::thumb32_TBB,            "TBB",                      "111010001101------------0000----"),
+        INST(&V::thumb32_TBB,            "TBB",                      "111010001101nnnn111100000000mmmm"),
         INST(&V::thumb32_TBH,            "TBH",                      "111010001101nnnn111100000001mmmm"),
         //INST(&V::thumb32_LDREXB,         "LDREXB",                   "111010001101------------0100----"),
         INST(&V::thumb32_LDREXH,         "LDREXH",                   "111010001101nnnntttt111101011111"),
