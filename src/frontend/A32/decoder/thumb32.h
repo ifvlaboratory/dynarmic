@@ -337,6 +337,9 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         INST(&V::asimd_SHR,              "SHR",                      "111U11111Diiiiiidddd0000LQM1mmmm"), // ASIMD
         INST(&V::vfp_VDUP,               "VDUP (from core)",         "111011101BQ0ddddtttt1011D0E10000"), // ASIMD
 
+        // Advanced SIMD load/store structures
+        INST(&V::v8_VST_multiple,       "VST{1-4} (multiple)",       "111110010D00nnnnddddxxxxzzaammmm"), // v8
+
         // Branch instructions
         INST(&V::thumb32_BL_imm,         "BL (imm)",                 "11110svvvvvvvvvv11i1jvvvvvvvvvvv"), // v4T
         INST(&V::thumb32_BLX_imm,        "BLX (imm)",                "11110svvvvvvvvvv11i0jvvvvvvvvvvv"), // v5T

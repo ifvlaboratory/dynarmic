@@ -4,6 +4,7 @@
  */
 
 #include "frontend/A32/translate/impl/translate_arm.h"
+#include "frontend/A32/translate/impl/translate_thumb.h"
 
 #include <optional>
 #include <tuple>
@@ -90,6 +91,57 @@ bool ArmTranslatorVisitor::v8_VST_multiple(bool D, Reg n, size_t Vd, Imm<4> type
     }
 
     [[maybe_unused]] const size_t alignment = align == 0 ? 1 : 4 << align;
+    const size_t ebytes = static_cast<size_t>(1) << size;
+    const size_t elements = 8 / ebytes;
+
+    const bool wback = m != Reg::R15;
+    const bool register_index = m != Reg::R15 && m != Reg::R13;
+
+    IR::U32 address = ir.GetRegister(n);
+    for (size_t r = 0; r < regs; r++) {
+        for (size_t e = 0; e < elements; e++) {
+            for (size_t i = 0; i < nelem; i++) {
+                const ExtReg ext_reg = d + i * inc + r;
+                const IR::U64 shifted_element = ir.LogicalShiftRight(ir.GetExtendedRegister(ext_reg), ir.Imm8(static_cast<u8>(e * ebytes * 8)));
+                const IR::UAny element = ir.LeastSignificant(8 * ebytes, shifted_element);
+                ir.WriteMemory(8 * ebytes, address, element);
+
+                address = ir.Add(address, ir.Imm32(static_cast<u32>(ebytes)));
+            }
+        }
+    }
+
+    if (wback) {
+        if (register_index) {
+            ir.SetRegister(n, ir.Add(ir.GetRegister(n), ir.GetRegister(m)));
+        } else {
+            ir.SetRegister(n, ir.Add(ir.GetRegister(n), ir.Imm32(static_cast<u32>(8 * nelem * regs))));
+        }
+    }
+
+    return true;
+}
+
+// VST1<c>.<size> <list>, [<Rn>{:<align>}]{!}
+// VST1<c>.<size> <list>, [<Rn>{:<align>}], <Rm>
+bool ThumbTranslatorVisitor::v8_VST_multiple(bool D, Reg n, size_t Vd, Imm<4> type, size_t size, size_t align, Reg m) {
+    if (type == 0b1011 || type.Bits<2, 3>() == 0b11) {
+        return DecodeError();
+    }
+
+    const auto decoded_type = DecodeType(type, size, align);
+    if (!decoded_type) {
+        return UndefinedInstruction();
+    }
+    const auto [nelem, regs, inc] = *decoded_type;
+
+    const ExtReg d = ToExtRegD(Vd, D);
+    const size_t d_last = RegNumber(d) + inc * (nelem - 1);
+    if (n == Reg::R15 || d_last + regs > 32) {
+        return UnpredictableInstruction();
+    }
+
+    [[maybe_unused]] const size_t alignment = align == 0 ? 1 : 4U << align;
     const size_t ebytes = static_cast<size_t>(1) << size;
     const size_t elements = 8 / ebytes;
 
