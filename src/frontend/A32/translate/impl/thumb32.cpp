@@ -1665,7 +1665,7 @@ bool ThumbTranslatorVisitor::thumb32_LDR_imm8(Reg n, Reg t, bool P, bool U, bool
     return true;
 }
 
-// LDR<c>.W <Rt>,[<Rn>,<Rm>{,LSL #<shift>}]
+// LDR<c>.W <Rt>, [<Rn>{, #<imm12>}]
 bool ThumbTranslatorVisitor::thumb32_LDR_imm12(Reg n, Reg t, Imm<12> imm12) {
     if (!ConditionPassed()) {
         return true;
