@@ -45,10 +45,10 @@ public:
     }
 
     bool IsInITBlock() const {
-        return Flags() != 0b00000;
+        return Common::Bits<0, 3>(value) != 0b0000;
     }
     bool IsLastInITBlock() const {
-        return Common::Bits<0, 3>(Flags()) == 0b1000;
+        return Common::Bits<0, 3>(value) == 0b1000;
     }
 
     ITState Advance() const {
