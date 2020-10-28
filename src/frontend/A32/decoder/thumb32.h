@@ -225,7 +225,7 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_UXTAB16,        "UXTAB16",                  "111110100011----1111----1-------"),
         //INST(&V::thumb32_SXTB,           "SXTB",                     "11111010010011111111----1-------"),
         //INST(&V::thumb32_SXTAB,          "SXTAB",                    "111110100100----1111----1-------"),
-        //INST(&V::thumb32_UXTB,           "UXTB",                     "11111010010111111111----1-------"),
+        INST(&V::thumb32_UXTB,           "UXTB",                     "11111010010111111111dddd10rrmmmm"),
         INST(&V::thumb32_UXTAB,          "UXTAB",                    "111110100101nnnn1111dddd10rrmmmm"),
 
         // Parallel Addition and Subtraction (signed)

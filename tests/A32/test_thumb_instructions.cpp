@@ -633,7 +633,7 @@ TEST_CASE("thumb2: UBFX", "[thumb2]") {
     ThumbTestEnv test_env;
     Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
     test_env.code_mem = {
-            0xf3c1, 0x1007, // rbit r0, r1
+            0xf3c1, 0x1007, // ubfx r0, r1, #4, #8
             0xe7fe, // b #0
     };
 
@@ -839,5 +839,5 @@ TEST_CASE("thumb2: LDR", "[thumb2]") {
 
     REQUIRE(jit.Regs()[3] == 0xb0a0908);
     REQUIRE(jit.Regs()[15] == 4);
-    REQUIRE(jit.Cpsr() == 0x20000030);
+    REQUIRE(jit.Cpsr() == 0x00000030);
 }
