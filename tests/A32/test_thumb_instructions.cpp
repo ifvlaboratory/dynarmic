@@ -743,3 +743,60 @@ TEST_CASE("thumb2: UMULL", "[thumb2]") {
     REQUIRE(jit.Regs()[15] == 4);
     REQUIRE(jit.Cpsr() == 0x00000030);
 }
+
+TEST_CASE("thumb2: POP", "[thumb2]") {
+    ThumbTestEnv test_env;
+    Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
+    test_env.code_mem = {
+            0xf1b0, 0x0f00, // cmp.w r0, #0
+            0xbf04, // itt eq
+            0x4629, // mov r1, r5
+            0xe8bd, 0x8001, // pop.w {r0, pc}
+            0xe7fe, 0xe7fe, // b #0
+            0xe7fe, 0xe7fe, // b #0
+            0x0011, 0x0000
+    };
+
+    jit.Regs()[0] = 0;
+    jit.Regs()[5] = 5;
+    jit.Regs()[13] = 16; // SP
+    jit.Regs()[15] = 0; // PC = 0
+    jit.SetCpsr(0x00000030); // Thumb, User-mode
+
+    test_env.ticks_left = 5;
+    jit.Run();
+
+    REQUIRE(jit.Regs()[0] == 0xe7fee7fe);
+    REQUIRE(jit.Regs()[1] == 5);
+    REQUIRE(jit.Regs()[13] == 24);
+    REQUIRE(jit.Regs()[15] == 16);
+    REQUIRE(jit.Cpsr() == 0x60000030);
+}
+
+TEST_CASE("thumb2: IT", "[thumb2]") {
+    ThumbTestEnv test_env;
+    Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
+    test_env.code_mem = {
+            0xf1b0, 0x0f00, // cmp.w r0, #0
+            0xbf04, // itt eq
+            0x4629, // mov r1, r5
+            0xe8bd, 0x8001, // pop.w {r0, pc}
+            0xe7fe, 0xe7fe, // b #0
+            0xe7fe, 0xe7fe, // b #0
+            0x0011, 0x0000
+    };
+
+    jit.Regs()[0] = 1;
+    jit.Regs()[1] = 1;
+    jit.Regs()[5] = 5;
+    jit.Regs()[13] = 16; // SP
+    jit.Regs()[15] = 0; // PC = 0
+    jit.SetCpsr(0x00000030); // Thumb, User-mode
+
+    test_env.ticks_left = 4;
+    jit.Run();
+
+    REQUIRE(jit.Regs()[1] == 1);
+    REQUIRE(jit.Regs()[15] == 12);
+    REQUIRE(jit.Cpsr() == 0x20000030);
+}

@@ -48,7 +48,7 @@ public:
         return Flags() != 0b00000;
     }
     bool IsLastInITBlock() const {
-        return Common::Bits<1, 4>(Flags()) == 0b1000;
+        return Common::Bits<0, 3>(Flags()) == 0b1000;
     }
 
     ITState Advance() const {
