@@ -49,7 +49,7 @@ std::optional<std::reference_wrapper<const VFPMatcher<V>>> DecodeVFP(u32 instruc
     const bool is_unconditional = (instruction & 0xF0000000) == 0xF0000000;
     const Table& table = is_unconditional ? tables.unconditional : tables.conditional;
 
-    const auto matches_instruction = [instruction](const auto& matcher){ return matcher.Matches(instruction); };
+    const auto matches_instruction = [instruction](const auto& matcher) { return matcher.Matches(instruction); };
 
     auto iter = std::find_if(table.begin(), table.end(), matches_instruction);
     return iter != table.end() ? std::optional<std::reference_wrapper<const VFPMatcher<V>>>(*iter) : std::nullopt;

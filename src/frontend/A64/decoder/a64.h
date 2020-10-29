@@ -27,7 +27,7 @@ using DecodeTable = std::array<std::vector<Matcher<Visitor>>, 0x1000>;
 
 namespace detail {
 inline size_t ToFastLookupIndex(u32 instruction) {
-    return ((instruction >> 10) & 0x00F) | ((instruction >> 18) & 0xFF0);
+    return ((instruction >> 10U) & 0x00FU) | ((instruction >> 18U) & 0xFF0U);
 }
 } // namespace detail
 

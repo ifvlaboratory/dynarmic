@@ -1852,48 +1852,6 @@ bool ThumbTranslatorVisitor::thumb32_UXTH(Reg d, SignExtendRotation rotate, Reg 
     return true;
 }
 
-// VMOV<c> <Dm>, <Rt>, <Rt2>
-bool ThumbTranslatorVisitor::vfp_VMOV_2u32_f64(Reg t2, Reg t1, bool M, size_t Vm) {
-    if (!ConditionPassed()) {
-        return true;
-    }
-
-    const auto m = ToExtReg(true, Vm, M);
-    if (t1 == Reg::PC || t2 == Reg::PC || m == ExtReg::S31) {
-        return UnpredictableInstruction();
-    }
-    if (t1 == Reg::R13 || t2 == Reg::R13) {
-        return UnpredictableInstruction();
-    }
-
-    const auto value = ir.Pack2x32To1x64(ir.GetRegister(t1), ir.GetRegister(t2));
-    ir.SetExtendedRegister(m, value);
-    return true;
-}
-
-// VMOV<c> <Rt>, <Rt2>, <Dm>
-bool ThumbTranslatorVisitor::vfp_VMOV_f64_2u32(Reg t2, Reg t1, bool M, size_t Vm) {
-    if (!ConditionPassed()) {
-        return true;
-    }
-
-    const auto m = ToExtReg(true, Vm, M);
-    if (t1 == Reg::PC || t2 == Reg::PC || m == ExtReg::S31) {
-        return UnpredictableInstruction();
-    }
-    if (t1 == Reg::R13 || t2 == Reg::R13) {
-        return UnpredictableInstruction();
-    }
-    if (t1 == t2) {
-        return UnpredictableInstruction();
-    }
-
-    const auto value = ir.GetExtendedRegister(m);
-    ir.SetRegister(t1, ir.LeastSignificantWord(value));
-    ir.SetRegister(t2, ir.MostSignificantWord(value).result);
-    return true;
-}
-
 // LDREX<c> <Rt>, [<Rn>{, #<imm>}]
 bool ThumbTranslatorVisitor::thumb32_LDREX(Reg n, Reg t, Imm<8> imm8) {
     if (!ConditionPassed()) {
@@ -2200,37 +2158,6 @@ bool ThumbTranslatorVisitor::thumb32_UBFX(Reg n, Imm<3> imm3, Reg d, Imm<2> imm2
     return true;
 }
 
-// VSTR<c> <Dd>, [<Rn>{, #+/-<imm>}]
-// VSTR<c> <Sd>, [<Rn>{, #+/-<imm>}]
-bool ThumbTranslatorVisitor::vfp_VSTR(bool U, bool D, Reg n, size_t Vd, bool sz, Imm<8> imm8) {
-    if (!ConditionPassed()) {
-        return true;
-    }
-
-    if(n == Reg::PC) {
-        return UnpredictableInstruction();
-    }
-
-    const u32 imm32 = imm8.ZeroExtend() << 2U;
-    const auto d = ToExtReg(sz, Vd, D);
-    const auto base = n == Reg::PC ? ir.Imm32(ir.AlignPC(4)) : ir.GetRegister(n);
-    const auto address = U ? ir.Add(base, ir.Imm32(imm32)) : ir.Sub(base, ir.Imm32(imm32));
-    if (sz) {
-        const auto reg_d = ir.GetExtendedRegister(d);
-        auto lo = ir.LeastSignificantWord(reg_d);
-        auto hi = ir.MostSignificantWord(reg_d).result;
-        if (ir.current_location.EFlag()) {
-            std::swap(lo, hi);
-        }
-        ir.WriteMemory32(address, lo);
-        ir.WriteMemory32(ir.Add(address, ir.Imm32(4)), hi);
-    } else {
-        ir.WriteMemory32(address, ir.GetExtendedRegister(d));
-    }
-
-    return true;
-}
-
 // UXTB<c>.W <Rd>, <Rm>{, <rotation>}
 bool ThumbTranslatorVisitor::thumb32_UXTB(Reg d, SignExtendRotation rotate, Reg m) {
     if (!ConditionPassed()) {
@@ -2269,34 +2196,6 @@ bool ThumbTranslatorVisitor::thumb32_UXTAB(Reg n, Reg d, SignExtendRotation rota
     return true;
 }
 
-// VDUP<c>.{8,16,32} <Qd>, <Rt>
-// VDUP<c>.{8,16,32} <Dd>, <Rt>
-bool ThumbTranslatorVisitor::vfp_VDUP(Imm<1> B, bool Q, size_t Vd, Reg t, bool D, Imm<1> E) {
-    if (!ConditionPassed()) {
-        return true;
-    }
-
-    if (Q && Common::Bit<0>(Vd)) {
-        return UndefinedInstruction();
-    }
-    if (t == Reg::R15 || t == Reg::R13) {
-        return UnpredictableInstruction();
-    }
-
-    const auto d = ToVector(Q, Vd, D);
-    const size_t BE = concatenate(B, E).ZeroExtend();
-    const size_t esize = 32u >> BE;
-
-    if (BE == 0b11) {
-        return UndefinedInstruction();
-    }
-
-    const auto scalar = ir.LeastSignificant(esize, ir.GetRegister(t));
-    const auto result = ir.VectorBroadcast(esize, scalar);
-    ir.SetVector(d, result);
-    return true;
-}
-
 // UMULL<c> <RdLo>, <RdHi>, <Rn>, <Rm>
 bool ThumbTranslatorVisitor::thumb32_UMULL(Reg n, Reg dLo, Reg dHi, Reg m) {
     if (!ConditionPassed()) {
@@ -2322,47 +2221,6 @@ bool ThumbTranslatorVisitor::thumb32_UMULL(Reg n, Reg dLo, Reg dHi, Reg m) {
 
     ir.SetRegister(dLo, lo);
     ir.SetRegister(dHi, hi);
-    return true;
-}
-
-// VLDR<c> <Dd>, [<Rn>{, #+/-<imm>}]
-// VLDR<c> <Sd>, [<Rn>{, #+/-<imm>}]
-bool ThumbTranslatorVisitor::vfp_VLDR(bool U, bool D, Reg n, size_t Vd, bool sz, Imm<8> imm8) {
-    if (!ConditionPassed()) {
-        return true;
-    }
-
-    const u32 imm32 = imm8.ZeroExtend() << 2U;
-    const auto d = ToExtReg(sz, Vd, D);
-    const auto base = n == Reg::PC ? ir.Imm32(ir.AlignPC(4)) : ir.GetRegister(n);
-    const auto address = U ? ir.Add(base, ir.Imm32(imm32)) : ir.Sub(base, ir.Imm32(imm32));
-
-    if (sz) {
-        auto lo = ir.ReadMemory32(address);
-        auto hi = ir.ReadMemory32(ir.Add(address, ir.Imm32(4)));
-        if (ir.current_location.EFlag()) {
-            std::swap(lo, hi);
-        }
-        ir.SetExtendedRegister(d, ir.Pack2x32To1x64(lo, hi));
-    } else {
-        ir.SetExtendedRegister(d, ir.ReadMemory32(address));
-    }
-
-    return true;
-}
-
-// VMOV<c> <Rt>, <Sn>
-bool ThumbTranslatorVisitor::vfp_VMOV_f32_u32(size_t Vn, Reg t, bool N) {
-    if (!ConditionPassed()) {
-        return true;
-    }
-
-    if (t == Reg::PC || t == Reg::R13) {
-        return UnpredictableInstruction();
-    }
-
-    const auto n = ToExtReg(false, Vn, N);
-    ir.SetRegister(t, ir.GetExtendedRegister(n));
     return true;
 }
 

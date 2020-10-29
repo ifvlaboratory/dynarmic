@@ -310,13 +310,6 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         //INST(&V::thumb32_UMLAL,          "UMLAL",                    "111110111110------------0000----"),
         //INST(&V::thumb32_UMAAL,          "UMAAL",                    "111110111110------------0110----"),
 
-        INST(&V::vfp_VMOV_2u32_f64,      "VMOV (2xcore to f64)",     "111011000100uuuutttt101100M1mmmm"), // VFPv2
-        INST(&V::vfp_VMOV_f64_2u32,      "VMOV (f64 to 2xcore)",     "111011000101uuuutttt101100M1mmmm"), // VFPv2
-        INST(&V::vfp_VMOV_f32_u32,       "VMOV (f32 to core)",       "111011100001nnnntttt1010N0010000"), // VFPv2
-        INST(&V::vfp_VSTR,               "VSTR",                     "11101101UD00nnnndddd101zvvvvvvvv"), // VFPv2
-        INST(&V::vfp_VDUP,               "VDUP (from core)",         "111011101BQ0ddddtttt1011D0E10000"), // ASIMD
-        INST(&V::vfp_VLDR,               "VLDR",                     "11101101UD01nnnndddd101zvvvvvvvv"), // VFPv2
-
         // Advanced SIMD one register, modified immediate
         INST(&V::asimd_VMOV_imm,         "VBIC, VMOV, VMVN, VORR",   "111a11111D000bcdVVVVmmmm0Qo1efgh"), // ASIMD
         INST(&V::asimd_SHR,              "SHR",                      "111U11111Diiiiiidddd0000LQM1mmmm"), // ASIMD

@@ -114,6 +114,8 @@ if ("A32" IN_LIST DYNARMIC_FRONTENDS)
         frontend/A32/decoder/thumb32.h
         frontend/A32/decoder/vfp.h
         frontend/A32/decoder/vfp.inc
+        frontend/A32/decoder/thumb32_vfp.h
+        frontend/A32/decoder/thumb32_vfp.inc
         frontend/A32/disassembler/disassembler.h
         frontend/A32/disassembler/disassembler_arm.cpp
         frontend/A32/disassembler/disassembler_thumb.cpp
