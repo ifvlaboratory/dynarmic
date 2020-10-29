@@ -1329,6 +1329,46 @@ bool ArmTranslatorVisitor::vfp_VPUSH(Cond cond, bool D, size_t Vd, bool sz, Imm<
     return true;
 }
 
+// VPUSH.{F32,F64} <list>
+bool ThumbTranslatorVisitor::vfp_VPUSH(bool D, size_t Vd, bool sz, Imm<8> imm8) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    const ExtReg d = ToExtReg(sz, Vd, D);
+    const size_t regs = sz ? imm8.ZeroExtend() >> 1U : imm8.ZeroExtend();
+
+    if (regs == 0 || RegNumber(d)+regs > 32) {
+        return UnpredictableInstruction();
+    }
+
+    if (sz && regs > 16) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 imm32 = imm8.ZeroExtend() << 2U;
+    auto address = ir.Sub(ir.GetRegister(Reg::SP), ir.Imm32(imm32));
+    ir.SetRegister(Reg::SP, address);
+
+    for (size_t i = 0; i < regs; ++i) {
+        if (sz) {
+            const auto reg_d = ir.GetExtendedRegister(d + i);
+            auto lo = ir.LeastSignificantWord(reg_d);
+            auto hi = ir.MostSignificantWord(reg_d).result;
+            if (ir.current_location.EFlag()) std::swap(lo, hi);
+            ir.WriteMemory32(address, lo);
+            address = ir.Add(address, ir.Imm32(4));
+            ir.WriteMemory32(address, hi);
+            address = ir.Add(address, ir.Imm32(4));
+        } else {
+            ir.WriteMemory32(address, ir.GetExtendedRegister(d + i));
+            address = ir.Add(address, ir.Imm32(4));
+        }
+    }
+
+    return true;
+}
+
 // VLDR<c> <Dd>, [<Rn>{, #+/-<imm>}]
 // VLDR<c> <Sd>, [<Rn>{, #+/-<imm>}]
 bool ArmTranslatorVisitor::vfp_VLDR(Cond cond, bool U, bool D, Reg n, size_t Vd, bool sz, Imm<8> imm8) {
