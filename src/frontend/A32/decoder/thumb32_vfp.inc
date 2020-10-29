@@ -61,7 +61,7 @@ INST(vfp_VDUP,             "VDUP (from core)",        "111011101BQ0ddddtttt1011D
 
 // Extension register load-store instructions
 INST(vfp_VPUSH,            "VPUSH",                   "111011010D101101dddd101zvvvvvvvv") // VFPv2
-//INST(vfp_VPOP,             "VPOP",                    "cccc11001D111101dddd101zvvvvvvvv") // VFPv2
+INST(vfp_VPOP,             "VPOP",                    "111011001D111101dddd101zvvvvvvvv") // VFPv2
 INST(vfp_VLDR,             "VLDR",                    "11101101UD01nnnndddd101zvvvvvvvv") // VFPv2
 INST(vfp_VSTR,             "VSTR",                    "11101101UD00nnnndddd101zvvvvvvvv") // VFPv2
 INST(thumb32_UDF,          "Undefined VSTM/VLDM",     "111011000-0---------101---------") // VFPv2

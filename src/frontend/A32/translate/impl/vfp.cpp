@@ -1289,6 +1289,47 @@ bool ArmTranslatorVisitor::vfp_VPOP(Cond cond, bool D, size_t Vd, bool sz, Imm<8
     return true;
 }
 
+// VPOP.{F32,F64} <list>
+bool ThumbTranslatorVisitor::vfp_VPOP(bool D, size_t Vd, bool sz, Imm<8> imm8) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    const ExtReg d = ToExtReg(sz, Vd, D);
+    const size_t regs = sz ? imm8.ZeroExtend() >> 1U : imm8.ZeroExtend();
+
+    if (regs == 0 || RegNumber(d)+regs > 32) {
+        return UnpredictableInstruction();
+    }
+
+    if (sz && regs > 16) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 imm32 = imm8.ZeroExtend() << 2U;
+    auto address = ir.GetRegister(Reg::SP);
+    ir.SetRegister(Reg::SP, ir.Add(address, ir.Imm32(imm32)));
+
+    for (size_t i = 0; i < regs; ++i) {
+        if (sz) {
+            auto lo = ir.ReadMemory32(address);
+            address = ir.Add(address, ir.Imm32(4));
+            auto hi = ir.ReadMemory32(address);
+            address = ir.Add(address, ir.Imm32(4));
+            if (ir.current_location.EFlag()) {
+                std::swap(lo, hi);
+            }
+            ir.SetExtendedRegister(d + i, ir.Pack2x32To1x64(lo, hi));
+        } else {
+            const auto res = ir.ReadMemory32(address);
+            ir.SetExtendedRegister(d + i, res);
+            address = ir.Add(address, ir.Imm32(4));
+        }
+    }
+
+    return true;
+}
+
 // VPUSH.{F32,F64} <list>
 bool ArmTranslatorVisitor::vfp_VPUSH(Cond cond, bool D, size_t Vd, bool sz, Imm<8> imm8) {
     const ExtReg d = ToExtReg(sz, Vd, D);
