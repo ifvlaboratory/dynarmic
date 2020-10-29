@@ -11,6 +11,7 @@
 #include "frontend/A32/decoder/thumb16.h"
 #include "frontend/A32/decoder/thumb32.h"
 #include "frontend/A32/decoder/thumb32_vfp.h"
+#include "frontend/A32/decoder/thumb32_asimd.h"
 #include "frontend/A32/ir_emitter.h"
 #include "frontend/A32/location_descriptor.h"
 #include "frontend/A32/translate/impl/translate_thumb.h"
@@ -76,6 +77,8 @@ IR::Block TranslateThumb(LocationDescriptor descriptor, const MemoryReadCodeFunc
             visitor.is_thumb_16 = false;
             if (const auto vfp_decoder = DecodeThumbVFP<ThumbTranslatorVisitor>(thumb_instruction)) {
                 should_continue = vfp_decoder->get().call(visitor, thumb_instruction);
+            } else if (const auto asimd_decoder = DecodeThumbASIMD<ThumbTranslatorVisitor>(thumb_instruction)) {
+                should_continue = asimd_decoder->get().call(visitor, thumb_instruction);
             } else if (const auto decoder = DecodeThumb32<ThumbTranslatorVisitor>(thumb_instruction)) {
                 should_continue = decoder->get().call(visitor, thumb_instruction);
             } else {
@@ -128,6 +131,8 @@ bool TranslateSingleThumbInstruction(IR::Block& block, LocationDescriptor descri
     } else {
         if (const auto vfp_decoder = DecodeThumbVFP<ThumbTranslatorVisitor>(thumb_instruction)) {
             should_continue = vfp_decoder->get().call(visitor, thumb_instruction);
+        } else if (const auto asimd_decoder = DecodeThumbASIMD<ThumbTranslatorVisitor>(thumb_instruction)) {
+            should_continue = asimd_decoder->get().call(visitor, thumb_instruction);
         } else if (const auto decoder = DecodeThumb32<ThumbTranslatorVisitor>(thumb_instruction)) {
             should_continue = decoder->get().call(visitor, thumb_instruction);
         } else {
