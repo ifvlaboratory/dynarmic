@@ -336,6 +336,7 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
         INST(&V::vfp_VSTR,               "VSTR",                     "11101101UD00nnnndddd101zvvvvvvvv"), // VFPv2
         INST(&V::asimd_SHR,              "SHR",                      "111U11111Diiiiiidddd0000LQM1mmmm"), // ASIMD
         INST(&V::vfp_VDUP,               "VDUP (from core)",         "111011101BQ0ddddtttt1011D0E10000"), // ASIMD
+        INST(&V::vfp_VLDR,               "VLDR",                     "11101101UD01nnnndddd101zvvvvvvvv"), // VFPv2
 
         // Advanced SIMD load/store structures
         INST(&V::v8_VST_multiple,       "VST{1-4} (multiple)",       "111110010D00nnnnddddxxxxzzaammmm"), // v8
