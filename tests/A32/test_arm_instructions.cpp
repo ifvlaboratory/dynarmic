@@ -898,3 +898,25 @@ TEST_CASE("arm: LDR", "[arm][A32]") {
     REQUIRE(jit.Regs()[15] == 4);
     REQUIRE(jit.Cpsr() == 0x000001d0);
 }
+
+TEST_CASE("arm: VMOV (f32 to core)", "[arm][A32]") {
+    ArmTestEnv test_env;
+    Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
+    test_env.code_mem = {
+            0xee100a10, // vmov r0, s0
+            0xeafffffe, // b #0
+    };
+
+    jit.Regs()[0] = 4;
+    jit.ExtRegs()[0] = 0x12345678;
+    jit.ExtRegs()[1] = 0x56781234;
+    jit.Regs()[15] = 0; // PC = 0
+    jit.SetCpsr(0x000001d0); // User-mode
+
+    test_env.ticks_left = 1;
+    jit.Run();
+
+    REQUIRE(jit.Regs()[0] == 0x12345678);
+    REQUIRE(jit.Regs()[15] == 4);
+    REQUIRE(jit.Cpsr() == 0x000001d0);
+}

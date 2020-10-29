@@ -2351,6 +2351,21 @@ bool ThumbTranslatorVisitor::vfp_VLDR(bool U, bool D, Reg n, size_t Vd, bool sz,
     return true;
 }
 
+// VMOV<c> <Rt>, <Sn>
+bool ThumbTranslatorVisitor::vfp_VMOV_f32_u32(size_t Vn, Reg t, bool N) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    if (t == Reg::PC || t == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+
+    const auto n = ToExtReg(false, Vn, N);
+    ir.SetRegister(t, ir.GetExtendedRegister(n));
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }

@@ -11,11 +11,10 @@
 
 #include <mp/traits/function_info.h>
 
-#include "common/assert.h"
+#include <cassert>
 #include "common/bit_util.h"
 
-namespace Dynarmic::Decoder {
-namespace detail {
+namespace Dynarmic::Decoder::detail {
 
 /**
  * Helper functions for the decoders.
@@ -167,5 +166,4 @@ public:
     }
 };
 
-} // namespace detail
-} // namespace Dynarmic::Decoder
+} // namespace Dynarmic::Decoder::detail

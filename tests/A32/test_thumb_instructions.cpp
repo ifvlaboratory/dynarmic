@@ -841,3 +841,25 @@ TEST_CASE("thumb2: LDR", "[thumb2]") {
     REQUIRE(jit.Regs()[15] == 4);
     REQUIRE(jit.Cpsr() == 0x00000030);
 }
+
+TEST_CASE("thumb2: VMOV (f32 to core)", "[thumb2]") {
+    ThumbTestEnv test_env;
+    Dynarmic::A32::Jit jit{GetUserConfig(&test_env)};
+    test_env.code_mem = {
+            0xee10, 0x0a10, // vmov r0, s0
+            0xe7fe, 0xe7fe, // b #0
+    };
+
+    jit.Regs()[0] = 4;
+    jit.ExtRegs()[0] = 0x12345678;
+    jit.ExtRegs()[1] = 0x56781234;
+    jit.Regs()[15] = 0; // PC = 0
+    jit.SetCpsr(0x00000030); // Thumb, User-mode
+
+    test_env.ticks_left = 1;
+    jit.Run();
+
+    REQUIRE(jit.Regs()[0] == 0x12345678);
+    REQUIRE(jit.Regs()[15] == 4);
+    REQUIRE(jit.Cpsr() == 0x00000030);
+}
