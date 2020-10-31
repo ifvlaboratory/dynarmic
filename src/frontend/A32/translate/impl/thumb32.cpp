@@ -2162,6 +2162,30 @@ bool ThumbTranslatorVisitor::thumb32_REV(Reg m1, Reg d, Reg m) {
     return true;
 }
 
+// REV16<c> <Rd>, <Rm>
+bool ThumbTranslatorVisitor::thumb32_REV16(Reg m1, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if(m1 != m) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || m == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+
+    const auto reg_m = ir.GetRegister(m);
+    const auto lo = ir.And(ir.LogicalShiftRight(reg_m, ir.Imm8(8), ir.Imm1(false)).result, ir.Imm32(0x00FF00FF));
+    const auto hi = ir.And(ir.LogicalShiftLeft(reg_m, ir.Imm8(8), ir.Imm1(false)).result, ir.Imm32(0xFF00FF00));
+    const auto result = ir.Or(lo, hi);
+
+    ir.SetRegister(d, result);
+    return true;
+}
+
 // RBIT<c> <Rd>, <Rm>
 bool ThumbTranslatorVisitor::thumb32_RBIT(Reg m1, Reg d, Reg m) {
     if (!ConditionPassed()) {

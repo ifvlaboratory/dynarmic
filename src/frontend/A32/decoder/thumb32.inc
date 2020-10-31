@@ -248,7 +248,7 @@ INST(thumb32_UADD8,          "UADD8",                    "111110101000nnnn1111dd
 //INST(thumb32_QSUB,           "QSUB",                     "111110101000----1111----1010----")
 //INST(thumb32_QDSUB,          "QDSUB",                    "111110101000----1111----1011----")
 INST(thumb32_REV,            "REV",                      "111110101001mmmm1111dddd1000mmmm")
-//INST(thumb32_REV16,          "REV16",                    "111110101001----1111----1001----")
+INST(thumb32_REV16,          "REV16",                    "111110101001mmmm1111dddd1001mmmm")
 INST(thumb32_RBIT,           "RBIT",                     "111110101001mmmm1111dddd1010mmmm")
 //INST(thumb32_REVSH,          "REVSH",                    "111110101001----1111----1011----")
 INST(thumb32_SEL,            "SEL",                      "111110101010nnnn1111dddd1000mmmm")
