@@ -1130,6 +1130,32 @@ bool ThumbTranslatorVisitor::thumb32_BFC(Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5>
     return true;
 }
 
+// BFI<c> <Rd>, <Rn>, #<lsb>, #<width>
+bool ThumbTranslatorVisitor::thumb32_BFI(Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5> msb) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (d == Reg::PC || d == Reg::R13 || n == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+
+    const auto lsb = concatenate(imm3, imm2);
+    if (msb < lsb) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 lsb_value = lsb.ZeroExtend();
+    const u32 msb_value = msb.ZeroExtend();
+    const u32 inclusion_mask = Common::Ones<u32>(msb_value - lsb_value + 1) << lsb_value;
+    const u32 exclusion_mask = ~inclusion_mask;
+    const IR::U32 operand1 = ir.And(ir.GetRegister(d), ir.Imm32(exclusion_mask));
+    const IR::U32 operand2 = ir.And(ir.LogicalShiftLeft(ir.GetRegister(n), ir.Imm8(u8(lsb_value))), ir.Imm32(inclusion_mask));
+    const IR::U32 result = ir.Or(operand1, operand2);
+
+    ir.SetRegister(d, result);
+    return true;
+}
+
 // STRB<c> <Rt>, [<Rn>, # - <imm8>]
 // STRB<c> <Rt>, [<Rn>], # + / -<imm8>
 // STRB<c> <Rt>, [<Rn>, # + / -<imm8>]!
@@ -2162,6 +2188,25 @@ bool ThumbTranslatorVisitor::thumb32_UBFX(Reg n, Imm<3> imm3, Reg d, Imm<2> imm2
     const IR::U32 operand = ir.GetRegister(n);
     const IR::U32 mask = ir.Imm32(Common::Ones<u32>(widthm1_value + 1));
     const IR::U32 result = ir.And(ir.LogicalShiftRight(operand, ir.Imm8(u8(lsb_value))), mask);
+
+    ir.SetRegister(d, result);
+    return true;
+}
+
+// SXTB<c>.W <Rd>, <Rm>{, <rotation>}
+bool ThumbTranslatorVisitor::thumb32_SXTB(Reg d, SignExtendRotation rotate, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (d == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || m == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+
+    const auto rotated = Rotate(ir, m, rotate);
+    const auto result = ir.SignExtendByteToWord(ir.LeastSignificantByte(rotated));
 
     ir.SetRegister(d, result);
     return true;
