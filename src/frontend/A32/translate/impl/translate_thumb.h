@@ -243,6 +243,7 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
     bool thumb32_STRB_imm_2(Reg n, Reg t, Imm<12> imm12);
     bool thumb32_STRB(Reg n, Reg t, Imm<2> shift, Reg m);
 
+    bool thumb32_SEL(Reg n, Reg d, Reg m);
     bool thumb32_UBFX(Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5> widthm1);
 
     bool thumb32_LDRB_lit(bool U, Reg t, Imm<12> imm12);

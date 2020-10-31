@@ -251,7 +251,7 @@ INST(thumb32_REV,            "REV",                      "111110101001mmmm1111dd
 //INST(thumb32_REV16,          "REV16",                    "111110101001----1111----1001----")
 INST(thumb32_RBIT,           "RBIT",                     "111110101001mmmm1111dddd1010mmmm")
 //INST(thumb32_REVSH,          "REVSH",                    "111110101001----1111----1011----")
-//INST(thumb32_SEL,            "SEL",                      "111110101010----1111----1000----")
+INST(thumb32_SEL,            "SEL",                      "111110101010nnnn1111dddd1000mmmm")
 INST(thumb32_CLZ,            "CLZ",                      "111110101011mmmm1111dddd1000mmmm")
 
 // Multiply, Multiply Accumulate, and Absolute Difference

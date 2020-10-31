@@ -2353,6 +2353,26 @@ bool ThumbTranslatorVisitor::thumb32_UADD8(Reg n, Reg d, Reg m) {
     return true;
 }
 
+// SEL<c> <Rd>, <Rn>, <Rm>
+bool ThumbTranslatorVisitor::thumb32_SEL(Reg n, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (n == Reg::PC || d == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (n == Reg::R13 || d == Reg::R13 || m == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+
+    const auto to = ir.GetRegister(m);
+    const auto from = ir.GetRegister(n);
+    const auto result = ir.PackedSelect(ir.GetGEFlags(), to, from);
+
+    ir.SetRegister(d, result);
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }
