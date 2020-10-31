@@ -92,29 +92,7 @@ bool TranslatorVisitor::ISB(Imm<4> /*CRm*/) {
     return false;
 }
 
-bool Sys_IC(TranslatorVisitor *visitor, Reg /*Rt*/, int type) {
-    if (type == 2) {
-        // TODO implement ic ivau, xx
-        return true;
-    }
-
-    return visitor->InterpretThisInstruction();
-}
-
-bool TranslatorVisitor::SYS(Imm<3> op1, Imm<4> CRn, Imm<4> CRm, Imm<3> op2, Reg Rt) {
-    if(CRn == 0b0111) {
-        switch (concatenate(op1, CRm, op2).SignExtend()) {
-            case 0b0000001000: // IALLUIS
-                return Sys_IC(this, Rt, 0);
-            case 0b0000101000: // IALLU
-                return Sys_IC(this, Rt, 1);
-            case 0b0110101001: // IVAU
-                return Sys_IC(this, Rt, 2);
-            default:
-                break;
-        }
-    }
-
+bool TranslatorVisitor::SYS(Imm<3> /*op1*/, Imm<4> /*CRn*/, Imm<4> /*CRm*/, Imm<3> /*op2*/, Reg /*Rt*/) {
     return InterpretThisInstruction();
 }
 
