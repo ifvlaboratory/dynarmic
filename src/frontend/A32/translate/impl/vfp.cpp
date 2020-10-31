@@ -1112,6 +1112,29 @@ bool ArmTranslatorVisitor::vfp_VCVT_f_to_f(Cond cond, bool D, size_t Vd, bool sz
     return true;
 }
 
+// VCVT<c>.F64.F32 <Dd>, <Sm>
+// VCVT<c>.F32.F64 <Sd>, <Dm>
+bool ThumbTranslatorVisitor::vfp_VCVT_f_to_f(bool D, size_t Vd, bool sz, bool M, size_t Vm) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    const auto d = ToExtReg(!sz, Vd, D); // Destination is of opposite size to source
+    const auto m = ToExtReg(sz, Vm, M);
+    const auto reg_m = ir.GetExtendedRegister(m);
+    const auto rounding_mode = ir.current_location.FPSCR().RMode();
+
+    if (sz) {
+        const auto result = ir.FPDoubleToSingle(reg_m, rounding_mode);
+        ir.SetExtendedRegister(d, result);
+    } else {
+        const auto result = ir.FPSingleToDouble(reg_m, rounding_mode);
+        ir.SetExtendedRegister(d, result);
+    }
+
+    return true;
+}
+
 // VCVT.F32.{S32,U32} <Sd>, <Sm>
 // VCVT.F64.{S32,U32} <Sd>, <Dm>
 bool ArmTranslatorVisitor::vfp_VCVT_from_int(Cond cond, bool D, size_t Vd, bool sz, bool is_signed, bool M, size_t Vm) {
