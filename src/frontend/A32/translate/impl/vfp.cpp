@@ -1083,6 +1083,33 @@ bool ArmTranslatorVisitor::vfp_VCVT_from_int(Cond cond, bool D, size_t Vd, bool 
     return true;
 }
 
+// VCVT.F32.{S32,U32} <Sd>, <Sm>
+// VCVT.F64.{S32,U32} <Sd>, <Dm>
+bool ThumbTranslatorVisitor::vfp_VCVT_from_int(bool D, size_t Vd, bool sz, bool is_signed, bool M, size_t Vm) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    const auto d = ToExtReg(sz, Vd, D);
+    const auto m = ToExtReg(false, Vm, M);
+    const auto rounding_mode = ir.current_location.FPSCR().RMode();
+    const auto reg_m = ir.GetExtendedRegister(m);
+
+    if (sz) {
+        const auto result = is_signed
+                            ? ir.FPSignedFixedToDouble(reg_m, 0, rounding_mode)
+                            : ir.FPUnsignedFixedToDouble(reg_m, 0, rounding_mode);
+        ir.SetExtendedRegister(d, result);
+    } else {
+        const auto result = is_signed
+                            ? ir.FPSignedFixedToSingle(reg_m, 0, rounding_mode)
+                            : ir.FPUnsignedFixedToSingle(reg_m, 0, rounding_mode);
+        ir.SetExtendedRegister(d, result);
+    }
+
+    return true;
+}
+
 // VCVT.F32.{S16,U16,S32,U32} <Sdm>, <Sdm>
 // VCVT.F64.{S16,U16,S32,U32} <Ddm>, <Ddm>
 bool ArmTranslatorVisitor::vfp_VCVT_from_fixed(Cond cond, bool D, bool U, size_t Vd, bool sz, bool sx, Imm<1> i, Imm<4> imm4) {
