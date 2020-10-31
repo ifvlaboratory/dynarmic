@@ -1161,6 +1161,28 @@ bool ArmTranslatorVisitor::vfp_VCMP_zero(Cond cond, bool D, size_t Vd, bool sz, 
     return true;
 }
 
+// VCMP{E}.F32 <Sd>, #0.0
+// VCMP{E}.F64 <Dd>, #0.0
+bool ThumbTranslatorVisitor::vfp_VCMP_zero(bool D, size_t Vd, bool sz, bool E) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    const auto d = ToExtReg(sz, Vd, D);
+    const auto exc_on_qnan = E;
+    const auto reg_d = ir.GetExtendedRegister(d);
+
+    if (sz) {
+        const auto nzcv = ir.FPCompare(reg_d, ir.Imm64(0), exc_on_qnan);
+        ir.SetFpscrNZCV(nzcv);
+    } else {
+        const auto nzcv = ir.FPCompare(reg_d, ir.Imm32(0), exc_on_qnan);
+        ir.SetFpscrNZCV(nzcv);
+    }
+
+    return true;
+}
+
 // VRINTR.{F16,F32} <Sd>, <Sm>
 // VRINTR.F64 <Dd>, <Dm>
 bool ArmTranslatorVisitor::vfp_VRINTR(Cond cond, bool D, size_t Vd, bool sz, bool M, size_t Vm) {
