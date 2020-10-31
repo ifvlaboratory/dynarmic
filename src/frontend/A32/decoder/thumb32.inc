@@ -189,7 +189,7 @@ INST(thumb32_LSL_reg,        "LSL (reg)",                "11111010000Snnnn1111dd
 INST(thumb32_LSR_reg,        "LSR (reg)",                "11111010001Snnnn1111dddd0000mmmm")
 //INST(thumb32_ASR_reg,        "ASR (reg)",                "11111010010-----1111----0000----")
 //INST(thumb32_ROR_reg,        "ROR (reg)",                "11111010011-----1111----0000----")
-//INST(thumb32_SXTH,           "SXTH",                     "11111010000011111111----1-------")
+INST(thumb32_SXTH,           "SXTH",                     "11111010000011111111dddd10rrmmmm")
 //INST(thumb32_SXTAH,          "SXTAH",                    "111110100000----1111----1-------")
 INST(thumb32_UXTH,           "UXTH",                     "11111010000111111111dddd10rrmmmm")
 //INST(thumb32_UXTAH,          "UXTAH",                    "111110100001----1111----1-------")

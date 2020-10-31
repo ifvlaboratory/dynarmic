@@ -2278,6 +2278,25 @@ bool ThumbTranslatorVisitor::thumb32_UMULL(Reg n, Reg dLo, Reg dHi, Reg m) {
     return true;
 }
 
+// SXTH<c> <Rd>, <Rm>{, <rotation>}
+bool ThumbTranslatorVisitor::thumb32_SXTH(Reg d, SignExtendRotation rotate, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (d == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || m == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+
+    const auto rotated = Rotate(ir, m, rotate);
+    const auto result = ir.SignExtendHalfToWord(ir.LeastSignificantHalf(rotated));
+
+    ir.SetRegister(d, result);
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }
