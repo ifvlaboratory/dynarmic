@@ -1228,6 +1228,9 @@ bool ThumbTranslatorVisitor::thumb16_B_t1(Cond cond, Imm<8> imm8) {
 
 // B <label>
 bool ThumbTranslatorVisitor::thumb16_B_t2(Imm<11> imm11) {
+    if (!ConditionPassed()) {
+        return true;
+    }
     const auto it = ir.current_location.IT();
     if (it.IsInITBlock() && ! it.IsLastInITBlock()) {
         return UnpredictableInstruction();
@@ -1241,25 +1244,24 @@ bool ThumbTranslatorVisitor::thumb16_B_t2(Imm<11> imm11) {
 
 // IT{x{y{z}}} <firstcond>
 bool ThumbTranslatorVisitor::thumb16_IT(Cond firstcond, Imm<4> mask) {
-    if (ir.current_location.IT().IsInITBlock()) {
+    if (mask == 0b0000) {
         return UndefinedInstruction();
     }
     if (firstcond == Cond::NV) {
        // NV conditional is obsolete
        return UnpredictableInstruction();
     }
-    if (mask == 0b0000) {
+    u32 mask_value = mask.ZeroExtend();
+    if (firstcond == Cond::AL && Common::BitCount(mask_value) != 1) {
         return UndefinedInstruction();
     }
-    
+    if (ir.current_location.IT().IsInITBlock()) {
+        return UndefinedInstruction();
+    }
+
     auto new_it = ITState(0);
-    const u8 mask_value = static_cast<u8>(mask.ZeroExtend());
-    const u8 cond = static_cast<u8>(firstcond);
-    const u8 first_flag = Common::Bit<0>(cond);
-    const u8 flags = (first_flag << 4U) | mask_value;
-    const u8 base = Common::Bits<1,3>(cond);
-    new_it.Base(base);
-    new_it.Flags(flags);
+    new_it.Cond(firstcond);
+    new_it.Mask(mask_value);
 
     ir.current_location = ir.current_location.SetIT(new_it);
     ir.current_location = ir.current_location.AdvancePC(2);

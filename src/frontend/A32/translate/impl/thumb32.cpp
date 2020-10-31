@@ -14,6 +14,9 @@ static IR::U32 Rotate(A32::IREmitter& ir, Reg m, SignExtendRotation rotate) {
 
 // BL <label>
 bool ThumbTranslatorVisitor::thumb32_BL_imm(bool S, Imm<10> hi, bool j1, bool j2, Imm<11> lo) {
+    if (!ConditionPassed()) {
+        return true;
+    }
     const auto it = ir.current_location.IT();
     if (it.IsInITBlock() && !it.IsLastInITBlock()) {
         return UnpredictableInstruction();
@@ -34,6 +37,9 @@ bool ThumbTranslatorVisitor::thumb32_BL_imm(bool S, Imm<10> hi, bool j1, bool j2
 
 // BLX <label>
 bool ThumbTranslatorVisitor::thumb32_BLX_imm(bool S, Imm<10> hi, bool j1, bool j2, Imm<11> lo) {
+    if (!ConditionPassed()) {
+        return true;
+    }
     const auto it = ir.current_location.IT();
     if (it.IsInITBlock() && !it.IsLastInITBlock()) {
         return UnpredictableInstruction();
@@ -93,6 +99,9 @@ bool ThumbTranslatorVisitor::thumb32_B_cond(Imm<1> S, Cond cond, Imm<6> imm6, Im
 
 // B<c>.W <label>
 bool ThumbTranslatorVisitor::thumb32_B(bool S, Imm<10> imm10, bool j1, bool j2, Imm<11> imm11) {
+    if (!ConditionPassed()) {
+        return true;
+    }
     const auto it = ir.current_location.IT();
     if (it.IsInITBlock() && !it.IsLastInITBlock()) {
         return UnpredictableInstruction();
