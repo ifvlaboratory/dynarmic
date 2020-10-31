@@ -57,7 +57,7 @@ INST(vfp_VDUP,             "VDUP (from core)",        "111011101BQ0ddddtttt1011D
 
 // Floating-point system register access
 //INST(vfp_VMSR,             "VMSR",                    "cccc111011100001tttt101000010000") // VFPv2
-//INST(vfp_VMRS,             "VMRS",                    "cccc111011110001tttt101000010000") // VFPv2
+INST(vfp_VMRS,             "VMRS",                    "1110111011110001tttt101000010000") // VFPv2
 
 // Extension register load-store instructions
 INST(vfp_VPUSH,            "VPUSH",                   "111011010D101101dddd101zvvvvvvvv") // VFPv2

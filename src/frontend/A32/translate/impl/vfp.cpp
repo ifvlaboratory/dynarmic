@@ -1307,6 +1307,26 @@ bool ArmTranslatorVisitor::vfp_VMRS(Cond cond, Reg t) {
     return true;
 }
 
+// VMRS <Rt>, FPSCR
+bool ThumbTranslatorVisitor::vfp_VMRS(Reg t) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (t == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+
+    if (t == Reg::R15) {
+        // This encodes ASPR_nzcv access
+        const auto nzcv = ir.GetFpscrNZCV();
+        ir.SetCpsrNZCV(nzcv);
+    } else {
+        ir.SetRegister(t, ir.GetFpscr());
+    }
+
+    return true;
+}
+
 // VPOP.{F32,F64} <list>
 bool ArmTranslatorVisitor::vfp_VPOP(Cond cond, bool D, size_t Vd, bool sz, Imm<8> imm8) {
     const ExtReg d = ToExtReg(sz, Vd, D);
