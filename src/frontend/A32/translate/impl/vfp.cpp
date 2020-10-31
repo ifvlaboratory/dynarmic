@@ -436,6 +436,20 @@ bool ArmTranslatorVisitor::vfp_VMOV_u32_f32(Cond cond, size_t Vn, Reg t, bool N)
     return true;
 }
 
+// VMOV<c> <Sn>, <Rt>
+bool ThumbTranslatorVisitor::vfp_VMOV_u32_f32(size_t Vn, Reg t, bool N) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (t == Reg::PC || t == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+
+    const auto n = ToExtReg(false, Vn, N);
+    ir.SetExtendedRegister(n, ir.GetRegister(t));
+    return true;
+}
+
 // VMOV<c> <Rt>, <Sn>
 bool ArmTranslatorVisitor::vfp_VMOV_f32_u32(Cond cond, size_t Vn, Reg t, bool N) {
     if (t == Reg::PC) {
