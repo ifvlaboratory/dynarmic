@@ -65,7 +65,7 @@ INST(vfp_VPOP,             "VPOP",                    "111011001D111101dddd101zv
 INST(vfp_VLDR,             "VLDR",                    "11101101UD01nnnndddd101zvvvvvvvv") // VFPv2
 INST(vfp_VSTR,             "VSTR",                    "11101101UD00nnnndddd101zvvvvvvvv") // VFPv2
 INST(thumb32_UDF,          "Undefined VSTM/VLDM",     "111011000-0---------101---------") // VFPv2
-//INST(vfp_VSTM_a1,          "VSTM (A1)",               "cccc110puDw0nnnndddd1011vvvvvvvv") // VFPv2
+INST(vfp_VSTM_a1,          "VSTM (T1)",               "1110110puDw0nnnndddd1011vvvvvvvv") // VFPv2
 //INST(vfp_VSTM_a2,          "VSTM (A2)",               "cccc110puDw0nnnndddd1010vvvvvvvv") // VFPv2
 //INST(vfp_VLDM_a1,          "VLDM (A1)",               "cccc110puDw1nnnndddd1011vvvvvvvv") // VFPv2
 //INST(vfp_VLDM_a2,          "VLDM (A2)",               "cccc110puDw1nnnndddd1010vvvvvvvv") // VFPv2
