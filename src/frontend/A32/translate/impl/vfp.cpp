@@ -2034,6 +2034,55 @@ bool ArmTranslatorVisitor::vfp_VLDM_a1(Cond cond, bool p, bool u, bool D, bool w
     return true;
 }
 
+// VLDM{mode}<c> <Rn>{!}, <list of double registers>
+bool ThumbTranslatorVisitor::vfp_VLDM_a1(bool p, bool u, bool D, bool w, Reg n, size_t Vd, Imm<8> imm8) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (!p && !u && !w) {
+        ASSERT_MSG(false, "Decode error");
+    }
+
+    if (p && !w) {
+        ASSERT_MSG(false, "Decode error");
+    }
+
+    if (p == u && w) {
+        return thumb32_UDF();
+    }
+
+    if (n == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+
+    const auto d = ToExtReg(true, Vd, D);
+    const size_t regs = imm8.ZeroExtend() / 2;
+
+    if (regs == 0 || regs > 16 || A32::RegNumber(d)+regs > 32) {
+        return UnpredictableInstruction();
+    }
+
+    const u32 imm32 = imm8.ZeroExtend() << 2U;
+    auto address = u ? ir.GetRegister(n) : IR::U32(ir.Sub(ir.GetRegister(n), ir.Imm32(imm32)));
+    if (w) {
+        ir.SetRegister(n, u ? IR::U32(ir.Add(address, ir.Imm32(imm32))) : address);
+    }
+    for (size_t i = 0; i < regs; i++) {
+        auto word1 = ir.ReadMemory32(address);
+        address = ir.Add(address, ir.Imm32(4));
+        auto word2 = ir.ReadMemory32(address);
+        address = ir.Add(address, ir.Imm32(4));
+
+        if (ir.current_location.EFlag()) {
+            std::swap(word1, word2);
+        }
+
+        ir.SetExtendedRegister(d + i, ir.Pack2x32To1x64(word1, word2));
+    }
+
+    return true;
+}
+
 // VLDM{mode}<c> <Rn>{!}, <list of single registers>
 bool ArmTranslatorVisitor::vfp_VLDM_a2(Cond cond, bool p, bool u, bool D, bool w, Reg n, size_t Vd, Imm<8> imm8) {
     if (!p && !u && !w) {
