@@ -11,7 +11,7 @@
 namespace Dynarmic::A32 {
 
 template <typename FnT>
-bool ArmTranslatorVisitor::EmitVfpVectorOperation(bool sz, ExtReg d, ExtReg n, ExtReg m, const FnT& fn) {
+bool A32TranslatorVisitor::EmitVfpVectorOperation(bool sz, ExtReg d, ExtReg n, ExtReg m, const FnT& fn) {
     if (!ir.current_location.FPSCR().Stride()) {
         return UnpredictableInstruction();
     }
@@ -78,7 +78,7 @@ bool ArmTranslatorVisitor::EmitVfpVectorOperation(bool sz, ExtReg d, ExtReg n, E
 }
 
 template <typename FnT>
-bool ArmTranslatorVisitor::EmitVfpVectorOperation(bool sz, ExtReg d, ExtReg m, const FnT& fn) {
+bool A32TranslatorVisitor::EmitVfpVectorOperation(bool sz, ExtReg d, ExtReg m, const FnT& fn) {
     return EmitVfpVectorOperation(sz, d, ExtReg::S0, m, [fn](ExtReg d, ExtReg, ExtReg m){
         fn(d, m);
     });
@@ -126,6 +126,25 @@ bool ArmTranslatorVisitor::vfp_VSUB(Cond cond, bool D, size_t Vn, size_t Vd, boo
 // VMUL<c>.F32 <Sd>, <Sn>, <Sm>
 bool ArmTranslatorVisitor::vfp_VMUL(Cond cond, bool D, size_t Vn, size_t Vd, bool sz, bool N, bool M, size_t Vm) {
     if (!ConditionPassed(cond)) {
+        return true;
+    }
+
+    const auto d = ToExtReg(sz, Vd, D);
+    const auto n = ToExtReg(sz, Vn, N);
+    const auto m = ToExtReg(sz, Vm, M);
+
+    return EmitVfpVectorOperation(sz, d, n, m, [this](ExtReg d, ExtReg n, ExtReg m) {
+        const auto reg_n = ir.GetExtendedRegister(n);
+        const auto reg_m = ir.GetExtendedRegister(m);
+        const auto result = ir.FPMul(reg_n, reg_m);
+        ir.SetExtendedRegister(d, result);
+    });
+}
+
+// VMUL<c>.F64 <Dd>, <Dn>, <Dm>
+// VMUL<c>.F32 <Sd>, <Sn>, <Sm>
+bool ThumbTranslatorVisitor::vfp_VMUL(bool D, size_t Vn, size_t Vd, bool sz, bool N, bool M, size_t Vm) {
+    if (!ConditionPassed()) {
         return true;
     }
 

@@ -53,6 +53,9 @@ struct A32TranslatorVisitor {
     A32::IREmitter ir;
     TranslationOptions options;
 
+    template <typename FnT> bool EmitVfpVectorOperation(bool sz, ExtReg d, ExtReg n, ExtReg m, const FnT& fn);
+    template <typename FnT> bool EmitVfpVectorOperation(bool sz, ExtReg d, ExtReg m, const FnT& fn);
+
     // Creates an immediate of the given value
     IR::UAny I(size_t bitsize, u64 value) {
         switch (bitsize) {
