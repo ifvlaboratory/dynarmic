@@ -274,7 +274,7 @@ INST(thumb32_MLS,            "MLS",                      "111110110000nnnnaaaadd
 
 // Long Multiply, Long Multiply Accumulate, and Divide
 //INST(thumb32_SMULL,          "SMULL",                    "111110111000------------0000----")
-//INST(thumb32_SDIV,           "SDIV",                     "111110111001------------1111----")
+INST(thumb32_SDIV,           "SDIV",                     "111110111001nnnn1111dddd1111mmmm")
 INST(thumb32_UMULL,          "UMULL",                    "111110111010nnnnllllhhhh0000mmmm")
 INST(thumb32_UDIV,           "UDIV",                     "111110111011nnnn1111dddd1111mmmm")
 //INST(thumb32_SMLAL,          "SMLAL",                    "111110111100------------0000----")

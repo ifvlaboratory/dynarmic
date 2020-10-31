@@ -6,6 +6,29 @@
 #include "frontend/A32/translate/impl/translate_thumb.h"
 
 namespace Dynarmic::A32 {
+namespace {
+    using DivideFunction = IR::U32U64 (IREmitter::*)(const IR::U32U64&, const IR::U32U64&);
+
+    bool DivideOperation(ThumbTranslatorVisitor& v, Reg d, Reg m, Reg n,
+                         DivideFunction fn) {
+        if (!v.ConditionPassed()) {
+            return true;
+        }
+        if (d == Reg::PC || m == Reg::PC || n == Reg::PC) {
+            return v.UnpredictableInstruction();
+        }
+        if (d == Reg::R13 || m == Reg::R13 || n == Reg::R13) {
+            return v.UnpredictableInstruction();
+        }
+
+        const IR::U32 operand1 = v.ir.GetRegister(n);
+        const IR::U32 operand2 = v.ir.GetRegister(m);
+        const IR::U32 result = (v.ir.*fn)(operand1, operand2);
+
+        v.ir.SetRegister(d, result);
+        return true;
+    }
+} // Anonymous namespace
 
 static IR::U32 Rotate(A32::IREmitter& ir, Reg m, SignExtendRotation rotate) {
     const u8 rotate_by = static_cast<u8>(static_cast<size_t>(rotate) * 8);
@@ -833,7 +856,7 @@ bool ThumbTranslatorVisitor::thumb32_ADD_reg(bool S, Reg n, Imm<3> imm3, Reg d, 
         if (it.IsInITBlock() && !it.IsLastInITBlock()) {
             return UnpredictableInstruction();
         }
-        ir.ALUWritePC(result.result);
+        ir.BXWritePC(result.result);
         // Return to dispatch as we can't predict what PC is going to be. Stop compilation.
         ir.SetTerm(IR::Term::FastDispatchHint{});
         return false;
@@ -1639,6 +1662,16 @@ bool ThumbTranslatorVisitor::thumb32_LDR_lit(bool U, Reg t, Imm<12> imm12) {
     const u32 imm12_value = imm12.ZeroExtend();
     const u32 address = U ? base + imm12_value : base - imm12_value;
     const auto read_byte = ir.ReadMemory32(ir.Imm32(address));
+    if (t == Reg::PC) {
+        const auto it = ir.current_location.IT();
+        if (it.IsInITBlock() && !it.IsLastInITBlock()) {
+            return UnpredictableInstruction();
+        }
+        ir.BXWritePC(read_byte);
+        // Return to dispatch as we can't predict what PC is going to be. Stop compilation.
+        ir.SetTerm(IR::Term::FastDispatchHint{});
+        return false;
+    }
     ir.SetRegister(t, read_byte);
     return true;
 }
@@ -1661,7 +1694,7 @@ bool ThumbTranslatorVisitor::thumb32_LDR_reg(Reg n, Reg t, Imm<2> shift, Reg m) 
         if (it.IsInITBlock() && !it.IsLastInITBlock()) {
             return UnpredictableInstruction();
         }
-        ir.ALUWritePC(data);
+        ir.BXWritePC(data);
         // Return to dispatch as we can't predict what PC is going to be. Stop compilation.
         ir.SetTerm(IR::Term::FastDispatchHint{});
         return false;
@@ -1691,7 +1724,7 @@ bool ThumbTranslatorVisitor::thumb32_LDR_imm8(Reg n, Reg t, bool P, bool U, bool
         if (it.IsInITBlock() && !it.IsLastInITBlock()) {
             return UnpredictableInstruction();
         }
-        ir.ALUWritePC(data);
+        ir.BXWritePC(data);
         // Return to dispatch as we can't predict what PC is going to be. Stop compilation.
         ir.SetTerm(IR::Term::FastDispatchHint{});
         return false;
@@ -1718,7 +1751,7 @@ bool ThumbTranslatorVisitor::thumb32_LDR_imm12(Reg n, Reg t, Imm<12> imm12) {
         if (it.IsInITBlock() && !it.IsLastInITBlock()) {
             return UnpredictableInstruction();
         }
-        ir.ALUWritePC(data);
+        ir.BXWritePC(data);
         // Return to dispatch as we can't predict what PC is going to be. Stop compilation.
         ir.SetTerm(IR::Term::FastDispatchHint{});
         return false;
@@ -2295,6 +2328,11 @@ bool ThumbTranslatorVisitor::thumb32_SXTH(Reg d, SignExtendRotation rotate, Reg 
 
     ir.SetRegister(d, result);
     return true;
+}
+
+// SDIV<c> <Rd>, <Rn>, <Rm>
+bool ThumbTranslatorVisitor::thumb32_SDIV(Reg n, Reg d, Reg m) {
+    return DivideOperation(*this, d, m, n, &IREmitter::SignedDiv);
 }
 
 bool ThumbTranslatorVisitor::thumb32_UDF() {

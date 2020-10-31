@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <optional>
+#include <set>
 #include <vector>
 
 #include "common/common_types.h"
@@ -31,6 +32,15 @@ std::vector<Thumb32Matcher<V>> GetThumb32DecodeTable() {
     // If a matcher has more bits in its mask it is more specific, so it should come first.
     std::stable_sort(table.begin(), table.end(), [](const auto& matcher1, const auto& matcher2) {
         return Common::BitCount(matcher1.GetMask()) > Common::BitCount(matcher2.GetMask());
+    });
+
+    // Exceptions to the above rule of thumb.
+    const std::set<std::string> comes_first {
+            "LDR (lit)",
+    };
+
+    std::stable_partition(table.begin(), table.end(), [&](const auto& matcher) {
+        return comes_first.count(matcher.GetName()) > 0;
     });
 
     return table;
