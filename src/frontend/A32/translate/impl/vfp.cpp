@@ -960,6 +960,24 @@ bool ArmTranslatorVisitor::vfp_VCMP(Cond cond, bool D, size_t Vd, bool sz, bool 
     return true;
 }
 
+// VCMP{E}.F32 <Sd>, <Sm>
+// VCMP{E}.F64 <Dd>, <Dm>
+bool ThumbTranslatorVisitor::vfp_VCMP(bool D, size_t Vd, bool sz, bool E, bool M, size_t Vm) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    const auto d = ToExtReg(sz, Vd, D);
+    const auto m = ToExtReg(sz, Vm, M);
+    const auto exc_on_qnan = E;
+    const auto reg_d = ir.GetExtendedRegister(d);
+    const auto reg_m = ir.GetExtendedRegister(m);
+    const auto nzcv = ir.FPCompare(reg_d, reg_m, exc_on_qnan);
+
+    ir.SetFpscrNZCV(nzcv);
+    return true;
+}
+
 // VCMP{E}.F32 <Sd>, #0.0
 // VCMP{E}.F64 <Dd>, #0.0
 bool ArmTranslatorVisitor::vfp_VCMP_zero(Cond cond, bool D, size_t Vd, bool sz, bool E) {
