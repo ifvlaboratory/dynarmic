@@ -158,7 +158,7 @@ INST(asimd_VMOV_imm,        "VBIC, VMOV, VMVN, VORR (immediate)",  "111a11111D00
 
 // Advanced SIMD load/store structures
 INST(v8_VST_multiple,       "VST{1-4} (multiple)",      "111110010D00nnnnddddxxxxzzaammmm") // v8
-//INST(v8_VLD_multiple,       "VLD{1-4} (multiple)",      "111101000D10nnnnddddxxxxzzaammmm") // v8
+INST(v8_VLD_multiple,       "VLD{1-4} (multiple)",      "111110010D10nnnnddddxxxxzzaammmm") // v8
 //INST(thumb32_UDF,           "UNALLOCATED",              "111101000--0--------1011--------") // v8
 //INST(thumb32_UDF,           "UNALLOCATED",              "111101000--0--------11----------") // v8
 //INST(thumb32_UDF,           "UNALLOCATED",              "111101001-00--------11----------") // v8
