@@ -311,6 +311,7 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
     bool vfp_VPOP(bool D, size_t Vd, bool sz, Imm<8> imm8);
     bool vfp_VCVT_f_to_f(bool D, size_t Vd, bool sz, bool M, size_t Vm);
     bool vfp_VCVT_from_int(bool D, size_t Vd, bool sz, bool is_signed, bool M, size_t Vm);
+    bool vfp_VCVT_to_s32(bool D, size_t Vd, bool sz, bool round_towards_zero, bool M, size_t Vm);
     bool vfp_VCMP(bool D, size_t Vd, bool sz, bool E, bool M, size_t Vm);
     bool vfp_VMRS(Reg t);
     bool vfp_VMUL(bool D, size_t Vn, size_t Vd, bool sz, bool N, bool M, size_t Vm);
