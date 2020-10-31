@@ -92,7 +92,9 @@ void MachHandler::MessagePump() {
     while (true) {
         mr = mach_msg(&request.head, MACH_RCV_MSG | MACH_RCV_LARGE, 0, sizeof(request), server_port, MACH_MSG_TIMEOUT_NONE, MACH_PORT_NULL);
         if (mr != MACH_MSG_SUCCESS) {
+#if defined(DEBUG)
             fmt::print(stderr, "dynarmic: macOS MachHandler: Failed to receive mach message. error: {:#08x} ({})\n", mr, mach_error_string(mr));
+#endif
             return;
         }
 
@@ -114,7 +116,9 @@ kern_return_t MachHandler::HandleRequest(x86_thread_state64_t* ts) {
 
     const auto iter = FindCodeBlockInfo(ts->__rip);
     if (iter == code_block_infos.end()) {
+#if defined(DEBUG)
         fmt::print(stderr, "dynarmic: macOS MachHandler: Exception was not in registered code blocks (rip {:#016x})\n", ts->__rip);
+#endif
         return KERN_FAILURE;
     }
 
