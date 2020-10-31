@@ -935,6 +935,21 @@ bool ArmTranslatorVisitor::vfp_VMOV_reg(Cond cond, bool D, size_t Vd, bool sz, b
     });
 }
 
+// VMOV<c>.F64 <Dd>, <Dm>
+// VMOV<c>.F32 <Sd>, <Sm>
+bool ThumbTranslatorVisitor::vfp_VMOV_reg(bool D, size_t Vd, bool sz, bool M, size_t Vm) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    const auto d = ToExtReg(sz, Vd, D);
+    const auto m = ToExtReg(sz, Vm, M);
+
+    return EmitVfpVectorOperation(sz, d, m, [this](ExtReg d, ExtReg m) {
+        ir.SetExtendedRegister(d, ir.GetExtendedRegister(m));
+    });
+}
+
 // VABS<c>.F64 <Dd>, <Dm>
 // VABS<c>.F32 <Sd>, <Sm>
 bool ArmTranslatorVisitor::vfp_VABS(Cond cond, bool D, size_t Vd, bool sz, bool M, size_t Vm) {
