@@ -10,7 +10,7 @@
 namespace Dynarmic::A32 {
 
 // LSL <Rd>, <Rm>, #<imm5>
-    [[maybe_unused]] bool ThumbTranslatorVisitor::thumb16_LSL_imm(Imm<5> imm5, Reg m, Reg d) {
+[[maybe_unused]] bool ThumbTranslatorVisitor::thumb16_LSL_imm(Imm<5> imm5, Reg m, Reg d) {
     if (!ConditionPassed()) {
         return true;
     }
@@ -1079,9 +1079,10 @@ bool ThumbTranslatorVisitor::thumb16_REVSH(Reg m, Reg d) {
 
 // BKPT #<imm8>
 bool ThumbTranslatorVisitor::thumb16_BKPT([[maybe_unused]] Imm<8> imm8) {
-    if (ir.current_location.IT().IsInITBlock()) {
-        return UnpredictableInstruction(); // TODO: handle this
+    if (!ConditionPassed()) {
+        return true;
     }
+
     ir.ExceptionRaised(Exception::Breakpoint);
     ir.SetTerm(IR::Term::CheckHalt{IR::Term::ReturnToDispatch{}});
     return false;
