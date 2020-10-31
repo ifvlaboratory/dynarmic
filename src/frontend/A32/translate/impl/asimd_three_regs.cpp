@@ -6,6 +6,7 @@
 #include "common/bit_util.h"
 
 #include "frontend/A32/translate/impl/translate_arm.h"
+#include "frontend/A32/translate/impl/translate_thumb.h"
 
 namespace Dynarmic::A32 {
 namespace {
@@ -28,7 +29,7 @@ enum class WidenBehaviour {
 };
 
 template <bool WithDst, typename Callable>
-bool BitwiseInstruction(ArmTranslatorVisitor& v, bool D, size_t Vn, size_t Vd, bool N, bool Q, bool M, size_t Vm, Callable fn) {
+bool BitwiseInstruction(A32TranslatorVisitor& v, bool D, size_t Vn, size_t Vd, bool N, bool Q, bool M, size_t Vm, Callable fn) {
     if (Q && (Common::Bit<0>(Vd) || Common::Bit<0>(Vn) || Common::Bit<0>(Vm))) {
         return v.UndefinedInstruction();
     }
@@ -316,6 +317,12 @@ bool ArmTranslatorVisitor::asimd_VRHADD(bool U, bool D, size_t sz, size_t Vn, si
 }
 
 bool ArmTranslatorVisitor::asimd_VAND_reg(bool D, size_t Vn, size_t Vd, bool N, bool Q, bool M, size_t Vm) {
+    return BitwiseInstruction<false>(*this, D, Vn, Vd, N, Q, M, Vm, [this](const auto& reg_n, const auto& reg_m) {
+        return ir.VectorAnd(reg_n, reg_m);
+    });
+}
+
+bool ThumbTranslatorVisitor::asimd_VAND_reg(bool D, size_t Vn, size_t Vd, bool N, bool Q, bool M, size_t Vm) {
     return BitwiseInstruction<false>(*this, D, Vn, Vd, N, Q, M, Vm, [this](const auto& reg_n, const auto& reg_m) {
         return ir.VectorAnd(reg_n, reg_m);
     });
