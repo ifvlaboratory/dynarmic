@@ -17,7 +17,7 @@ INST(vfp_VDIV,             "VDIV",                    "111011101D00nnnndddd101zN
 //INST(vfp_VMINNM,           "VMINNM",                  "111111101D00nnnndddd101zN1M0mmmm") // VFPv5
 
 // Other floating-point data-processing instructions
-//INST(vfp_VMOV_imm,         "VMOV (immediate)",        "cccc11101D11vvvvdddd101z0000vvvv") // VFPv3
+INST(vfp_VMOV_imm,         "VMOV (immediate)",        "111011101D11vvvvdddd101z0000vvvv") // VFPv3
 //INST(vfp_VMOV_reg,         "VMOV (reg)",              "cccc11101D110000dddd101z01M0mmmm") // VFPv2
 //INST(vfp_VABS,             "VABS",                    "cccc11101D110000dddd101z11M0mmmm") // VFPv2
 //INST(vfp_VNEG,             "VNEG",                    "cccc11101D110001dddd101z01M0mmmm") // VFPv2
