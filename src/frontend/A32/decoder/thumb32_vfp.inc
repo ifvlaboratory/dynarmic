@@ -4,7 +4,7 @@ INST(vfp_VMLS,             "VMLS",                    "111011100D00nnnndddd101zN
 //INST(vfp_VNMLS,            "VNMLS",                   "cccc11100D01nnnndddd101zN0M0mmmm") // VFPv2
 //INST(vfp_VNMLA,            "VNMLA",                   "cccc11100D01nnnndddd101zN1M0mmmm") // VFPv2
 INST(vfp_VMUL,             "VMUL",                    "111011100D10nnnndddd101zN0M0mmmm") // VFPv2
-//INST(vfp_VNMUL,            "VNMUL",                   "cccc11100D10nnnndddd101zN1M0mmmm") // VFPv2
+INST(vfp_VNMUL,            "VNMUL",                   "111011100D10nnnndddd101zN1M0mmmm") // VFPv2
 INST(vfp_VADD,             "VADD",                    "111011100D11nnnndddd101zN0M0mmmm") // VFPv2
 INST(vfp_VSUB,             "VSUB",                    "111011100D11nnnndddd101zN1M0mmmm") // VFPv2
 INST(vfp_VDIV,             "VDIV",                    "111011101D00nnnndddd101zN0M0mmmm") // VFPv2
