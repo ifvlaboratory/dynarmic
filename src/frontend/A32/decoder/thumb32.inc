@@ -227,7 +227,7 @@ INST(thumb32_UXTAB,          "UXTAB",                    "111110100101nnnn1111dd
 //INST(thumb32_UASX,           "UASX",                     "111110101010----1111----0100----")
 //INST(thumb32_USAX,           "USAX",                     "111110101110----1111----0100----")
 //INST(thumb32_USUB16,         "USUB16",                   "111110101101----1111----0100----")
-//INST(thumb32_UADD8,          "UADD8",                    "111110101000----1111----0100----")
+INST(thumb32_UADD8,          "UADD8",                    "111110101000nnnn1111dddd0100mmmm")
 //INST(thumb32_USUB8,          "USUB8",                    "111110101100----1111----0100----")
 //INST(thumb32_UQADD16,        "UQADD16",                  "111110101001----1111----0101----")
 //INST(thumb32_UQASX,          "UQASX",                    "111110101010----1111----0101----")

@@ -2335,6 +2335,24 @@ bool ThumbTranslatorVisitor::thumb32_SDIV(Reg n, Reg d, Reg m) {
     return DivideOperation(*this, d, m, n, &IREmitter::SignedDiv);
 }
 
+// UADD8<c> <Rd>, <Rn>, <Rm>
+bool ThumbTranslatorVisitor::thumb32_UADD8(Reg n, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (d == Reg::PC || n == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || n == Reg::R13 || m == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+
+    const auto result = ir.PackedAddU8(ir.GetRegister(n), ir.GetRegister(m));
+    ir.SetRegister(d, result.result);
+    ir.SetGEFlags(result.ge);
+    return true;
+}
+
 bool ThumbTranslatorVisitor::thumb32_UDF() {
     return thumb16_UDF();
 }
