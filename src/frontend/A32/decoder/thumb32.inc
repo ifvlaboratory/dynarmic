@@ -20,7 +20,7 @@ INST(thumb32_TBB,            "TBB",                      "111010001101nnnn111100
 INST(thumb32_TBH,            "TBH",                      "111010001101nnnn111100000001mmmm")
 //INST(thumb32_LDREXB,         "LDREXB",                   "111010001101------------0100----")
 INST(thumb32_LDREXH,         "LDREXH",                   "111010001101nnnntttt111101011111")
-//INST(thumb32_LDREXD,         "LDREXD",                   "111010001101------------0111----")
+INST(thumb32_LDREXD,         "LDREXD",                   "111010001101nnnnttttdddd01111111")
 //INST(thumb32_STRD_imm_1,     "STRD (imm)",               "11101000-110--------------------")
 INST(thumb32_STRD_imm_2,     "STRD (imm)",               "1110100PU1W0nnnnttttddddvvvvvvvv")
 //INST(thumb32_LDRD_imm_1,     "LDRD (lit)",               "11101000-1111111----------------")

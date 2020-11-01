@@ -4,6 +4,7 @@
  */
 
 #include "frontend/A32/translate/impl/translate_arm.h"
+#include "frontend/A32/translate/impl/translate_thumb.h"
 
 namespace Dynarmic::A32 {
 
@@ -330,6 +331,26 @@ bool ArmTranslatorVisitor::arm_LDREXD(Cond cond, Reg n, Reg t) {
     // DO NOT SWAP hi AND lo IN BIG ENDIAN MODE, THIS IS CORRECT BEHAVIOUR
     ir.SetRegister(t, lo);
     ir.SetRegister(t+1, hi);
+    return true;
+}
+
+// LDREXD<c> <Rt>, <Rt2>, [<Rn>]
+bool ThumbTranslatorVisitor::thumb32_LDREXD(Reg n, Reg t, Reg t2) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (t == Reg::R13 || t == Reg::PC || n == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (t2 == Reg::R13 || t2 == Reg::PC || t == t2) {
+        return UnpredictableInstruction();
+    }
+
+    const auto address = ir.GetRegister(n);
+    const auto [lo, hi] = ir.ExclusiveReadMemory64(address);
+    // DO NOT SWAP hi AND lo IN BIG ENDIAN MODE, THIS IS CORRECT BEHAVIOUR
+    ir.SetRegister(t, lo);
+    ir.SetRegister(t2, hi);
     return true;
 }
 
