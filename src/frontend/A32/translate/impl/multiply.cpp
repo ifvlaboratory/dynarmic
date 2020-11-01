@@ -4,6 +4,7 @@
  */
 
 #include "frontend/A32/translate/impl/translate_arm.h"
+#include "frontend/A32/translate/impl/translate_thumb.h"
 
 namespace Dynarmic::A32 {
 
@@ -392,6 +393,31 @@ bool ArmTranslatorVisitor::arm_SMMUL(Cond cond, Reg d, Reg m, bool R, Reg n) {
 
     if (!ConditionPassed(cond)) {
         return true;
+    }
+
+    const auto n64 = ir.SignExtendWordToLong(ir.GetRegister(n));
+    const auto m64 = ir.SignExtendWordToLong(ir.GetRegister(m));
+    const auto product = ir.Mul(n64, m64);
+    const auto result_carry = ir.MostSignificantWord(product);
+    auto result = result_carry.result;
+    if (R) {
+        result = ir.AddWithCarry(result, ir.Imm32(0), result_carry.carry).result;
+    }
+
+    ir.SetRegister(d, result);
+    return true;
+}
+
+// SMMUL{R}<c> <Rd>, <Rn>, <Rm>
+bool ThumbTranslatorVisitor::thumb32_SMMUL(Reg n, Reg d, bool R, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (d == Reg::PC || n == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || n == Reg::R13 || m == Reg::R13) {
+        return UnpredictableInstruction();
     }
 
     const auto n64 = ir.SignExtendWordToLong(ir.GetRegister(n));
