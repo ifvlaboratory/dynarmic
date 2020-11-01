@@ -148,7 +148,9 @@ void SigHandler::SigAction(int sig, siginfo_t* info, void* raw_context) {
         }
     }
 
+#if defined(DEBUG)
     fmt::print(stderr, "dynarmic: POSIX SigHandler: Exception was not in registered code blocks (rip {:#016x})\n", CTX_RIP);
+#endif
 
     struct sigaction* retry_sa = sig == SIGSEGV ? &sig_handler.old_sa_segv : &sig_handler.old_sa_bus;
     if (retry_sa->sa_flags & SA_SIGINFO) {
