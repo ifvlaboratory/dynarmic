@@ -107,6 +107,10 @@ bool ThumbTranslatorVisitor::thumb32_PUSH(bool M, RegList reg_list) {
 
 // B<c>.W <label>
 bool ThumbTranslatorVisitor::thumb32_B_cond(Imm<1> S, Cond cond, Imm<6> imm6, Imm<1> j1, Imm<1> j2, Imm<11> imm11) {
+    if (Common::Bits<1, 3>(static_cast<u8>(cond)) == 0b111) {
+        return UnpredictableInstruction();
+    }
+
     const auto it = ir.current_location.IT();
     if (it.IsInITBlock()) {
         return UnpredictableInstruction();

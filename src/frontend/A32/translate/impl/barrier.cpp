@@ -4,6 +4,7 @@
  */
 
 #include "frontend/A32/translate/impl/translate_arm.h"
+#include "frontend/A32/translate/impl/translate_thumb.h"
 
 namespace Dynarmic::A32 {
 
@@ -13,6 +14,11 @@ bool ArmTranslatorVisitor::arm_DMB([[maybe_unused]] Imm<4> option) {
 }
 
 bool ArmTranslatorVisitor::arm_DSB([[maybe_unused]] Imm<4> option) {
+    ir.DataSynchronizationBarrier();
+    return true;
+}
+
+bool ThumbTranslatorVisitor::thumb32_DSB([[maybe_unused]] Imm<4> option) {
     ir.DataSynchronizationBarrier();
     return true;
 }
