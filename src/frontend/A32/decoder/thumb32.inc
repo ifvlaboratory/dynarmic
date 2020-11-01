@@ -15,7 +15,7 @@ INST(thumb32_STREX,          "STREX",                    "111010000100nnnnttttdd
 INST(thumb32_LDREX,          "LDREX",                    "111010000101nnnntttt1111vvvvvvvv")
 //INST(thumb32_STREXB,         "STREXB",                   "111010001100------------0100----")
 INST(thumb32_STREXH,         "STREXH",                   "111010001100nnnntttt11110101mmmm")
-//INST(thumb32_STREXD,         "STREXD",                   "111010001100------------0111----")
+INST(thumb32_STREXD,         "STREXD",                   "111010001100nnnnttttdddd0111dddd")
 INST(thumb32_TBB,            "TBB",                      "111010001101nnnn111100000000mmmm")
 INST(thumb32_TBH,            "TBH",                      "111010001101nnnn111100000001mmmm")
 //INST(thumb32_LDREXB,         "LDREXB",                   "111010001101------------0100----")

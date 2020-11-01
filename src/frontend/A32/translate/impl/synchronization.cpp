@@ -434,6 +434,29 @@ bool ArmTranslatorVisitor::arm_STREXD(Cond cond, Reg n, Reg d, Reg t) {
     return true;
 }
 
+// STREXD<c> <Rd>, <Rt>, <Rt2>, [<Rn>]
+bool ThumbTranslatorVisitor::thumb32_STREXD(Reg n, Reg t, Reg t2, Reg d) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (n == Reg::PC || d == Reg::PC || t == Reg::PC || t2 == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || t == Reg::R13 || t2 == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+    if (d == n || d == t || d == t2) {
+        return UnpredictableInstruction();
+    }
+
+    const auto address = ir.GetRegister(n);
+    const auto value_lo = ir.GetRegister(t);
+    const auto value_hi = ir.GetRegister(t2);
+    const auto passed = ir.ExclusiveWriteMemory64(address, value_lo, value_hi);
+    ir.SetRegister(d, passed);
+    return true;
+}
+
 // STREXH<c> <Rd>, <Rt>, [<Rn>]
 bool ArmTranslatorVisitor::arm_STREXH(Cond cond, Reg n, Reg d, Reg t) {
     if (n == Reg::PC || d == Reg::PC || t == Reg::PC) {
