@@ -508,7 +508,7 @@ bool ThumbTranslatorVisitor::thumb16_ADD_reg_t2(bool d_n_hi, Reg m, Reg d_n_lo) 
         if (it.IsInITBlock() && !it.IsLastInITBlock()) {
             return UnpredictableInstruction();
         }
-        ir.ALUWritePC(result.result);
+        ir.BranchWritePC(result.result);
         // Return to dispatch as we can't predict what PC is going to be. Stop compilation.
         ir.SetTerm(IR::Term::FastDispatchHint{});
         return false;
@@ -552,7 +552,7 @@ bool ThumbTranslatorVisitor::thumb16_MOV_reg(bool d_hi, Reg m, Reg d_lo) {
         if (it.IsInITBlock() && !it.IsLastInITBlock()) {
             return UnpredictableInstruction();
         }
-        ir.ALUWritePC(result);
+        ir.BranchWritePC(result);
         ir.SetTerm(IR::Term::FastDispatchHint{});
         return false;
     } else {
