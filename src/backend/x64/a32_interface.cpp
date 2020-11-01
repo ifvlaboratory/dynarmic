@@ -136,7 +136,7 @@ struct Jit::Impl {
 
     void RequestCacheInvalidation() {
         if (jit_interface->is_executing) {
-            jit_state.halt_requested = true;
+//            jit_state.halt_requested = true;
             return;
         }
 
