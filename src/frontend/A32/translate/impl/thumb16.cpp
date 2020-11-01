@@ -1171,6 +1171,9 @@ bool ThumbTranslatorVisitor::thumb16_UDF() {
 
 // BX <Rm>
 bool ThumbTranslatorVisitor::thumb16_BX(Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
     const auto it = ir.current_location.IT();
     if (it.IsInITBlock() && !it.IsLastInITBlock()) {
         return UnpredictableInstruction();
@@ -1185,6 +1188,9 @@ bool ThumbTranslatorVisitor::thumb16_BX(Reg m) {
 
 // BLX <Rm>
 bool ThumbTranslatorVisitor::thumb16_BLX_reg(Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
     const auto it = ir.current_location.IT();
     if (it.IsInITBlock() && !it.IsLastInITBlock()) {
         return UnpredictableInstruction();
