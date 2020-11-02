@@ -1455,6 +1455,22 @@ bool ArmTranslatorVisitor::vfp_VCVT_to_u32(Cond cond, bool D, size_t Vd, bool sz
     return true;
 }
 
+// VCVT{,R}.U32.F32 <Sd>, <Sm>
+// VCVT{,R}.U32.F64 <Sd>, <Dm>
+bool ThumbTranslatorVisitor::vfp_VCVT_to_u32(bool D, size_t Vd, bool sz, bool round_towards_zero, bool M, size_t Vm) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    const ExtReg d = ToExtReg(false, Vd, D);
+    const ExtReg m = ToExtReg(sz, Vm, M);
+    const auto reg_m = ir.GetExtendedRegister(m);
+    const auto result = ir.FPToFixedU32(reg_m, 0, round_towards_zero ? FP::RoundingMode::TowardsZero : ir.current_location.FPSCR().RMode());
+
+    ir.SetExtendedRegister(d, result);
+    return true;
+}
+
 // VCVT{,R}.S32.F32 <Sd>, <Sm>
 // VCVT{,R}.S32.F64 <Sd>, <Dm>
 bool ArmTranslatorVisitor::vfp_VCVT_to_s32(Cond cond, bool D, size_t Vd, bool sz, bool round_towards_zero, bool M, size_t Vm) {
