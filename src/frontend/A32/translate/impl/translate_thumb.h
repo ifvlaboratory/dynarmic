@@ -286,6 +286,7 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
 
     bool thumb32_LSL_reg(bool S, Reg n, Reg d, Reg m);
     bool thumb32_LSR_reg(bool S, Reg n, Reg d, Reg m);
+    bool thumb32_ROR_reg(bool S, Reg n, Reg d, Reg m);
 
     bool thumb32_MOV_imm(Imm<1> i, bool S, Imm<3> imm3, Reg d, Imm<8> imm8);
     bool thumb32_BIC_imm(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
