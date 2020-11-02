@@ -170,50 +170,26 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
     bool thumb16_B_t2(Imm<11> imm11);
     bool thumb16_IT(Cond firstcond, Imm<4> mask);
 
-    // thumb32
-    bool thumb32_SXTH(Reg d, SignExtendRotation rotate, Reg m);
-    bool thumb32_UXTH(Reg d, SignExtendRotation rotate, Reg m);
-    bool thumb32_SXTB(Reg d, SignExtendRotation rotate, Reg m);
-    bool thumb32_UXTB(Reg d, SignExtendRotation rotate, Reg m);
-    bool thumb32_UXTAB(Reg n, Reg d, SignExtendRotation rotate, Reg m);
-    bool thumb32_UXTAH(Reg n, Reg d, SignExtendRotation rotate, Reg m);
-
-    bool thumb32_SMMUL(Reg n, Reg d, bool R, Reg m);
-
-    bool thumb32_SMLAL(Reg n, Reg dLo, Reg dHi, Reg m);
-
-    bool thumb32_PLD_imm12(bool W, Reg n, Imm<12> imm12);
-
-    bool thumb32_REV(Reg m1, Reg d, Reg m);
-    bool thumb32_REV16(Reg m1, Reg d, Reg m);
-    bool thumb32_RBIT(Reg m1, Reg d, Reg m);
-    bool thumb32_CLZ(Reg m1, Reg d, Reg m);
-
-    bool thumb32_MUL(Reg n, Reg d, Reg m);
-    bool thumb32_MLA(Reg n, Reg a, Reg d, Reg m);
-    bool thumb32_MLS(Reg n, Reg a, Reg d, Reg m);
-
-    bool thumb32_SDIV(Reg n, Reg d, Reg m);
-    bool thumb32_UMULL(Reg n, Reg dLo, Reg dHi, Reg m);
-    bool thumb32_UDIV(Reg n, Reg d, Reg m);
-
-    bool thumb32_PUSH(bool M, RegList reg_list);
+    // Load/Store Multiple
     bool thumb32_STMIA(bool W, Reg n, RegList reg_list);
     bool thumb32_LDMIA(bool W, Reg n, RegList reg_list);
+//    bool thumb32_PUSH(bool M, RegList reg_list);
     bool thumb32_STMDB(bool W, Reg n, RegList reg_list);
     bool thumb32_LDMDB(bool W, Reg n, RegList reg_list);
 
-    bool thumb32_STRD_imm_2(bool P, bool U, bool W, Reg n, Reg t1, Reg t2, Imm<8> imm8);
-    bool thumb32_LDRD_imm_2(bool P, bool U, bool W, Reg n, Reg t1, Reg t2, Imm<8> imm8);
-    bool thumb32_STREXH(Reg n, Reg d, Reg t);
-    bool thumb32_LDREXH(Reg n, Reg t);
-    bool thumb32_LDREX(Reg n, Reg t, Imm<8> imm8);
+    // Load/Store Dual, Load/Store Exclusive, Table Branch
     bool thumb32_STREX(Reg n, Reg t, Reg d, Imm<8> imm8);
+    bool thumb32_LDREX(Reg n, Reg t, Imm<8> imm8);
+    bool thumb32_STREXH(Reg n, Reg d, Reg t);
+    bool thumb32_STREXD(Reg n, Reg t, Reg t2, Reg d);
     bool thumb32_TBB(Reg n, Reg m);
     bool thumb32_TBH(Reg n, Reg m);
+    bool thumb32_LDREXH(Reg n, Reg t);
     bool thumb32_LDREXD(Reg n, Reg t, Reg t2);
-    bool thumb32_STREXD(Reg n, Reg t, Reg t2, Reg d);
+    bool thumb32_STRD_imm_2(bool P, bool U, bool W, Reg n, Reg t1, Reg t2, Imm<8> imm8);
+    bool thumb32_LDRD_imm_2(bool P, bool U, bool W, Reg n, Reg t1, Reg t2, Imm<8> imm8);
 
+    // Data Processing (Shifted Register)
     bool thumb32_TST_reg(Reg n, Imm<3> imm3, Imm<2> imm2, Imm<2> t, Reg m);
     bool thumb32_AND_reg(bool S, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m);
     bool thumb32_BIC_reg(bool S, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m);
@@ -236,59 +212,7 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
     bool thumb32_SUB_reg(bool S, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m);
     bool thumb32_RSB_reg(bool S, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m);
 
-    bool thumb32_ADR_after(Imm<1> i, Imm<3> imm3, Reg d, Imm<8> imm8);
-    bool thumb32_ADD_imm_2(Imm<1> i, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
-    bool thumb32_MOVW_imm(Imm<1> i, Imm<4> imm4, Imm<3> imm3, Reg d, Imm<8> imm8);
-    bool thumb32_ADR_before(Imm<1> i, Imm<3> imm3, Reg d, Imm<8> imm8);
-    bool thumb32_SUB_imm_2(Imm<1> i, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
-    bool thumb32_MOVT(Imm<1> i, Imm<4> imm4, Imm<3> imm3, Reg d, Imm<8> imm8);
-    bool thumb32_SSAT(bool sh, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5> sat_imm);
-    bool thumb32_SSAT16(Reg n, Reg d, Imm<5> sat_imm);
-    bool thumb32_SBFX(Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5> widthm);
-    bool thumb32_BFC(Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5> msb);
-    bool thumb32_BFI(Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5> msb);
-    bool thumb32_STRB_imm_1(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
-    bool thumb32_STRB_imm_2(Reg n, Reg t, Imm<12> imm12);
-    bool thumb32_STRB(Reg n, Reg t, Imm<2> shift, Reg m);
-
-    bool thumb32_SEL(Reg n, Reg d, Reg m);
-    bool thumb32_UBFX(Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5> widthm1);
-
-    bool thumb32_LDRB_lit(bool U, Reg t, Imm<12> imm12);
-    bool thumb32_STRH_imm_1(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
-    bool thumb32_STRH_imm_3(Reg n, Reg t, Imm<12> imm12);
-    bool thumb32_STRH(Reg n, Reg t, Imm<2> shift, Reg m);
-    bool thumb32_STR_imm_1(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
-    bool thumb32_STR_imm_3(Reg n, Reg t, Imm<12> imm12);
-    bool thumb32_STR_reg(Reg n, Reg t, Imm<2> shift, Reg m);
-
-    bool thumb32_LDRB_reg(Reg n, Reg t, Imm<2> shift, Reg m);
-    bool thumb32_LDRB_imm8(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
-    bool thumb32_LDRB_imm12(Reg n, Reg t, Imm<12> imm12);
-    bool thumb32_LDRSB_lit(bool u, Reg t, Imm<12> imm12);
-    bool thumb32_LDRSB_reg(Reg n, Reg t, Imm<2> shift, Reg m);
-    bool thumb32_LDRSB_imm8(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
-    bool thumb32_LDRSB_imm12(Reg n, Reg t, Imm<12> imm12);
-
-    bool thumb32_LDRH_lit(bool u, Reg t, Imm<12> imm12);
-    bool thumb32_LDRH_reg(Reg n, Reg t, Imm<2> shift, Reg m);
-    bool thumb32_LDRH_imm8(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
-    bool thumb32_LDRH_imm12(Reg n, Reg t, Imm<12> imm12);
-    bool thumb32_LDRSH_lit(bool u, Reg t, Imm<12> imm12);
-    bool thumb32_LDRSH_reg(Reg n, Reg t, Imm<2> shift, Reg m);
-    bool thumb32_LDRSH_imm8(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
-    bool thumb32_LDRSH_imm12(Reg n, Reg t, Imm<12> imm12);
-
-    bool thumb32_LDR_lit(bool u, Reg t, Imm<12> imm12);
-    bool thumb32_LDR_reg(Reg n, Reg t, Imm<2> shift, Reg m);
-    bool thumb32_LDR_imm8(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
-    bool thumb32_LDR_imm12(Reg n, Reg t, Imm<12> imm12);
-
-    bool thumb32_LSL_reg(bool S, Reg n, Reg d, Reg m);
-    bool thumb32_LSR_reg(bool S, Reg n, Reg d, Reg m);
-    bool thumb32_ROR_reg(bool S, Reg n, Reg d, Reg m);
-    bool thumb32_ASR_reg(bool S, Reg n, Reg d, Reg m);
-
+    // Data Processing (Modified Immediate)
     bool thumb32_MOV_imm(Imm<1> i, bool S, Imm<3> imm3, Reg d, Imm<8> imm8);
     bool thumb32_BIC_imm(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
     bool thumb32_AND_imm(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
@@ -306,55 +230,162 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
     bool thumb32_SUB_imm_1(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
     bool thumb32_RSB_imm(Imm<1> i, bool S, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
 
-    bool thumb32_MRC(size_t opc1, CoprocReg CRn, Reg t, size_t coproc, size_t opc2, CoprocReg CRm);
+    // Data Processing (Plain Binary Immediate)
+    bool thumb32_ADR_after(Imm<1> i, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_ADD_imm_2(Imm<1> i, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_MOVW_imm(Imm<1> i, Imm<4> imm4, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_ADR_before(Imm<1> i, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_SUB_imm_2(Imm<1> i, Reg n, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_MOVT(Imm<1> i, Imm<4> imm4, Imm<3> imm3, Reg d, Imm<8> imm8);
+    bool thumb32_SSAT(bool sh, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5> sat_imm);
+    bool thumb32_SSAT16(Reg n, Reg d, Imm<5> sat_imm);
+    bool thumb32_SBFX(Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5> widthm);
+    bool thumb32_BFC(Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5> msb);
+    bool thumb32_BFI(Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5> msb);
+    bool thumb32_UBFX(Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5> widthm1);
+
+    // Branches and Miscellaneous Control
     bool thumb32_DSB(Imm<4> option);
     bool thumb32_DMB(Imm<4> option);
 
-    bool asimd_VMOV_imm(Imm<1> a, bool D, Imm<1> b, Imm<1> c, Imm<1> d, size_t Vd,
-                        Imm<4> cmode, bool Q, bool op, Imm<1> e, Imm<1> f, Imm<1> g, Imm<1> h);
-    bool asimd_VAND_reg(bool D, size_t Vn, size_t Vd, bool N, bool Q, bool M, size_t Vm);
-    bool vfp_VMOV_2u32_f64(Reg t2, Reg t1, bool M, size_t Vm);
-    bool vfp_VMOV_f64_2u32(Reg t2, Reg t1, bool M, size_t Vm);
-    bool vfp_VMOV_u32_f32(size_t Vn, Reg t, bool N);
-    bool vfp_VMOV_f32_u32(size_t Vn, Reg t, bool N);
-    bool vfp_VSTR(bool U, bool D, Reg n, size_t Vd, bool sz, Imm<8> imm8);
-    bool asimd_SHR(bool U, bool D, size_t imm6, size_t Vd, bool L, bool Q, bool M, size_t Vm);
-    bool vfp_VDUP(Imm<1> B, bool Q, size_t Vd, Reg t, bool D, Imm<1> E);
-    bool v8_VST_multiple(bool D, Reg n, size_t Vd, Imm<4> type, size_t size, size_t align, Reg m);
-    bool v8_VLD_multiple(bool D, Reg n, size_t Vd, Imm<4> type, size_t sz, size_t align, Reg m);
-    bool vfp_VLDR(bool U, bool D, Reg n, size_t Vd, bool sz, Imm<8> imm8);
-    bool vfp_VPUSH(bool D, size_t Vd, bool sz, Imm<8> imm8);
-    bool vfp_VPOP(bool D, size_t Vd, bool sz, Imm<8> imm8);
-    bool vfp_VCVT_f_to_f(bool D, size_t Vd, bool sz, bool M, size_t Vm);
-    bool vfp_VCVT_from_int(bool D, size_t Vd, bool sz, bool is_signed, bool M, size_t Vm);
-    bool vfp_VCVT_to_s32(bool D, size_t Vd, bool sz, bool round_towards_zero, bool M, size_t Vm);
-    bool vfp_VCMP(bool D, size_t Vd, bool sz, bool E, bool M, size_t Vm);
-    bool vfp_VCMP_zero(bool D, size_t Vd, bool sz, bool E);
-    bool vfp_VMRS(Reg t);
-    bool vfp_VMUL(bool D, size_t Vn, size_t Vd, bool sz, bool N, bool M, size_t Vm);
-    bool vfp_VMLA(bool D, size_t Vn, size_t Vd, bool sz, bool N, bool M, size_t Vm);
-    bool vfp_VMLS(bool D, size_t Vn, size_t Vd, bool sz, bool N, bool M, size_t Vm);
-    bool vfp_VNMUL(bool D, size_t Vn, size_t Vd, bool sz, bool N, bool M, size_t Vm);
-    bool vfp_VDIV(bool D, size_t Vn, size_t Vd, bool sz, bool N, bool M, size_t Vm);
-    bool vfp_VMOV_imm(bool D, Imm<4> imm4H, size_t Vd, bool sz, Imm<4> imm4L);
-    bool vfp_VMOV_reg(bool D, size_t Vd, bool sz, bool M, size_t Vm);
-    bool vfp_VADD(bool D, size_t Vn, size_t Vd, bool sz, bool N, bool M, size_t Vm);
-    bool vfp_VSUB(bool D, size_t Vn, size_t Vd, bool sz, bool N, bool M, size_t Vm);
-    bool vfp_VABS(bool D, size_t Vd, bool sz, bool M, size_t Vm);
-    bool vfp_VNEG(bool D, size_t Vd, bool sz, bool M, size_t Vm);
-    bool vfp_VSTM_a1(bool p, bool u, bool D, bool w, Reg n, size_t Vd, Imm<8> imm8);
-    bool vfp_VLDM_a1(bool p, bool u, bool D, bool w, Reg n, size_t Vd, Imm<8> imm8);
-    bool vfp_VLDM_a2(bool p, bool u, bool D, bool w, Reg n, size_t Vd, Imm<8> imm8);
-    bool vfp_VSTM_a2(bool p, bool u, bool D, bool w, Reg n, size_t Vd, Imm<8> imm8);
-    bool vfp_VNMLS(bool D, size_t Vn, size_t Vd, bool sz, bool N, bool M, size_t Vm);
-    bool vfp_VCVT_to_u32(bool D, size_t Vd, bool sz, bool round_towards_zero, bool M, size_t Vm);
+    // Store Single Data Item
+    bool thumb32_STRB_imm_1(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_STRB_imm_2(Reg n, Reg t, Imm<12> imm12);
+    bool thumb32_STRB(Reg n, Reg t, Imm<2> shift, Reg m);
+    bool thumb32_STRH_imm_1(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_STRH_imm_3(Reg n, Reg t, Imm<12> imm12);
+    bool thumb32_STRH(Reg n, Reg t, Imm<2> shift, Reg m);
+    bool thumb32_STR_imm_1(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_STR_imm_3(Reg n, Reg t, Imm<12> imm12);
+    bool thumb32_STR_reg(Reg n, Reg t, Imm<2> shift, Reg m);
 
+    // Load Byte and Memory Hints
+    bool thumb32_PLD_imm12(bool W, Reg n, Imm<12> imm12);
+    bool thumb32_LDRB_lit(bool U, Reg t, Imm<12> imm12);
+    bool thumb32_LDRB_reg(Reg n, Reg t, Imm<2> shift, Reg m);
+    bool thumb32_LDRB_imm8(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_LDRB_imm12(Reg n, Reg t, Imm<12> imm12);
+    bool thumb32_LDRSB_lit(bool u, Reg t, Imm<12> imm12);
+    bool thumb32_LDRSB_reg(Reg n, Reg t, Imm<2> shift, Reg m);
+    bool thumb32_LDRSB_imm8(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_LDRSB_imm12(Reg n, Reg t, Imm<12> imm12);
+
+    // Load Halfword and Memory Hints
+    bool thumb32_LDRH_lit(bool u, Reg t, Imm<12> imm12);
+    bool thumb32_LDRH_reg(Reg n, Reg t, Imm<2> shift, Reg m);
+    bool thumb32_LDRH_imm8(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_LDRH_imm12(Reg n, Reg t, Imm<12> imm12);
+    bool thumb32_LDRSH_lit(bool u, Reg t, Imm<12> imm12);
+    bool thumb32_LDRSH_reg(Reg n, Reg t, Imm<2> shift, Reg m);
+    bool thumb32_LDRSH_imm8(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_LDRSH_imm12(Reg n, Reg t, Imm<12> imm12);
+
+    // Load Word
+    bool thumb32_LDR_lit(bool u, Reg t, Imm<12> imm12);
+    bool thumb32_LDR_reg(Reg n, Reg t, Imm<2> shift, Reg m);
+    bool thumb32_LDR_imm8(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
+    bool thumb32_LDR_imm12(Reg n, Reg t, Imm<12> imm12);
+
+    // Data Processing (register)
+    bool thumb32_LSL_reg(bool S, Reg n, Reg d, Reg m);
+    bool thumb32_LSR_reg(bool S, Reg n, Reg d, Reg m);
+    bool thumb32_ROR_reg(bool S, Reg n, Reg d, Reg m);
+    bool thumb32_ASR_reg(bool S, Reg n, Reg d, Reg m);
+    bool thumb32_SXTH(Reg d, SignExtendRotation rotate, Reg m);
+    bool thumb32_UXTH(Reg d, SignExtendRotation rotate, Reg m);
+    bool thumb32_SXTB(Reg d, SignExtendRotation rotate, Reg m);
+    bool thumb32_UXTB(Reg d, SignExtendRotation rotate, Reg m);
+    bool thumb32_UXTAB(Reg n, Reg d, SignExtendRotation rotate, Reg m);
+    bool thumb32_UXTAH(Reg n, Reg d, SignExtendRotation rotate, Reg m);
+
+    // Parallel Addition and Subtraction (unsigned)
     bool thumb32_UADD8(Reg n, Reg d, Reg m);
 
+    // Miscellaneous Operations
+    bool thumb32_REV(Reg m1, Reg d, Reg m);
+    bool thumb32_REV16(Reg m1, Reg d, Reg m);
+    bool thumb32_RBIT(Reg m1, Reg d, Reg m);
+    bool thumb32_SEL(Reg n, Reg d, Reg m);
+    bool thumb32_CLZ(Reg m1, Reg d, Reg m);
+
+    // Multiply, Multiply Accumulate, and Absolute Difference
+    bool thumb32_MUL(Reg n, Reg d, Reg m);
+    bool thumb32_MLA(Reg n, Reg a, Reg d, Reg m);
+    bool thumb32_MLS(Reg n, Reg a, Reg d, Reg m);
+    bool thumb32_SMMUL(Reg n, Reg d, bool R, Reg m);
+
+    // Long Multiply, Long Multiply Accumulate, and Divide
+    bool thumb32_SDIV(Reg n, Reg d, Reg m);
+    bool thumb32_UMULL(Reg n, Reg dLo, Reg dHi, Reg m);
+    bool thumb32_UDIV(Reg n, Reg d, Reg m);
+    bool thumb32_SMLAL(Reg n, Reg dLo, Reg dHi, Reg m);
+
+    // Coprocessor
+    bool thumb32_MRC(size_t opc1, CoprocReg CRn, Reg t, size_t coproc, size_t opc2, CoprocReg CRm);
+
+    // Branch instructions
     bool thumb32_BL_imm(bool S, Imm<10> hi, bool j1, bool j2, Imm<11> lo);
     bool thumb32_BLX_imm(bool S, Imm<10> hi, bool j1, bool j2, Imm<11> lo);
     bool thumb32_B_cond(Imm<1> S, Cond cond, Imm<6> imm6, Imm<1> j1, Imm<1> j2, Imm<11> imm11);
     bool thumb32_B(bool S, Imm<10> imm10, bool j1, bool j2, Imm<11> imm11);
+
+    // Three registers of the same length
+    bool asimd_VAND_reg(bool D, size_t Vn, size_t Vd, bool N, bool Q, bool M, size_t Vm);
+
+    // Two registers and a shift amount
+    bool asimd_SHR(bool U, bool D, size_t imm6, size_t Vd, bool L, bool Q, bool M, size_t Vm);
+
+    // One register and modified immediate
+    bool asimd_VMOV_imm(Imm<1> a, bool D, Imm<1> b, Imm<1> c, Imm<1> d, size_t Vd,
+                        Imm<4> cmode, bool Q, bool op, Imm<1> e, Imm<1> f, Imm<1> g, Imm<1> h);
+
+    // Advanced SIMD load/store structures
+    bool v8_VST_multiple(bool D, Reg n, size_t Vd, Imm<4> type, size_t size, size_t align, Reg m);
+    bool v8_VLD_multiple(bool D, Reg n, size_t Vd, Imm<4> type, size_t sz, size_t align, Reg m);
+
+    // Floating-point three-register data processing instructions
+    bool vfp_VMLA(bool D, size_t Vn, size_t Vd, bool sz, bool N, bool M, size_t Vm);
+    bool vfp_VMLS(bool D, size_t Vn, size_t Vd, bool sz, bool N, bool M, size_t Vm);
+    bool vfp_VNMLS(bool D, size_t Vn, size_t Vd, bool sz, bool N, bool M, size_t Vm);
+    bool vfp_VMUL(bool D, size_t Vn, size_t Vd, bool sz, bool N, bool M, size_t Vm);
+    bool vfp_VNMUL(bool D, size_t Vn, size_t Vd, bool sz, bool N, bool M, size_t Vm);
+    bool vfp_VADD(bool D, size_t Vn, size_t Vd, bool sz, bool N, bool M, size_t Vm);
+    bool vfp_VSUB(bool D, size_t Vn, size_t Vd, bool sz, bool N, bool M, size_t Vm);
+    bool vfp_VDIV(bool D, size_t Vn, size_t Vd, bool sz, bool N, bool M, size_t Vm);
+
+    // Other floating-point data-processing instructions
+    bool vfp_VMOV_imm(bool D, Imm<4> imm4H, size_t Vd, bool sz, Imm<4> imm4L);
+    bool vfp_VMOV_reg(bool D, size_t Vd, bool sz, bool M, size_t Vm);
+    bool vfp_VABS(bool D, size_t Vd, bool sz, bool M, size_t Vm);
+    bool vfp_VNEG(bool D, size_t Vd, bool sz, bool M, size_t Vm);
+    bool vfp_VCMP(bool D, size_t Vd, bool sz, bool E, bool M, size_t Vm);
+    bool vfp_VCMP_zero(bool D, size_t Vd, bool sz, bool E);
+    bool vfp_VCVT_f_to_f(bool D, size_t Vd, bool sz, bool M, size_t Vm);
+    bool vfp_VCVT_from_int(bool D, size_t Vd, bool sz, bool is_signed, bool M, size_t Vm);
+    bool vfp_VCVT_to_u32(bool D, size_t Vd, bool sz, bool round_towards_zero, bool M, size_t Vm);
+    bool vfp_VCVT_to_s32(bool D, size_t Vd, bool sz, bool round_towards_zero, bool M, size_t Vm);
+
+    // Floating-point move instructions
+    bool vfp_VMOV_u32_f32(size_t Vn, Reg t, bool N);
+    bool vfp_VMOV_f32_u32(size_t Vn, Reg t, bool N);
+    bool vfp_VMOV_2u32_f64(Reg t2, Reg t1, bool M, size_t Vm);
+    bool vfp_VMOV_f64_2u32(Reg t2, Reg t1, bool M, size_t Vm);
+    bool vfp_VDUP(Imm<1> B, bool Q, size_t Vd, Reg t, bool D, Imm<1> E);
+
+    // Floating-point system register access
+    bool vfp_VMRS(Reg t);
+
+    // Extension register load-store instructions
+    bool vfp_VPUSH(bool D, size_t Vd, bool sz, Imm<8> imm8);
+    bool vfp_VPOP(bool D, size_t Vd, bool sz, Imm<8> imm8);
+    bool vfp_VLDR(bool U, bool D, Reg n, size_t Vd, bool sz, Imm<8> imm8);
+    bool vfp_VSTR(bool U, bool D, Reg n, size_t Vd, bool sz, Imm<8> imm8);
+    bool vfp_VSTM_a1(bool p, bool u, bool D, bool w, Reg n, size_t Vd, Imm<8> imm8);
+    bool vfp_VLDM_a1(bool p, bool u, bool D, bool w, Reg n, size_t Vd, Imm<8> imm8);
+    bool vfp_VLDM_a2(bool p, bool u, bool D, bool w, Reg n, size_t Vd, Imm<8> imm8);
+    bool vfp_VSTM_a2(bool p, bool u, bool D, bool w, Reg n, size_t Vd, Imm<8> imm8);
+
+    // Misc instructions
     bool thumb32_UDF();
 };
 

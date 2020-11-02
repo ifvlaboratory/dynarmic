@@ -88,7 +88,7 @@ bool ThumbTranslatorVisitor::thumb32_BLX_imm(bool S, Imm<10> hi, bool j1, bool j
 
 // PUSH<c>.W <registers>
 // reg_list cannot encode for R15.
-bool ThumbTranslatorVisitor::thumb32_PUSH(bool M, RegList reg_list) {
+/*bool ThumbTranslatorVisitor::thumb32_PUSH(bool M, RegList reg_list) {
     if (!ConditionPassed()) {
         return true;
     }
@@ -103,7 +103,7 @@ bool ThumbTranslatorVisitor::thumb32_PUSH(bool M, RegList reg_list) {
     const auto final_address = ir.Sub(ir.GetRegister(Reg::SP), ir.Imm32(num_bytes));
     auto address = final_address;
     return Helper::STMHelper(ir, true, Reg::SP, reg_list, address, final_address);
-}
+}*/
 
 // B<c>.W <label>
 bool ThumbTranslatorVisitor::thumb32_B_cond(Imm<1> S, Cond cond, Imm<6> imm6, Imm<1> j1, Imm<1> j2, Imm<11> imm11) {
