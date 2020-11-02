@@ -180,6 +180,8 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
 
     bool thumb32_SMMUL(Reg n, Reg d, bool R, Reg m);
 
+    bool thumb32_SMLAL(Reg n, Reg dLo, Reg dHi, Reg m);
+
     bool thumb32_PLD_imm12(bool W, Reg n, Imm<12> imm12);
 
     bool thumb32_REV(Reg m1, Reg d, Reg m);

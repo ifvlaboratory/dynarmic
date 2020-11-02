@@ -67,7 +67,6 @@ bool ArmTranslatorVisitor::arm_MUL(Cond cond, bool S, Reg d, Reg m, Reg n) {
     return true;
 }
 
-
 // SMLAL{S}<c> <RdLo>, <RdHi>, <Rn>, <Rm>
 bool ArmTranslatorVisitor::arm_SMLAL(Cond cond, bool S, Reg dHi, Reg dLo, Reg m, Reg n) {
     if (dLo == Reg::PC || dHi == Reg::PC || n == Reg::PC || m == Reg::PC) {
@@ -96,6 +95,36 @@ bool ArmTranslatorVisitor::arm_SMLAL(Cond cond, bool S, Reg dHi, Reg dLo, Reg m,
         ir.SetNFlag(ir.MostSignificantBit(hi));
         ir.SetZFlag(ir.IsZero(result));
     }
+
+    return true;
+}
+
+// SMLAL{S}<c> <RdLo>, <RdHi>, <Rn>, <Rm>
+bool ThumbTranslatorVisitor::thumb32_SMLAL(Reg n, Reg dLo, Reg dHi, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (dLo == Reg::PC || dHi == Reg::PC || n == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (dLo == Reg::R13 || dHi == Reg::R13 || n == Reg::R13 || m == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+
+    if (dLo == dHi) {
+        return UnpredictableInstruction();
+    }
+
+    const auto n64 = ir.SignExtendWordToLong(ir.GetRegister(n));
+    const auto m64 = ir.SignExtendWordToLong(ir.GetRegister(m));
+    const auto product = ir.Mul(n64, m64);
+    const auto addend = ir.Pack2x32To1x64(ir.GetRegister(dLo), ir.GetRegister(dHi));
+    const auto result = ir.Add(product, addend);
+    const auto lo = ir.LeastSignificantWord(result);
+    const auto hi = ir.MostSignificantWord(result).result;
+
+    ir.SetRegister(dLo, lo);
+    ir.SetRegister(dHi, hi);
 
     return true;
 }
