@@ -172,6 +172,7 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
 
     // Load/Store Multiple
     bool thumb32_STMIA(bool W, Reg n, RegList reg_list);
+//    bool thumb32_POP(bool P, bool M, RegList reg_list);
     bool thumb32_LDMIA(bool W, Reg n, RegList reg_list);
 //    bool thumb32_PUSH(bool M, RegList reg_list);
     bool thumb32_STMDB(bool W, Reg n, RegList reg_list);
@@ -180,10 +181,12 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
     // Load/Store Dual, Load/Store Exclusive, Table Branch
     bool thumb32_STREX(Reg n, Reg t, Reg d, Imm<8> imm8);
     bool thumb32_LDREX(Reg n, Reg t, Imm<8> imm8);
+//    bool thumb32_STREXB(Reg n, Reg t, Reg d);
     bool thumb32_STREXH(Reg n, Reg d, Reg t);
     bool thumb32_STREXD(Reg n, Reg t, Reg t2, Reg d);
     bool thumb32_TBB(Reg n, Reg m);
     bool thumb32_TBH(Reg n, Reg m);
+//    bool thumb32_LDREXB(Reg n, Reg t);
     bool thumb32_LDREXH(Reg n, Reg t);
     bool thumb32_LDREXD(Reg n, Reg t, Reg t2);
     bool thumb32_STRD_imm_2(bool P, bool U, bool W, Reg n, Reg t1, Reg t2, Imm<8> imm8);
@@ -193,6 +196,7 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
     bool thumb32_TST_reg(Reg n, Imm<3> imm3, Imm<2> imm2, Imm<2> t, Reg m);
     bool thumb32_AND_reg(bool S, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m);
     bool thumb32_BIC_reg(bool S, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m);
+//    bool thumb32_MOV_reg(bool S, Reg d, Reg m);
     bool thumb32_LSL_imm(bool S, Imm<3> imm3, Reg d, Imm<2> imm2, Reg m);
     bool thumb32_LSR_imm(bool S, Imm<3> imm3, Reg d, Imm<2> imm2, Reg m);
     bool thumb32_ASR_imm(bool S, Imm<3> imm3, Reg d, Imm<2> imm2, Reg m);
@@ -247,6 +251,7 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
     // Branches and Miscellaneous Control
     bool thumb32_DSB(Imm<4> option);
     bool thumb32_DMB(Imm<4> option);
+//    bool thumb32_ISB(Imm<4> option);
 
     // Store Single Data Item
     bool thumb32_STRB_imm_1(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
@@ -282,6 +287,7 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
 
     // Load Word
     bool thumb32_LDR_lit(bool u, Reg t, Imm<12> imm12);
+//    bool thumb32_LDRT(Reg n, Reg t, Imm<8> imm8);
     bool thumb32_LDR_reg(Reg n, Reg t, Imm<2> shift, Reg m);
     bool thumb32_LDR_imm8(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
     bool thumb32_LDR_imm12(Reg n, Reg t, Imm<12> imm12);
