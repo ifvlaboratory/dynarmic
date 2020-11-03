@@ -16,8 +16,7 @@ namespace Dynarmic {
 class ExclusiveMonitor;
 } // namespace Dynarmic
 
-namespace Dynarmic {
-namespace A32 {
+namespace Dynarmic::A32 {
 
 using VAddr = std::uint32_t;
 
@@ -181,5 +180,4 @@ struct UserConfig {
     bool always_little_endian = false;
 };
 
-} // namespace A32
-} // namespace Dynarmic
+} // namespace Dynarmic::A32

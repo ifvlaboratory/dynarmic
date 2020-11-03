@@ -16,8 +16,7 @@ namespace Dynarmic {
 class ExclusiveMonitor;
 } // namespace Dynarmic
 
-namespace Dynarmic {
-namespace A64 {
+namespace Dynarmic::A64 {
 
 using VAddr = std::uint64_t;
 
@@ -232,5 +231,4 @@ struct UserConfig {
     // bool enable_ticks = true; // TODO
 };
 
-} // namespace A64
-} // namespace Dynarmic
+} // namespace Dynarmic::A64
