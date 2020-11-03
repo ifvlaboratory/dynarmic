@@ -12,8 +12,7 @@
 
 #include <dynarmic/A32/config.h>
 
-namespace Dynarmic {
-namespace A32 {
+namespace Dynarmic::A32 {
 
 struct Context;
 
@@ -111,5 +110,4 @@ private:
     std::unique_ptr<Impl> impl;
 };
 
-} // namespace A32
-} // namespace Dynarmic
+} // namespace Dynarmic::A32

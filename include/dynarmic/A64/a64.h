@@ -13,8 +13,7 @@
 
 #include <dynarmic/A64/config.h>
 
-namespace Dynarmic {
-namespace A64 {
+namespace Dynarmic::A64 {
 
 struct Context;
 
@@ -135,5 +134,4 @@ private:
     std::unique_ptr<Impl> impl;
 };
 
-} // namespace A64
-} // namespace Dynarmic
+} // namespace Dynarmic::A64
