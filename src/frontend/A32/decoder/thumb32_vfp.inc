@@ -21,7 +21,7 @@ INST(vfp_VMOV_imm,         "VMOV (immediate)",        "111011101D11vvvvdddd101z0
 INST(vfp_VMOV_reg,         "VMOV (reg)",              "111011101D110000dddd101z01M0mmmm") // VFPv2
 INST(vfp_VABS,             "VABS",                    "111011101D110000dddd101z11M0mmmm") // VFPv2
 INST(vfp_VNEG,             "VNEG",                    "111011101D110001dddd101z01M0mmmm") // VFPv2
-//INST(vfp_VSQRT,            "VSQRT",                   "cccc11101D110001dddd101z11M0mmmm") // VFPv2
+INST(vfp_VSQRT,            "VSQRT",                   "111011101D110001dddd101z11M0mmmm") // VFPv2
 //INST(vfp_VCVTB,            "VCVTB",                   "cccc11101D11001odddd101z01M0mmmm") // VFPv3HP
 //INST(vfp_VCVTT,            "VCVTT",                   "cccc11101D11001odddd101z11M0mmmm") // VFPv3HP
 INST(vfp_VCMP,             "VCMP",                    "111011101D110100dddd101zE1M0mmmm") // VFPv2

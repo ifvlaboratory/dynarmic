@@ -1112,6 +1112,23 @@ bool ArmTranslatorVisitor::vfp_VSQRT(Cond cond, bool D, size_t Vd, bool sz, bool
     });
 }
 
+// VSQRT<c>.F64 <Dd>, <Dm>
+// VSQRT<c>.F32 <Sd>, <Sm>
+bool ThumbTranslatorVisitor::vfp_VSQRT(bool D, size_t Vd, bool sz, bool M, size_t Vm) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    const auto d = ToExtReg(sz, Vd, D);
+    const auto m = ToExtReg(sz, Vm, M);
+
+    return EmitVfpVectorOperation(sz, d, m, [this](ExtReg d, ExtReg m) {
+        const auto reg_m = ir.GetExtendedRegister(m);
+        const auto result = ir.FPSqrt(reg_m);
+        ir.SetExtendedRegister(d, result);
+    });
+}
+
 // VCVTB<c>.f32.f16 <Dd>, <Dm>
 // VCVTB<c>.f64.f16 <Dd>, <Dm>
 // VCVTB<c>.f16.f32 <Dd>, <Dm>
