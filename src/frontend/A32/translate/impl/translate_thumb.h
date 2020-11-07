@@ -326,6 +326,7 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
     bool thumb32_UDIV(Reg n, Reg d, Reg m);
     bool thumb32_SMLAL(Reg n, Reg dLo, Reg dHi, Reg m);
     bool thumb32_UMLAL(Reg n, Reg dLo, Reg dHi, Reg m);
+    bool thumb32_UMAAL(Reg n, Reg dLo, Reg dHi, Reg m);
 
     // Coprocessor
     bool thumb32_MRC(size_t opc1, CoprocReg CRn, Reg t, size_t coproc, size_t opc2, CoprocReg CRm);

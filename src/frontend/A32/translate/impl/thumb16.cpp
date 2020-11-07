@@ -962,21 +962,10 @@ bool ThumbTranslatorVisitor::thumb16_PUSH(bool M, RegList reg_list) {
         return UnpredictableInstruction();
     }
 
-    const u32 num_bytes_to_push = static_cast<u32>(4 * Common::BitCount(reg_list));
-    const auto final_address = ir.Sub(ir.GetRegister(Reg::SP), ir.Imm32(num_bytes_to_push));
+    const u32 num_bytes = static_cast<u32>(4 * Common::BitCount(reg_list));
+    const auto final_address = ir.Sub(ir.GetRegister(Reg::SP), ir.Imm32(num_bytes));
     auto address = final_address;
-    for (size_t i = 0; i < 16; i++) {
-        if (Common::Bit(i, reg_list)) {
-            // TODO: Deal with alignment
-            const auto Ri = ir.GetRegister(static_cast<Reg>(i));
-            ir.WriteMemory32(address, Ri);
-            address = ir.Add(address, ir.Imm32(4));
-        }
-    }
-
-    ir.SetRegister(Reg::SP, final_address);
-    // TODO(optimization): Possible location for an RSB push.
-    return true;
+    return Helper::STMHelper(ir, true, Reg::SP, reg_list, address, final_address);
 }
 
 // POP <reg_list>
@@ -990,29 +979,15 @@ bool ThumbTranslatorVisitor::thumb16_POP(bool P, RegList reg_list) {
     if (Common::BitCount(reg_list) < 1) {
         return UnpredictableInstruction();
     }
-
-    auto address = ir.GetRegister(Reg::SP);
-    for (size_t i = 0; i < 15; i++) {
-        if (Common::Bit(i, reg_list)) {
-            // TODO: Deal with alignment
-            const auto data = ir.ReadMemory32(address);
-            ir.SetRegister(static_cast<Reg>(i), data);
-            address = ir.Add(address, ir.Imm32(4));
-        }
+    const auto it = ir.current_location.IT();
+    if (Common::Bit<15>(reg_list) && it.IsInITBlock() && !it.IsLastInITBlock()) {
+        return UnpredictableInstruction();
     }
 
-    if (Common::Bit<15>(reg_list)) {
-        // TODO(optimization): Possible location for an RSB pop.
-        const auto data = ir.ReadMemory32(address);
-        ir.LoadWritePC(data);
-        address = ir.Add(address, ir.Imm32(4));
-        ir.SetRegister(Reg::SP, address);
-        ir.SetTerm(IR::Term::PopRSBHint{});
-        return false;
-    } else {
-        ir.SetRegister(Reg::SP, address);
-        return true;
-    }
+    const u32 num_bytes = static_cast<u32>(4 * Common::BitCount(reg_list));
+    const auto address = ir.GetRegister(Reg::SP);
+    const auto final_address = ir.Add(address, ir.Imm32(num_bytes));
+    return Helper::LDMHelper(ir, true, Reg::SP, reg_list, address, final_address);
 }
 
 // SETEND <endianness>
@@ -1049,18 +1024,15 @@ bool ThumbTranslatorVisitor::thumb16_REV(Reg m, Reg d) {
 
 // REV16 <Rd>, <Rm>
 // Rd cannot encode R15.
-// TODO: Consider optimizing
 bool ThumbTranslatorVisitor::thumb16_REV16(Reg m, Reg d) {
     if (!ConditionPassed()) {
         return true;
     }
-    const auto Rm = ir.GetRegister(m);
-    const auto upper_half = ir.LeastSignificantHalf(ir.LogicalShiftRight(Rm, ir.Imm8(16), ir.Imm1(false)).result);
-    const auto lower_half = ir.LeastSignificantHalf(Rm);
-    const auto rev_upper_half = ir.ZeroExtendHalfToWord(ir.ByteReverseHalf(upper_half));
-    const auto rev_lower_half = ir.ZeroExtendHalfToWord(ir.ByteReverseHalf(lower_half));
-    const auto result = ir.Or(ir.LogicalShiftLeft(rev_upper_half, ir.Imm8(16), ir.Imm1(false)).result,
-                              rev_lower_half);
+
+    const auto reg_m = ir.GetRegister(m);
+    const auto lo = ir.And(ir.LogicalShiftRight(reg_m, ir.Imm8(8), ir.Imm1(false)).result, ir.Imm32(0x00FF00FF));
+    const auto hi = ir.And(ir.LogicalShiftLeft(reg_m, ir.Imm8(8), ir.Imm1(false)).result, ir.Imm32(0xFF00FF00));
+    const auto result = ir.Or(lo, hi);
 
     ir.SetRegister(d, result);
     return true;

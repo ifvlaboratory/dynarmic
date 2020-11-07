@@ -184,6 +184,32 @@ bool ArmTranslatorVisitor::arm_UMAAL(Cond cond, Reg dHi, Reg dLo, Reg m, Reg n) 
     return true;
 }
 
+// UMAAL<c> <RdLo>, <RdHi>, <Rn>, <Rm>
+bool ThumbTranslatorVisitor::thumb32_UMAAL(Reg n, Reg dLo, Reg dHi, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (dLo == Reg::PC || dHi == Reg::PC || n == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (dLo == Reg::R13 || dHi == Reg::R13 || n == Reg::R13 || m == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+    if (dLo == dHi) {
+        return UnpredictableInstruction();
+    }
+
+    const auto lo64 = ir.ZeroExtendWordToLong(ir.GetRegister(dLo));
+    const auto hi64 = ir.ZeroExtendWordToLong(ir.GetRegister(dHi));
+    const auto n64 = ir.ZeroExtendWordToLong(ir.GetRegister(n));
+    const auto m64 = ir.ZeroExtendWordToLong(ir.GetRegister(m));
+    const auto result = ir.Add(ir.Add(ir.Mul(n64, m64), hi64), lo64);
+
+    ir.SetRegister(dLo, ir.LeastSignificantWord(result));
+    ir.SetRegister(dHi, ir.MostSignificantWord(result).result);
+    return true;
+}
+
 // UMLAL{S}<c> <RdLo>, <RdHi>, <Rn>, <Rm>
 bool ArmTranslatorVisitor::arm_UMLAL(Cond cond, bool S, Reg dHi, Reg dLo, Reg m, Reg n) {
     if (dLo == Reg::PC || dHi == Reg::PC || n == Reg::PC || m == Reg::PC) {

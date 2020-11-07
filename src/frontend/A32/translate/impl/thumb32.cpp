@@ -508,7 +508,7 @@ bool ThumbTranslatorVisitor::thumb32_LDMIA(bool W, Reg n, RegList reg_list) {
 
     const u32 num_bytes = static_cast<u32>(4 * Common::BitCount(reg_list));
     const auto address = ir.GetRegister(n);
-    const auto final_address = ir.Add(ir.GetRegister(n), ir.Imm32(num_bytes));
+    const auto final_address = ir.Add(address, ir.Imm32(num_bytes));
     return Helper::LDMHelper(ir, W, n, reg_list, address, final_address);
 }
 
