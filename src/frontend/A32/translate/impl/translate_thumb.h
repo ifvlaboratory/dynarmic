@@ -319,6 +319,7 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
     bool thumb32_MLA(Reg n, Reg a, Reg d, Reg m);
     bool thumb32_MLS(Reg n, Reg a, Reg d, Reg m);
     bool thumb32_SMMUL(Reg n, Reg d, bool R, Reg m);
+    bool thumb32_SMMLA(Reg n, Reg a, Reg d, bool R, Reg m);
 
     // Long Multiply, Long Multiply Accumulate, and Divide
     bool thumb32_SDIV(Reg n, Reg d, Reg m);

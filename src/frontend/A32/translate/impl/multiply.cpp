@@ -444,6 +444,32 @@ bool ArmTranslatorVisitor::arm_SMMLA(Cond cond, Reg d, Reg a, Reg m, bool R, Reg
     return true;
 }
 
+// SMMLA{R}<c> <Rd>, <Rn>, <Rm>, <Ra>
+bool ThumbTranslatorVisitor::thumb32_SMMLA(Reg n, Reg a, Reg d, bool R, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+    if (d == Reg::PC || n == Reg::PC || m == Reg::PC || a == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || n == Reg::R13 || m == Reg::R13 || a == Reg::R13) {
+        return UnpredictableInstruction();
+    }
+
+    const auto n64 = ir.SignExtendWordToLong(ir.GetRegister(n));
+    const auto m64 = ir.SignExtendWordToLong(ir.GetRegister(m));
+    const auto a64 = ir.Pack2x32To1x64(ir.Imm32(0), ir.GetRegister(a));
+    const auto temp = ir.Add(a64, ir.Mul(n64, m64));
+    const auto result_carry = ir.MostSignificantWord(temp);
+    auto result = result_carry.result;
+    if (R) {
+        result = ir.AddWithCarry(result, ir.Imm32(0), result_carry.carry).result;
+    }
+
+    ir.SetRegister(d, result);
+    return true;
+}
+
 // SMMLS{R}<c> <Rd>, <Rn>, <Rm>, <Ra>
 bool ArmTranslatorVisitor::arm_SMMLS(Cond cond, Reg d, Reg a, Reg m, bool R, Reg n) {
     if (d == Reg::PC || n == Reg::PC || m == Reg::PC || a == Reg::PC) {
