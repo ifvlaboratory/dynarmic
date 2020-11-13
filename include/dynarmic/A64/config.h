@@ -68,11 +68,11 @@ enum class DataCacheOperation {
 };
 
 enum class InstructionCacheOperation {
-    // IC IVAU
+    /// IC IVAU
     InvalidateByVAToPoU,
-    // IC IALLU
+    /// IC IALLU
     InvalidateAllToPoU,
-    // IC IALLUIS
+    /// IC IALLUIS
     InvalidateAllToPoUInnerSharable
 };
 
