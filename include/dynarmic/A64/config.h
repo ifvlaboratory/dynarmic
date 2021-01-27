@@ -119,6 +119,7 @@ struct UserCallbacks {
     virtual void ExceptionRaised(VAddr pc, Exception exception) = 0;
     virtual void DataCacheOperationRaised(DataCacheOperation /*op*/, VAddr /*value*/) {}
     virtual void InstructionCacheOperationRaised(InstructionCacheOperation /*op*/, VAddr /*value*/) {}
+    virtual void InstructionSynchronizationBarrierRaised() {}
 
     // Timing-related callbacks
     // ticks ticks have passed
@@ -161,6 +162,11 @@ struct UserConfig {
     /// When set to false, UserCallbacks::DataCacheOperationRaised will never be called.
     /// Executing DC ZVA in this mode will result in zeros being written to memory.
     bool hook_data_cache_operations = false;
+
+    /// When set to true, UserCallbacks::InstructionSynchronizationBarrierRaised will be
+    /// called when an ISB instruction is executed.
+    /// When set to false, ISB will be treated as a NOP instruction.
+    bool hook_isb = false;
 
     /// When set to true, UserCallbacks::ExceptionRaised will be called when any hint
     /// instruction is executed.
