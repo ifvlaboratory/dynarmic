@@ -2036,24 +2036,6 @@ bool ThumbTranslatorVisitor::thumb32_MLS(Reg n, Reg a, Reg d, Reg m) {
     return true;
 }
 
-// CLZ<c> <Rd>, <Rm>
-bool ThumbTranslatorVisitor::thumb32_CLZ(Reg m1, Reg d, Reg m) {
-    if (!ConditionPassed()) {
-        return true;
-    }
-
-    if(m1 != m) {
-        return UnpredictableInstruction();
-    }
-
-    if (d == Reg::R13 || d == Reg::PC || m == Reg::R13 || m == Reg::PC) {
-        return UnpredictableInstruction();
-    }
-
-    ir.SetRegister(d, ir.CountLeadingZeros(ir.GetRegister(m)));
-    return true;
-}
-
 // LSR{S}<c>.W <Rd>, <Rn>, <Rm>
 bool ThumbTranslatorVisitor::thumb32_LSR_reg(bool S, Reg n, Reg d, Reg m) {
     if (!ConditionPassed()) {
@@ -2196,86 +2178,6 @@ bool ThumbTranslatorVisitor::thumb32_TBH(Reg n, Reg m) {
     return false;
 }
 
-// REV<c> <Rd>, <Rm>
-bool ThumbTranslatorVisitor::thumb32_REV(Reg m1, Reg d, Reg m) {
-    if (!ConditionPassed()) {
-        return true;
-    }
-    if(m1 != m) {
-        return UnpredictableInstruction();
-    }
-    if (d == Reg::PC || m == Reg::PC) {
-        return UnpredictableInstruction();
-    }
-    if (d == Reg::R13 || m == Reg::R13) {
-        return UnpredictableInstruction();
-    }
-
-    const auto result = ir.ByteReverseWord(ir.GetRegister(m));
-    ir.SetRegister(d, result);
-    return true;
-}
-
-// REV16<c> <Rd>, <Rm>
-bool ThumbTranslatorVisitor::thumb32_REV16(Reg m1, Reg d, Reg m) {
-    if (!ConditionPassed()) {
-        return true;
-    }
-    if(m1 != m) {
-        return UnpredictableInstruction();
-    }
-    if (d == Reg::PC || m == Reg::PC) {
-        return UnpredictableInstruction();
-    }
-    if (d == Reg::R13 || m == Reg::R13) {
-        return UnpredictableInstruction();
-    }
-
-    const auto reg_m = ir.GetRegister(m);
-    const auto lo = ir.And(ir.LogicalShiftRight(reg_m, ir.Imm8(8), ir.Imm1(false)).result, ir.Imm32(0x00FF00FF));
-    const auto hi = ir.And(ir.LogicalShiftLeft(reg_m, ir.Imm8(8), ir.Imm1(false)).result, ir.Imm32(0xFF00FF00));
-    const auto result = ir.Or(lo, hi);
-
-    ir.SetRegister(d, result);
-    return true;
-}
-
-// RBIT<c> <Rd>, <Rm>
-bool ThumbTranslatorVisitor::thumb32_RBIT(Reg m1, Reg d, Reg m) {
-    if (!ConditionPassed()) {
-        return true;
-    }
-    if(m1 != m) {
-        return UnpredictableInstruction();
-    }
-
-    if (d == Reg::PC || m == Reg::PC) {
-        return UnpredictableInstruction();
-    }
-    if (d == Reg::R13 || m == Reg::R13) {
-        return UnpredictableInstruction();
-    }
-
-    const IR::U32 swapped = ir.ByteReverseWord(ir.GetRegister(m));
-
-    // ((x & 0xF0F0F0F0) >> 4) | ((x & 0x0F0F0F0F) << 4)
-    const IR::U32 first_lsr = ir.LogicalShiftRight(ir.And(swapped, ir.Imm32(0xF0F0F0F0)), ir.Imm8(4));
-    const IR::U32 first_lsl = ir.LogicalShiftLeft(ir.And(swapped, ir.Imm32(0x0F0F0F0F)), ir.Imm8(4));
-    const IR::U32 corrected = ir.Or(first_lsl, first_lsr);
-
-    // ((x & 0x88888888) >> 3) | ((x & 0x44444444) >> 1) |
-    // ((x & 0x22222222) << 1) | ((x & 0x11111111) << 3)
-    const IR::U32 second_lsr = ir.LogicalShiftRight(ir.And(corrected, ir.Imm32(0x88888888)), ir.Imm8(3));
-    const IR::U32 third_lsr = ir.LogicalShiftRight(ir.And(corrected, ir.Imm32(0x44444444)), ir.Imm8(1));
-    const IR::U32 second_lsl = ir.LogicalShiftLeft(ir.And(corrected, ir.Imm32(0x22222222)), ir.Imm8(1));
-    const IR::U32 third_lsl = ir.LogicalShiftLeft(ir.And(corrected, ir.Imm32(0x11111111)), ir.Imm8(3));
-
-    const IR::U32 result = ir.Or(ir.Or(ir.Or(second_lsr, third_lsr), second_lsl), third_lsl);
-
-    ir.SetRegister(d, result);
-    return true;
-}
-
 // UBFX<c> <Rd>, <Rn>, #<lsb>, #<width>
 bool ThumbTranslatorVisitor::thumb32_UBFX(Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<5> widthm1) {
     if (!ConditionPassed()) {
@@ -2411,44 +2313,6 @@ bool ThumbTranslatorVisitor::thumb32_SXTH(Reg d, SignExtendRotation rotate, Reg 
 // SDIV<c> <Rd>, <Rn>, <Rm>
 bool ThumbTranslatorVisitor::thumb32_SDIV(Reg n, Reg d, Reg m) {
     return DivideOperation(*this, d, m, n, &IREmitter::SignedDiv);
-}
-
-// UADD8<c> <Rd>, <Rn>, <Rm>
-bool ThumbTranslatorVisitor::thumb32_UADD8(Reg n, Reg d, Reg m) {
-    if (!ConditionPassed()) {
-        return true;
-    }
-    if (d == Reg::PC || n == Reg::PC || m == Reg::PC) {
-        return UnpredictableInstruction();
-    }
-    if (d == Reg::R13 || n == Reg::R13 || m == Reg::R13) {
-        return UnpredictableInstruction();
-    }
-
-    const auto result = ir.PackedAddU8(ir.GetRegister(n), ir.GetRegister(m));
-    ir.SetRegister(d, result.result);
-    ir.SetGEFlags(result.ge);
-    return true;
-}
-
-// SEL<c> <Rd>, <Rn>, <Rm>
-bool ThumbTranslatorVisitor::thumb32_SEL(Reg n, Reg d, Reg m) {
-    if (!ConditionPassed()) {
-        return true;
-    }
-    if (n == Reg::PC || d == Reg::PC || m == Reg::PC) {
-        return UnpredictableInstruction();
-    }
-    if (n == Reg::R13 || d == Reg::R13 || m == Reg::R13) {
-        return UnpredictableInstruction();
-    }
-
-    const auto to = ir.GetRegister(m);
-    const auto from = ir.GetRegister(n);
-    const auto result = ir.PackedSelect(ir.GetGEFlags(), to, from);
-
-    ir.SetRegister(d, result);
-    return true;
 }
 
 bool ThumbTranslatorVisitor::thumb32_UDF() {
