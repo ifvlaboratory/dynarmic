@@ -23,7 +23,7 @@ public:
     using RegisterArray = std::array<u32, 16>;
     using ExtRegsArray = std::array<u32, 64>;
 
-    static constexpr InstructionType infinite_loop = static_cast<InstructionType>(infinite_loop_u32);
+    static constexpr InstructionType infinite_loop = InstructionType(infinite_loop_u32);
 
     u64 ticks_left = 0;
     bool code_mem_modified_by_guest = false;
