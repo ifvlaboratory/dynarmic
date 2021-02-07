@@ -7,9 +7,31 @@
 #include "frontend/A32/types.h"
 #include "frontend/ir/opcodes.h"
 
+#include <dynarmic/A32/arch_version.h>
+
 namespace Dynarmic::A32 {
 
 using Opcode = IR::Opcode;
+
+size_t IREmitter::ArchVersion() const {
+    switch (arch_version) {
+    case ArchVersion::v3:
+        return 3;
+    case ArchVersion::v4:
+    case ArchVersion::v4T:
+        return 4;
+    case ArchVersion::v5TE:
+        return 5;
+    case ArchVersion::v6K:
+    case ArchVersion::v6T2:
+        return 6;
+    case ArchVersion::v7:
+        return 7;
+    case ArchVersion::v8:
+        return 8;
+    }
+    UNREACHABLE();
+}
 
 u32 IREmitter::PC() const {
     const u32 offset = current_location.TFlag() ? 4 : 8;
@@ -67,17 +89,16 @@ void IREmitter::SetVector(ExtReg reg, const IR::U128& value) {
 
 void IREmitter::ALUWritePC(const IR::U32& value) {
     // This behaviour is ARM version-dependent.
-#ifdef DYNARMIC_USE_ARMV7
-    // The below implementation is for ARMv7
-    BXWritePC(value);
-#else
-    // The below implementation is for ARMv6k
-    BranchWritePC(value);
-#endif
+    if (ArchVersion() >= 7 && !current_location.TFlag()) {
+        BXWritePC(value);
+    } else {
+        BranchWritePC(value);
+    }
 }
 
 void IREmitter::BranchWritePC(const IR::U32& value) {
     if (!current_location.TFlag()) {
+        // Note that for ArchVersion() < 6, this is UNPREDICTABLE when value<1:0> != 0b00
         const auto new_pc = And(value, Imm32(0xFFFFFFFC));
         Inst(Opcode::A32SetRegister, IR::Value(A32::Reg::PC), new_pc);
     } else {
@@ -92,8 +113,11 @@ void IREmitter::BXWritePC(const IR::U32& value) {
 
 void IREmitter::LoadWritePC(const IR::U32& value) {
     // This behaviour is ARM version-dependent.
-    // The below implementation is for ARMv6k and ARMv7
-    BXWritePC(value);
+    if (ArchVersion() >= 5) {
+        BXWritePC(value);
+    } else {
+        BranchWritePC(value);
+    }
 }
 
 void IREmitter::CallSupervisor(const IR::U32& value) {

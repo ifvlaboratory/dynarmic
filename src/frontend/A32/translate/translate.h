@@ -10,6 +10,8 @@
 #include "frontend/A32/ir_emitter.h"
 #include "frontend/A32/types.h"
 
+#include <dynarmic/A32/arch_version.h>
+
 namespace Dynarmic::IR {
 class Block;
 } // namespace Dynarmic::IR
@@ -21,6 +23,8 @@ class LocationDescriptor;
 using MemoryReadCodeFuncType = std::function<u32(u32 vaddr, bool thumb)>;
 
 struct TranslationOptions {
+    ArchVersion arch_version;
+
     /// This changes what IR we emit when we translate an unpredictable instruction.
     /// If this is false, the ExceptionRaised IR instruction is emitted.
     /// If this is true, we define some behaviour for some instructions.

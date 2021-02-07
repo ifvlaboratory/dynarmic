@@ -305,9 +305,6 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
     bool thumb32_UXTAH(Reg n, Reg d, SignExtendRotation rotate, Reg m);
 
     // Multiply, Multiply Accumulate, and Absolute Difference
-    bool thumb32_MUL(Reg n, Reg d, Reg m);
-    bool thumb32_MLA(Reg n, Reg a, Reg d, Reg m);
-    bool thumb32_MLS(Reg n, Reg a, Reg d, Reg m);
     bool thumb32_SMMUL(Reg n, Reg d, bool R, Reg m);
     bool thumb32_SMMLA(Reg n, Reg a, Reg d, bool R, Reg m);
 
@@ -399,6 +396,13 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
     bool thumb32_REV16(Reg n, Reg d, Reg m);
     bool thumb32_REVSH(Reg n, Reg d, Reg m);
     bool thumb32_SEL(Reg n, Reg d, Reg m);
+
+    // thumb32 multiply instructions
+    bool thumb32_MLA(Reg n, Reg a, Reg d, Reg m);
+    bool thumb32_MLS(Reg n, Reg a, Reg d, Reg m);
+    bool thumb32_MUL(Reg n, Reg d, Reg m);
+    bool thumb32_USAD8(Reg n, Reg d, Reg m);
+    bool thumb32_USADA8(Reg n, Reg a, Reg d, Reg m);
 
     // thumb32 parallel add/sub instructions
     bool thumb32_SADD8(Reg n, Reg d, Reg m);

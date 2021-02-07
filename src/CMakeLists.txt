@@ -1,5 +1,6 @@
 add_library(dynarmic
     ../include/dynarmic/A32/a32.h
+    ../include/dynarmic/A32/arch_version.h
     ../include/dynarmic/A32/config.h
     ../include/dynarmic/A32/coprocessor.h
     ../include/dynarmic/A32/coprocessor_util.h
@@ -158,6 +159,7 @@ if ("A32" IN_LIST DYNARMIC_FRONTENDS)
         frontend/A32/translate/impl/thumb16.cpp
         frontend/A32/translate/impl/thumb32.cpp
         frontend/A32/translate/impl/thumb32_misc.cpp
+        frontend/A32/translate/impl/thumb32_multiply.cpp
         frontend/A32/translate/impl/thumb32_parallel.cpp
         frontend/A32/translate/impl/translate_arm.h
         frontend/A32/translate/impl/translate_thumb.h
