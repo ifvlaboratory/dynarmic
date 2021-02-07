@@ -49,7 +49,7 @@ enum class ConditionalState {
 
 struct A32TranslatorVisitor {
 
-    explicit A32TranslatorVisitor(IR::Block& block, LocationDescriptor descriptor, const TranslationOptions& options) : ir(block, descriptor), options(options) {
+    explicit A32TranslatorVisitor(IR::Block& block, LocationDescriptor descriptor, const TranslationOptions& options) : ir(block, descriptor, options.arch_version), options(options) {
     }
 
     ConditionalState cond_state = ConditionalState::None;

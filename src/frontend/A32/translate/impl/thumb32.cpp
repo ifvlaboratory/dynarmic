@@ -1978,64 +1978,6 @@ bool ThumbTranslatorVisitor::thumb32_PLD_imm12(bool W,
     return RaiseException(exception);
 }
 
-// MLA<c> <Rd>, <Rn>, <Rm>, <Ra>
-bool ThumbTranslatorVisitor::thumb32_MLA(Reg n, Reg a, Reg d, Reg m) {
-    if (!ConditionPassed()) {
-        return true;
-    }
-
-    if (d == Reg::PC || n == Reg::PC || m == Reg::PC || a == Reg::PC) {
-        return UnpredictableInstruction();
-    }
-    if (d == Reg::R13 || n == Reg::R13 || m == Reg::R13 || a == Reg::R13) {
-        return UnpredictableInstruction();
-    }
-
-    const auto result = ir.Add(ir.Mul(ir.GetRegister(n), ir.GetRegister(m)), ir.GetRegister(a));
-    ir.SetRegister(d, result);
-    return true;
-}
-
-// MUL<c> <Rd>, <Rn>, <Rm>
-bool ThumbTranslatorVisitor::thumb32_MUL(Reg n, Reg d, Reg m) {
-    if (!ConditionPassed()) {
-        return true;
-    }
-
-    if (d == Reg::PC || n == Reg::PC || m == Reg::PC) {
-        return UnpredictableInstruction();
-    }
-    if (d == Reg::R13 || n == Reg::R13 || m == Reg::R13) {
-        return UnpredictableInstruction();
-    }
-
-    const auto result = ir.Mul(ir.GetRegister(n), ir.GetRegister(m));
-    ir.SetRegister(d, result);
-    return true;
-}
-
-// MLS<c> <Rd>, <Rn>, <Rm>, <Ra>
-bool ThumbTranslatorVisitor::thumb32_MLS(Reg n, Reg a, Reg d, Reg m) {
-    if (!ConditionPassed()) {
-        return true;
-    }
-
-    if (d == Reg::PC || a == Reg::PC || m == Reg::PC || n == Reg::PC) {
-        return UnpredictableInstruction();
-    }
-    if (d == Reg::R13 || a == Reg::R13 || m == Reg::R13 || n == Reg::R13) {
-        return UnpredictableInstruction();
-    }
-
-    const IR::U32 operand1 = ir.GetRegister(n);
-    const IR::U32 operand2 = ir.GetRegister(m);
-    const IR::U32 operand3 = ir.GetRegister(a);
-    const IR::U32 result = ir.Sub(operand3, ir.Mul(operand1, operand2));
-
-    ir.SetRegister(d, result);
-    return true;
-}
-
 // LSR{S}<c>.W <Rd>, <Rn>, <Rm>
 bool ThumbTranslatorVisitor::thumb32_LSR_reg(bool S, Reg n, Reg d, Reg m) {
     if (!ConditionPassed()) {
