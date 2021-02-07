@@ -1,4 +1,4 @@
-// Shift (immediate) add, subtract, move and compare instructions
+// Shift (immediate), add, subtract, move and compare instructions
 INST(thumb16_LSL_imm,        "LSL (imm)",                "00000vvvvvmmmddd")
 INST(thumb16_LSR_imm,        "LSR (imm)",                "00001vvvvvmmmddd")
 INST(thumb16_ASR_imm,        "ASR (imm)",                "00010vvvvvmmmddd")
@@ -66,6 +66,7 @@ INST(thumb16_SEVL,           "SEVL",                     "1011111101010000") // 
 INST(thumb16_WFE,            "WFE",                      "1011111100100000") // v7
 INST(thumb16_WFI,            "WFI",                      "1011111100110000") // v7
 INST(thumb16_YIELD,          "YIELD",                    "1011111100010000") // v7
+INST(thumb16_IT,             "IT",                       "10111111ccccmmmm")
 
 // Miscellaneous 16-bit instructions
 INST(thumb16_SXTH,           "SXTH",                     "1011001000mmmddd") // v6
