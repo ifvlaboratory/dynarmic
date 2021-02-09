@@ -8,7 +8,14 @@
 namespace Dynarmic::A32 {
 
 bool ThumbTranslatorVisitor::thumb32_MLA(Reg n, Reg a, Reg d, Reg m) {
-    if (d == Reg::PC || n == Reg::PC || m == Reg::PC) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    if (d == Reg::PC || n == Reg::PC || m == Reg::PC || a == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || n == Reg::R13 || m == Reg::R13 || a == Reg::R13) {
         return UnpredictableInstruction();
     }
 
@@ -22,7 +29,14 @@ bool ThumbTranslatorVisitor::thumb32_MLA(Reg n, Reg a, Reg d, Reg m) {
 }
 
 bool ThumbTranslatorVisitor::thumb32_MLS(Reg n, Reg a, Reg d, Reg m) {
-    if (d == Reg::PC || n == Reg::PC || m == Reg::PC) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
+    if (d == Reg::PC || n == Reg::PC || m == Reg::PC || a == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || m == Reg::R13 || n == Reg::R13 || a == Reg::R13) {
         return UnpredictableInstruction();
     }
 
@@ -36,7 +50,14 @@ bool ThumbTranslatorVisitor::thumb32_MLS(Reg n, Reg a, Reg d, Reg m) {
 }
 
 bool ThumbTranslatorVisitor::thumb32_MUL(Reg n, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
     if (d == Reg::PC || n == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || n == Reg::R13 || m == Reg::R13) {
         return UnpredictableInstruction();
     }
 
@@ -49,6 +70,10 @@ bool ThumbTranslatorVisitor::thumb32_MUL(Reg n, Reg d, Reg m) {
 }
 
 bool ThumbTranslatorVisitor::thumb32_USAD8(Reg n, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
     if (d == Reg::PC || n == Reg::PC || m == Reg::PC) {
         return UnpredictableInstruction();
     }
@@ -62,6 +87,10 @@ bool ThumbTranslatorVisitor::thumb32_USAD8(Reg n, Reg d, Reg m) {
 }
 
 bool ThumbTranslatorVisitor::thumb32_USADA8(Reg n, Reg a, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
     if (d == Reg::PC || n == Reg::PC || m == Reg::PC) {
         return UnpredictableInstruction();
     }

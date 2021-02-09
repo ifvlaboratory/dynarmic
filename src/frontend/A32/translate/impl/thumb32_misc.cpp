@@ -8,7 +8,14 @@
 namespace Dynarmic::A32 {
 
 bool ThumbTranslatorVisitor::thumb32_CLZ(Reg n, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
     if (m != n || d == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || m == Reg::R13) {
         return UnpredictableInstruction();
     }
 
@@ -20,7 +27,14 @@ bool ThumbTranslatorVisitor::thumb32_CLZ(Reg n, Reg d, Reg m) {
 }
 
 bool ThumbTranslatorVisitor::thumb32_QADD(Reg n, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
     if (d == Reg::PC || n == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || n == Reg::R13 || m == Reg::R13) {
         return UnpredictableInstruction();
     }
 
@@ -34,7 +48,14 @@ bool ThumbTranslatorVisitor::thumb32_QADD(Reg n, Reg d, Reg m) {
 }
 
 bool ThumbTranslatorVisitor::thumb32_QDADD(Reg n, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
     if (d == Reg::PC || n == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || n == Reg::R13 || m == Reg::R13) {
         return UnpredictableInstruction();
     }
 
@@ -50,7 +71,14 @@ bool ThumbTranslatorVisitor::thumb32_QDADD(Reg n, Reg d, Reg m) {
 }
 
 bool ThumbTranslatorVisitor::thumb32_QDSUB(Reg n, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
     if (d == Reg::PC || n == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || n == Reg::R13 || m == Reg::R13) {
         return UnpredictableInstruction();
     }
 
@@ -66,7 +94,14 @@ bool ThumbTranslatorVisitor::thumb32_QDSUB(Reg n, Reg d, Reg m) {
 }
 
 bool ThumbTranslatorVisitor::thumb32_QSUB(Reg n, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
     if (d == Reg::PC || n == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || n == Reg::R13 || m == Reg::R13) {
         return UnpredictableInstruction();
     }
 
@@ -80,7 +115,14 @@ bool ThumbTranslatorVisitor::thumb32_QSUB(Reg n, Reg d, Reg m) {
 }
 
 bool ThumbTranslatorVisitor::thumb32_RBIT(Reg n, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
     if (m != n || d == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || m == Reg::R13) {
         return UnpredictableInstruction();
     }
 
@@ -105,7 +147,14 @@ bool ThumbTranslatorVisitor::thumb32_RBIT(Reg n, Reg d, Reg m) {
 }
 
 bool ThumbTranslatorVisitor::thumb32_REV(Reg n, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
     if (m != n || d == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || m == Reg::R13) {
         return UnpredictableInstruction();
     }
 
@@ -116,7 +165,14 @@ bool ThumbTranslatorVisitor::thumb32_REV(Reg n, Reg d, Reg m) {
 }
 
 bool ThumbTranslatorVisitor::thumb32_REV16(Reg n, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
     if (m != n || d == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || m == Reg::R13) {
         return UnpredictableInstruction();
     }
 
@@ -130,7 +186,14 @@ bool ThumbTranslatorVisitor::thumb32_REV16(Reg n, Reg d, Reg m) {
 }
 
 bool ThumbTranslatorVisitor::thumb32_REVSH(Reg n, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
     if (m != n || d == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || m == Reg::R13) {
         return UnpredictableInstruction();
     }
 
@@ -142,7 +205,14 @@ bool ThumbTranslatorVisitor::thumb32_REVSH(Reg n, Reg d, Reg m) {
 }
 
 bool ThumbTranslatorVisitor::thumb32_SEL(Reg n, Reg d, Reg m) {
+    if (!ConditionPassed()) {
+        return true;
+    }
+
     if (d == Reg::PC || n == Reg::PC || m == Reg::PC) {
+        return UnpredictableInstruction();
+    }
+    if (d == Reg::R13 || n == Reg::R13 || m == Reg::R13) {
         return UnpredictableInstruction();
     }
 
