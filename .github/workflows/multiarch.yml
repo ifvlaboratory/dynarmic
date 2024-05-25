@@ -29,6 +29,9 @@ jobs:
           path: externals/ext-boost
 
       - name: Configure CMake
+        env:
+          CFLAGS: "-WM11.0"
+          CXXFLAGS: "-WM11.0"
         run: >
           cmake
           -B ${{github.workspace}}/build
