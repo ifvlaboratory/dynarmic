@@ -205,3 +205,7 @@ install(FILES
 )
 
 install(DIRECTORY src/dynarmic TYPE INCLUDE FILES_MATCHING PATTERN "*.h")
+
+# Ignore warnings from ranlib, see https://stackoverflow.com/questions/44124219/what-does-library-has-no-symbol-mean
+SET(CMAKE_C_ARCHIVE_FINISH   "<CMAKE_RANLIB> -no_warning_for_no_symbols -c <TARGET>")
+SET(CMAKE_CXX_ARCHIVE_FINISH "<CMAKE_RANLIB> -no_warning_for_no_symbols -c <TARGET>")
