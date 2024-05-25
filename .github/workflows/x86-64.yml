@@ -1,6 +1,6 @@
 name: x86-64
 
-on: [ push, pull_request ]
+on: [ push, pull_request, workflow_dispatch ]
 
 env:
   BUILD_TYPE: Release
@@ -28,19 +28,19 @@ jobs:
           echo "/usr/local/opt/llvm/bin" >> $GITHUB_PATH
 
       - name: Checkout dynarmic repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Checkout ext-boost repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
-          repository: MerryMage/ext-boost
+          repository: ifvlaboratory/boost
           path: externals/ext-boost
 
       - name: Checkout unicorn repo
         if: ${{matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'}}
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
-          repository: MerryMage/unicorn
+          repository: ifvlaboratory/unicorn
           path: externals/unicorn
 
       - name: Build unicorn
@@ -51,8 +51,8 @@ jobs:
       - name: Configure CMake
         if: ${{matrix.os == 'ubuntu-latest'}}
         env:
-          CC: gcc-10
-          CXX: g++-10
+          CC: gcc-13
+          CXX: g++-13
           CXXFLAGS: -Wp,-D_GLIBCXX_ASSERTIONS
         run: >
           cmake
