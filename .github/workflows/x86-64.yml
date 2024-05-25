@@ -40,7 +40,7 @@ jobs:
         if: ${{matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'}}
         uses: actions/checkout@v4
         with:
-          repository: ifvlaboratory/unicorn
+          repository: unicorn-engine/unicorn
           path: externals/unicorn
 
       - name: Build unicorn
