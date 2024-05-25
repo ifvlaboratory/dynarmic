@@ -43,10 +43,13 @@ jobs:
           repository: unicorn-engine/unicorn
           path: externals/unicorn
 
-      - name: Build unicorn
+      - name: Configure and build unicorn
         if: ${{matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'}}
         working-directory: externals/unicorn
-        run: UNICORN_ARCHS=aarch64,arm ./make.sh
+        run: |
+          mkdir build; cd build;
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          UNICORN_ARCHS="aarch64,arm" make
 
       - name: Configure CMake
         if: ${{matrix.os == 'ubuntu-latest'}}
@@ -63,7 +66,7 @@ jobs:
           -DDYNARMIC_TESTS_USE_UNICORN=1
           -DDYNARMIC_USE_LLVM=1
           -DLIBUNICORN_INCLUDE_DIR=${{github.workspace}}/externals/unicorn/include
-          -DLIBUNICORN_LIBRARY=${{github.workspace}}/externals/unicorn/libunicorn.a
+          -DLIBUNICORN_LIBRARY=${{github.workspace}}/externals/unicorn/build/libunicorn.a
           -G Ninja
 
       - name: Configure CMake
@@ -77,7 +80,7 @@ jobs:
           -DDYNARMIC_TESTS_USE_UNICORN=1
           -DDYNARMIC_USE_LLVM=1
           -DLIBUNICORN_INCLUDE_DIR=${{github.workspace}}/externals/unicorn/include
-          -DLIBUNICORN_LIBRARY=${{github.workspace}}/externals/unicorn/libunicorn.a
+          -DLIBUNICORN_LIBRARY=${{github.workspace}}/externals/unicorn/build/libunicorn.a
           -G Ninja
 
       - name: Configure CMake
