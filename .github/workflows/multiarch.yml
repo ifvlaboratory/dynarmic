@@ -30,8 +30,7 @@ jobs:
 
       - name: Configure CMake
         env:
-          CFLAGS: "-WM11.0"
-          CXXFLAGS: "-WM11.0"
+          LDFLAGS: "-ld_classic"
         run: >
           cmake
           -B ${{github.workspace}}/build
