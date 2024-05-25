@@ -20,29 +20,29 @@ jobs:
         run: >
           sudo apt-get update &&
           sudo apt-get install
-          gcc-10-aarch64-linux-gnu
-          g++-10-aarch64-linux-gnu
+          gcc-13-aarch64-linux-gnu
+          g++-13-aarch64-linux-gnu
           ninja-build
           qemu-user
 
       - name: Checkout dynarmic repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Ccache
         if: matrix.platform == 'linux'
-        uses: hendrikmuhs/ccache-action@v1.2
+        uses: hendrikmuhs/ccache-action@v1.2.13
 
       - name: Checkout ext-boost repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
-          repository: MerryMage/ext-boost
+          repository: ifvlaboratory/boost
           path: externals/ext-boost
 
       - name: Configure CMake for AArch64 (Linux)
         if: matrix.platform == 'linux'
         env:
-          CC: aarch64-linux-gnu-gcc-10
-          CXX: aarch64-linux-gnu-g++-10
+          CC: aarch64-linux-gnu-gcc-13
+          CXX: aarch64-linux-gnu-g++-13
         run: >
           cmake
           -B ${{github.workspace}}/build-arm64
@@ -73,8 +73,8 @@ jobs:
       - name: Configure CMake for x86_64
         if: matrix.platform == 'linux'
         env:
-          CC: gcc-10
-          CXX: g++-10
+          CC: gcc-13
+          CXX: g++-13
         run: >
           cmake
           -B ${{github.workspace}}/build-x64
@@ -129,16 +129,16 @@ jobs:
     steps:
 
       - name: Checkout dynarmic repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Checkout ext-boost repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
-          repository: MerryMage/ext-boost
+          repository: ifvlaboratory/boost
           path: externals/ext-boost
 
       - name: Setup msvc-arm64 environment
-        uses: ilammy/msvc-dev-cmd@v1
+        uses: ilammy/msvc-dev-cmd@v1.13.0
         with:
           arch: amd64_arm64
 
