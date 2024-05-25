@@ -179,6 +179,19 @@ class Test {
 			printf("\n");
 		}
 	}
+	void put(const char *nm, const char *para1, uint64_t op2, const char *para3) const
+	{
+		for (int j = 0; j < bitEnd; j++) {
+			if ((op2 & (1ULL << j)) == 0) continue;
+			printf("%s ", nm);
+			if (isXbyak_) printf("(");
+			printf("%s", para1);
+			if (!(op2 & NOPARA)) printf(", %s", get(1ULL << j));
+			printf(", %s", para3);
+			if (isXbyak_) printf("); dump();");
+			printf("\n");
+		}
+	}
 	const char *get(uint64_t type) const
 	{
 		int idx = (rand() / 31) & 7;
@@ -499,6 +512,7 @@ class Test {
 			"cmpsb",
 			"cmpsw",
 			"cmpsd",
+			"hlt",
 			"int3",
 			"leave",
 			"lodsb",
@@ -519,6 +533,7 @@ class Test {
 			"nop",
 
 			"sahf",
+			"serialize",
 			"stc",
 			"std",
 			"sti",
@@ -543,6 +558,7 @@ class Test {
 			"wbinvd",
 			"wrmsr",
 			"xlatb",
+			"xend",
 
 			"popf",
 			"pushf",
@@ -623,6 +639,7 @@ class Test {
 				"fstsw",
 				"fnstsw",
 				"fxrstor",
+				"clwb",
 			};
 			for (size_t i = 0; i < NUM_OF_ARRAY(memTbl); i++) {
 				put(memTbl[i], MEM);
@@ -643,6 +660,7 @@ class Test {
 		puts(isXbyak_ ? "out_(dx, al); dump();" : "out dx, al");
 		puts(isXbyak_ ? "out_(dx, ax); dump();" : "out dx, ax");
 		puts(isXbyak_ ? "out_(dx, eax); dump();" : "out dx, eax");
+		puts(isXbyak_ ? "lea(eax, ptr[edi + 4 * eax]); dump();" : "lea eax, [edi + 4 * eax]");
 	}
 	void putJmp() const
 	{
@@ -684,6 +702,24 @@ class Test {
 			puts("pshufb xmm14, [rel label0]");
 		}
 #endif
+#endif
+	}
+	void putFarJmp() const
+	{
+#ifdef XBYAK64
+		put("jmp", "word[rax],T_FAR", "far word [rax]");
+		put("jmp", "dword[rax],T_FAR", "far dword [rax]");
+		put("jmp", "qword[rax],T_FAR", "far qword [rax]");
+
+		put("call", "word[rax],T_FAR", "far word [rax]");
+		put("call", "dword[rax],T_FAR", "far dword [rax]");
+		put("call", "qword[rax],T_FAR", "far qword [rax]");
+#else
+		put("jmp", "dword[eax],T_FAR", "far dword [eax]");
+		put("jmp", "word[eax],T_FAR", "far word [eax]");
+
+		put("call", "dword[eax],T_FAR", "far dword [eax]");
+		put("call", "word[eax],T_FAR", "far word [eax]");
 #endif
 	}
 	void putMMX1() const
@@ -983,9 +1019,7 @@ class Test {
 	}
 	void putCmov() const
 	{
-		const struct {
-			const char *s;
-		} tbl[] = {
+		const char tbl[][4] = {
 			"o",
 			"no",
 			"b",
@@ -1017,15 +1051,22 @@ class Test {
 			"nle",
 			"g",
 		};
+#if defined(__GNUC__) && !defined(__clang__)
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wformat-truncation" // wrong detection
+#endif
 		for (size_t i = 0; i < NUM_OF_ARRAY(tbl); i++) {
 			char buf[32];
-			snprintf(buf, sizeof(buf), "cmov%s", tbl[i].s);
+			snprintf(buf, sizeof(buf), "cmov%s", tbl[i]);
 			put(buf, REG16, REG16|MEM);
 			put(buf, REG32, REG32|MEM);
 			put(buf, REG64, REG64|MEM);
-			snprintf(buf, sizeof(buf), "set%s", tbl[i].s);
+			snprintf(buf, sizeof(buf), "set%s", tbl[i]);
 			put(buf, REG8|REG8_3|MEM);
 		}
+#if defined(__GNUC__) && !defined(__clang__)
+	#pragma GCC diagnostic pop
+#endif
 	}
 	void putReg1() const
 	{
@@ -1236,11 +1277,18 @@ class Test {
 		put("mov", REG64, "0x12345678", "0x12345678");
 		put("mov", REG64, "0xffffffff12345678LL", "0xffffffff12345678");
 		put("mov", REG32e|REG16|REG8|RAX|EAX|AX|AL, IMM);
+
+		put("mov", EAX, "ptr[(void*)-1]", "[-1]");
+		put("mov", EAX, "ptr[(void*)0x7fffffff]", "[0x7fffffff]");
+		put("mov", EAX, "ptr[(void*)0xffffffffffffffff]", "[0xffffffffffffffff]");
 	}
 	void putEtc() const
 	{
 		{
 			const char *p = "ret";
+			put(p);
+			put(p, IMM);
+			p = "retf";
 			put(p);
 			put(p, IMM);
 			p = "mov";
@@ -1253,7 +1301,7 @@ class Test {
 			put(p, REG64, "0x1234567890abcdefLL", "0x1234567890abcdef");
 			put("movbe", REG16|REG32e, MEM);
 			put("movbe", MEM, REG16|REG32e);
-#ifdef XBYAK64
+#if defined(XBYAK64) && !defined(__ILP32__)
 			put(p, RAX|EAX|AX|AL, "ptr [0x1234567890abcdefLL]", "[qword 0x1234567890abcdef]");
 			put(p, "ptr [0x1234567890abcdefLL]", "[qword 0x1234567890abcdef]", RAX|EAX|AX|AL);
 			put(p, "qword [rax], 0");
@@ -1276,6 +1324,7 @@ class Test {
 				put(p, REG64, REG16|REG8|MEM8|MEM16);
 				put(p, REG32, REG16|REG8|MEM8|MEM16);
 				put(p, REG16, REG8|MEM8);
+				put(p, "eax, ah");
 			}
 		}
 #ifdef XBYAK64
@@ -1285,6 +1334,7 @@ class Test {
 #ifdef XBYAK64
 		put("cmpxchg16b", MEM);
 		put("fxrstor64", MEM);
+		put("xbegin", "0x12345678");
 #endif
 		{
 			const char tbl[][8] = {
@@ -1307,6 +1357,7 @@ class Test {
 		put("xchg", EAX|REG32, EAX|REG32|MEM);
 		put("xchg", MEM, EAX|REG32);
 		put("xchg", REG64, REG64|MEM);
+		put("xabort", IMM8);
 	}
 	void putShift() const
 	{
@@ -1452,18 +1503,6 @@ class Test {
 				put(p, XMM, XMM|MEM, IMM);
 			}
 		}
-		{
-			const char tbl[][16] = {
-				"pclmullqlqdq",
-				"pclmulhqlqdq",
-//				"pclmullqhdq", // QQQ : not supported by nasm/yasm
-//				"pclmulhqhdq",
-			};
-			for (size_t i = 0; i < NUM_OF_ARRAY(tbl); i++) {
-				const char *p = tbl[i];
-				put(p, XMM, XMM|MEM);
-			}
-		}
 		put("extractps", REG32e|MEM, XMM, IMM);
 		put("pextrw", REG32e|MEM, XMM, IMM); // pextrw for REG32 is for MMX2
 		put("pextrb", REG32e|MEM, XMM, IMM);
@@ -1479,6 +1518,24 @@ class Test {
 		put("pextrq", REG64|MEM, XMM, IMM);
 		put("pinsrq", XMM, REG64|MEM, IMM);
 #endif
+
+	}
+	void putVpclmulqdq()
+	{
+		const char tbl[][16] = {
+			"vpclmullqlqdq",
+			"vpclmulhqlqdq",
+			"vpclmullqhqdq",
+			"vpclmulhqhqdq",
+		};
+		for (size_t i = 0; i < NUM_OF_ARRAY(tbl); i++) {
+			const char *p = tbl[i] + 1; // remove the top 'v'
+			put(p, XMM, XMM|MEM);
+			p = tbl[i]; // use the top 'v'
+			put(p, XMM, XMM, XMM|MEM);
+			put(p, YMM, YMM, YMM|MEM);
+			put(p, ZMM, ZMM, ZMM|MEM);
+		}
 	}
 	void putSHA() const
 	{
@@ -2360,16 +2417,16 @@ public:
 		for (size_t i = 0; i < NUM_OF_ARRAY(tbl); i++) {
 			const Tbl& p = tbl[i];
 			const char *name = p.name;
-			put(name, XMM, VM32X, XMM);
+			put(name, "xmm3", VM32X, "xmm5");
 			switch (p.mode) {
 			case y_vx_y:
-				put(name, YMM, VM32X, YMM);
+				put(name, "ymm3", VM32X, "ymm5");
 				break;
 			case y_vy_y:
-				put(name, YMM, VM32Y, YMM);
+				put(name, "ymm3", VM32Y, "ymm5");
 				break;
 			case x_vy_x:
-				put(name, XMM, VM32Y, XMM);
+				put(name, "xmm3", VM32Y, "xmm5");
 				break;
 			default:
 				printf("ERR mode=%d\n", p.mode);
@@ -2515,6 +2572,7 @@ public:
 #else // USE_AVX
 
 		putJmp();
+		putFarJmp();
 
 #ifdef USE_YASM
 
@@ -2526,6 +2584,7 @@ public:
 		putPushPop8_16();
 #else
 		putSIMPLE();
+		putVpclmulqdq();
 		putReg1();
 		putBt();
 		putRorM();
@@ -2564,7 +2623,7 @@ public:
 		putMPX();
 #endif
 
-#ifdef XBYAK64
+#if defined(XBYAK64) && !defined(__ILP32__)
 
 #ifdef USE_YASM
 		putRip();

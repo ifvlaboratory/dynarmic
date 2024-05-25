@@ -4,34 +4,34 @@
  */
 
 #include <cstring>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
-#include <catch.hpp>
+#include <catch2/catch_test_macros.hpp>
+#include <mcl/assert.hpp>
 
-#include <dynarmic/A32/config.h>
-#include "common/assert.h"
-#include "frontend/A32/decoder/asimd.h"
-#include "frontend/A32/translate/impl/translate_arm.h"
-#include "frontend/ir/opcodes.h"
+#include "dynarmic/frontend/A32/decoder/asimd.h"
+#include "dynarmic/frontend/A32/translate/impl/a32_translate_impl.h"
+#include "dynarmic/interface/A32/config.h"
+#include "dynarmic/ir/opcodes.h"
 
 using namespace Dynarmic;
 
-TEST_CASE("ASIMD Decoder: Ensure table order correctness", "[decode][a32]") {
-    const auto table = A32::GetASIMDDecodeTable<A32::ArmTranslatorVisitor>();
+TEST_CASE("ASIMD Decoder: Ensure table order correctness", "[decode][a32][.]") {
+    const auto table = A32::GetASIMDDecodeTable<A32::TranslatorVisitor>();
 
-    const auto get_ir = [](const A32::ASIMDMatcher<A32::ArmTranslatorVisitor>& matcher, u32 instruction) {
+    const auto get_ir = [](const A32::ASIMDMatcher<A32::TranslatorVisitor>& matcher, u32 instruction) {
         ASSERT(matcher.Matches(instruction));
 
         const A32::LocationDescriptor location{0, {}, {}};
         IR::Block block{location};
-        A32::ArmTranslatorVisitor visitor{block, location, {}};
+        A32::TranslatorVisitor visitor{block, location, {}};
         matcher.call(visitor, instruction);
 
         return block;
     };
 
-    const auto is_decode_error = [&get_ir](const A32::ASIMDMatcher<A32::ArmTranslatorVisitor>& matcher, u32 instruction){
+    const auto is_decode_error = [&get_ir](const A32::ASIMDMatcher<A32::TranslatorVisitor>& matcher, u32 instruction) {
         const auto block = get_ir(matcher, instruction);
 
         for (const auto& ir_inst : block) {

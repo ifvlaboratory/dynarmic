@@ -6,18 +6,18 @@
 #include <tuple>
 #include <vector>
 
-#include <catch.hpp>
+#include <catch2/catch_test_macros.hpp>
+#include <mcl/stdint.hpp>
 
-#include "common/common_types.h"
-#include "common/fp/mantissa_util.h"
-#include "common/safe_ops.h"
-#include "rand_int.h"
+#include "../rand_int.h"
+#include "dynarmic/common/fp/mantissa_util.h"
+#include "dynarmic/common/safe_ops.h"
 
 using namespace Dynarmic;
 using namespace Dynarmic::FP;
 
 TEST_CASE("ResidualErrorOnRightShift", "[fp]") {
-    const std::vector<std::tuple<u32, int, ResidualError>> test_cases {
+    const std::vector<std::tuple<u32, int, ResidualError>> test_cases{
         {0x00000001, 1, ResidualError::Half},
         {0x00000002, 1, ResidualError::Zero},
         {0x00000001, 2, ResidualError::LessThanHalf},
@@ -37,13 +37,13 @@ TEST_CASE("ResidualErrorOnRightShift", "[fp]") {
 
 TEST_CASE("ResidualErrorOnRightShift Randomized", "[fp]") {
     for (size_t test = 0; test < 100000; test++) {
-        const u64 mantissa = Common::SignExtend<32, u64>(RandInt<u32>(0, 0xFFFFFFFF));
+        const u64 mantissa = mcl::bit::sign_extend<32, u64>(RandInt<u32>(0, 0xFFFFFFFF));
         const int shift = RandInt<int>(-60, 60);
 
         const ResidualError result = ResidualErrorOnRightShift(mantissa, shift);
 
         const u64 calculated_error = Safe::ArithmeticShiftRightDouble(mantissa, u64(0), shift);
-        const ResidualError expected_result = [&]{
+        const ResidualError expected_result = [&] {
             constexpr u64 half_error = 0x8000'0000'0000'0000ull;
             if (calculated_error == 0) {
                 return ResidualError::Zero;

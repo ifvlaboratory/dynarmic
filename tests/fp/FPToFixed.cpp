@@ -6,20 +6,20 @@
 #include <tuple>
 #include <vector>
 
-#include <catch.hpp>
+#include <catch2/catch_test_macros.hpp>
+#include <mcl/stdint.hpp>
 
-#include "common/common_types.h"
-#include "common/fp/fpcr.h"
-#include "common/fp/fpsr.h"
-#include "common/fp/op.h"
-#include "common/fp/rounding_mode.h"
-#include "rand_int.h"
+#include "../rand_int.h"
+#include "dynarmic/common/fp/fpcr.h"
+#include "dynarmic/common/fp/fpsr.h"
+#include "dynarmic/common/fp/op.h"
+#include "dynarmic/common/fp/rounding_mode.h"
 
 using namespace Dynarmic;
 using namespace Dynarmic::FP;
 
 TEST_CASE("FPToFixed", "[fp]") {
-    const std::vector<std::tuple<u32, size_t, u64, u32>> test_cases {
+    const std::vector<std::tuple<u32, size_t, u64, u32>> test_cases{
         {0x447A0000, 64, 0x000003E8, 0x00},
         {0xC47A0000, 32, 0xFFFFFC18, 0x00},
         {0x4479E000, 64, 0x000003E8, 0x10},
@@ -36,5 +36,22 @@ TEST_CASE("FPToFixed", "[fp]") {
         const u64 output = FPToFixed<u32>(ibits, input, 0, false, fpcr, RoundingMode::ToNearest_TieEven, fpsr);
         REQUIRE(output == expected_output);
         REQUIRE(fpsr.Value() == expected_fpsr);
+    }
+}
+
+TEST_CASE("FPToFixed edge cases", "[fp]") {
+    const std::vector<std::tuple<u64, u64, bool, FP::RoundingMode>> test_cases{
+        {0x41dffffffffffffe, 0x7fffffff, false, FP::RoundingMode::ToNearest_TieEven},
+        {0x41dffffffffffffe, 0x7fffffff, false, FP::RoundingMode::TowardsPlusInfinity},
+        {0x41dffffffffffffe, 0x7fffffff, false, FP::RoundingMode::TowardsMinusInfinity},
+        {0x41dffffffffffffe, 0x7fffffff, false, FP::RoundingMode::TowardsZero},
+        {0x41dffffffffffffe, 0x7fffffff, false, FP::RoundingMode::ToNearest_TieAwayFromZero},
+    };
+
+    const FPCR fpcr;
+    FPSR fpsr;
+    for (auto [input, expected_output, unsigned_, rounding_mode] : test_cases) {
+        const u64 output = FPToFixed<u64>(32, input, 0, unsigned_, fpcr, rounding_mode, fpsr);
+        REQUIRE(output == expected_output);
     }
 }

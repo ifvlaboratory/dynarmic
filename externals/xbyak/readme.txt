@@ -1,5 +1,5 @@
 
-    C++用x86(IA-32), x64(AMD64, x86-64) JITアセンブラ Xbyak 5.97
+    C++用x86(IA-32), x64(AMD64, x86-64) JITアセンブラ Xbyak 7.05
 
 -----------------------------------------------------------------------------
 ◎概要
@@ -45,6 +45,8 @@ Linuxではmake installで/usr/local/include/xbyakにコピーされます。
 
 -----------------------------------------------------------------------------
 ◎新機能
+
+APX/AVX10対応
 
 例外なしモード追加
 XBYAK_NO_EXCEPTIONを定義してコンパイルするとgcc/clangで-fno-exceptionsオプションでコンパイルできます。
@@ -163,13 +165,18 @@ vfpclassps k5{k3}, zword [rax+64], 5    --> vfpclassps(k5|k3, zword [rax+64], 5)
 vfpclasspd k5{k3}, [rax+64]{1to2}, 5    --> vfpclasspd(k5|k3, xword_b [rax+64], 5); // broadcast 64-bit to 128-bit
 vfpclassps k5{k3}, [rax+64]{1to4}, 5    --> vfpclassps(k5|k3, xword_b [rax+64], 5); // broadcast 64-bit to 256-bit
 
-
+vpdpbusd(xm0, xm1, xm2); // default encoding is EVEX
+vpdpbusd(xm0, xm1, xm2, EvexEncoding); // same as the above
+vpdpbusd(xm0, xm1, xm2, VexEncoding); // VEX encoding
+setDefaultEncoding(VexEncoding); // default encoding is VEX
+vpdpbusd(xm0, xm1, xm2); // VEX encoding
 注意
 * k1, ..., k7 は新しいopmaskレジスタです。
 * z, sae, rn-sae, rd-sae, ru-sae, rz-saeの代わりにT_z, T_sae, T_rn_sae, T_rd_sae, T_ru_sae, T_rz_saeを使ってください。
 * `k4 | k3`と`k3 | k4`は意味が異なります。
 * {1toX}の代わりにptr_bを使ってください。Xは自動的に決まります。
 * 一部の命令はメモリサイズを指定するためにxword/yword/zword(_b)を使ってください。
+* setDefaultEncoding()でencoding省略時のEVEX/VEXを設定できます。
 
 ・ラベル
 
@@ -272,6 +279,24 @@ Label label;
 assert(label.getAddress(), 0);
 L(label);
 assert(label.getAddress(), getCurr());
+```
+
+4. farジャンプ
+
+`jmp(mem, T_FAR)`, `call(mem, T_FAR)`, `retf()`をサポートします。
+サイズを明示するために`ptr`の代わりに`word|dword|qword`を利用してください。
+
+32bit
+```
+jmp(word[eax], T_FAR);  // jmp m16:16(FF /5)
+jmp(dword[eax], T_FAR); // jmp m16:32(FF /5)
+```
+
+64bit
+```
+jmp(word[rax], T_FAR);  // jmp m16:16(FF /5)
+jmp(dword[rax], T_FAR); // jmp m16:32(FF /5)
+jmp(qword[rax], T_FAR); // jmp m16:64(REX.W FF /5)
 ```
 
 ・Xbyak::CodeGenerator()コンストラクタインタフェース
@@ -379,6 +404,50 @@ sample/{echo,hello}.bfは http://www.kmonos.net/alang/etc/brainfuck.php から
 -----------------------------------------------------------------------------
 ◎履歴
 
+2024/01/03 ver 7.05 APX対応RAO-INT
+2023/12/28 ver 7.04 2バイトオペコードのrex2対応
+2023/12/26 ver 7.03 dfvのデフォルト値を0に設定
+2023/12/20 ver 7.02 SHA*のAPX対応
+2023/12/19 ver 7.01 AESKLE, WIDE_KL, KEYLOCKER, KEYLOCKER_WIDE対応 APX10/APX判定対応
+2023/12/01 ver 7.00 APX対応
+2023/08/07 ver 6.73 sha512/sm3/sm4/avx-vnni-int16追加
+2023/08/02 ver 6.72 xabort, xbegin, xend追加
+2023/07/27 ver 6.71 Allocatorでhuge pageを考慮する。
+2023/07/05 ver 6.70 vpclmulqdqのailas追加
+2023/06/27 ver 6.69.2 `TypeT operator|`にconstexpr追加(thanks to Wunkolo)
+2023/03/23 ver 6.69.1 xsave判定追加(thanks to Wunkolo)
+2023/02/20 ver 6.69 util::CpuがAMD対応 UINTR命令対応
+2022/12/07 ver 6.68 prefetchit{0,1}サポート
+2022/11/30 ver 6.67 CMPccXADDサポート
+2022/11/25 ver 6.66 RAO-INTサポート
+2022/11/22 ver 6.65 x32動作確認
+2022/11/04 ver 6.64 vmov*命令をmaskつきアドレッシング対応修正
+2022/10/06 ver 6.63 AVX-IFMA用のvpmadd52{h,l}uq対応
+2022/10/05          amx_fp16/avx_vnni_int8/avx_ne_convertt対応とsetDefaultEncoding()追加
+2022/09/15 ver 6.62 serialize追加
+2022/08/02 ver 6.61.1 noexceptはVisual Studio 2015以降対応
+2022/07/29 ver 6.61 movzx eax, ahがエラーになるのを修正
+2022/06/16 ver 6.60.2 GFNI, VAES, VPCLMULQDQの判定修正
+2022/06/15 ver 6.60.1 Visual Studio /O0でXbyak::util::Cpuがリンクエラーになるのに対応
+2022/06/06 ver 6.60 バージョンのつけ方を数値が戻らないように変更
+2022/06/01 ver 6.06 Cpu::TypeクラスのリファクタリングとXBYAK_USE_MEMFDが定義されたときのMmapAllocatorの改善
+2022/05/20 ver 6.052 Cpu::operator==()を正しく定義
+2022/05/13 ver 6.051 XYBAK_NO_EXCEPTIONを定義したときのCpuクラスのコンパイルエラー修正
+2022/05/12 ver 6.05 movdiri, movdir64b, clwb, cldemoteを追加
+2022/04/05 ver 6.04 tpause, umonitor, umwaitを追加
+2022/03/08 ver 6.03 MmapAllocatorがmemfd用のユーザ定義文字列をサポート
+2022/01/28 ver 6.02 dispacementの32bit範囲チェックの厳密化
+2021/12/14 ver 6.01 T_FAR jump/callとretfをサポート
+2021/09/14 ver 6.00 AVX512-FP16を完全サポート
+2021/09/09 ver 5.997 vrndscale*を{sae}をサポートするよう修正
+2021/09/03 ver 5.996 v{add,sub,mul,div,max,min}{sd,ss}をT_rd_saeなどをサポートするよう修正
+2021/08/15 ver 5.995 Linux上でXBYAK_USE_MEMFDが定義されたなら/proc/self/mapsにラベル追加
+2021/06/17 ver 5.994 マスクレジスタ用のvcmpXX{ps,pd,ss,sd}のalias追加
+2021/06/06 ver 5.993 gather/scatterのレジスタの組み合わせの厳密なチェック
+2021/05/09 ver 5.992 endbr32とendbr64のサポート
+2020/11/16 ver 5.991 g++-5のC++14でconstexpr機能の抑制
+2020/10/19 ver 5.99 VNNI命令サポート(Thanks to akharito)
+2020/10/17 ver 5.98 [scale * reg]のサポート
 2020/09/08 ver 5.97 uint32などをuint32_tに置換
 2020/08/28 ver 5.95 レジスタクラスのコンストラクタがconstexprに対応(C++14以降)
 2020/08/04 ver 5.941 `CodeGenerator::reset()`が`ClearError()`を呼ぶように変更

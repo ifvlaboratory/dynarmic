@@ -12,23 +12,21 @@
 #include <string_view>
 #include <tuple>
 
-#include <catch.hpp>
+#include <catch2/catch_test_macros.hpp>
+#include <mcl/bit/bit_field.hpp>
+#include <mcl/stdint.hpp>
 
-#include <dynarmic/A32/a32.h>
-
-#include "common/bit_util.h"
-#include "common/common_types.h"
-#include "frontend/A32/disassembler/disassembler.h"
-#include "frontend/A32/FPSCR.h"
-#include "frontend/A32/location_descriptor.h"
-#include "frontend/A32/PSR.h"
-#include "frontend/A32/translate/translate.h"
-#include "frontend/ir/basic_block.h"
-#include "fuzz_util.h"
-#include "ir_opt/passes.h"
-#include "rand_int.h"
-#include "testenv.h"
-#include "unicorn_emu/a32_unicorn.h"
+#include "../rand_int.h"
+#include "../unicorn_emu/a32_unicorn.h"
+#include "./testenv.h"
+#include "dynarmic/frontend/A32/FPSCR.h"
+#include "dynarmic/frontend/A32/PSR.h"
+#include "dynarmic/frontend/A32/a32_location_descriptor.h"
+#include "dynarmic/frontend/A32/disassembler/disassembler.h"
+#include "dynarmic/frontend/A32/translate/a32_translate.h"
+#include "dynarmic/interface/A32/a32.h"
+#include "dynarmic/ir/basic_block.h"
+#include "dynarmic/ir/opt/passes.h"
 
 using namespace Dynarmic;
 
@@ -41,12 +39,11 @@ static A32::UserConfig GetUserConfig(ThumbTestEnv* testenv) {
 
 using WriteRecords = std::map<u32, u8>;
 
-using ThumbInstruction = boost::variant<u32, u16>;
-
-template <typename InstructionType>
 struct ThumbInstGen final {
 public:
-    ThumbInstGen(std::string_view format, std::function<bool(u32)> is_valid = [](u32){ return true; }) : is_valid(is_valid) {
+    ThumbInstGen(
+        std::string_view format, std::function<bool(u32)> is_valid = [](u32) { return true; })
+            : is_valid(is_valid) {
         REQUIRE((format.size() == 16 || format.size() == 32));
 
         const auto bit_size = format.size();
@@ -87,11 +84,11 @@ public:
         do {
             const auto random = RandInt<u32>(0, 0xFFFFFFFF);
             inst = bits | (random & ~mask);
-        } while (!is_valid(inst) || !ShouldTestA32Inst(inst, pc, true, is_last_inst));
+        } while (!is_valid(inst));
 
         ASSERT((inst & mask) == bits);
 
-        return ThumbInstruction(inst);
+        return inst;
     }
 
 private:
@@ -100,48 +97,14 @@ private:
     std::function<bool(u32)> is_valid;
 };
 
-using Thumb16InstGen = ThumbInstGen<u16>;
-using Thumb32InstGen = ThumbInstGen<u32>;
-
-// This validation function prevents PCs in
-// thumb32 instruction's register fields
-template<bool mask_n, bool mask_t, bool mask_d, bool mask_r>
-static bool T32PCMask(u32 inst) {
-    if constexpr (mask_n) {
-        if (Common::Bits<16, 19>(inst) == 0b1111) {
-            return false;
-        }
-    }
-    if constexpr (mask_t) { 
-        if (Common::Bits<12, 15>(inst) == 0b1111) {
-            return false;
-        }
-    }
-    if constexpr (mask_d) {
-        if (Common::Bits<8, 11>(inst) == 0b1111) {
-            return false;
-        }
-    }
-    if constexpr (mask_r) {
-        if (Common::Bits<0, 3>(inst) == 0b1111) {
-            return false;
-        }
-    }
-    return true;
-}
-
-static bool DoesBehaviorMatch(const A32Unicorn<ThumbTestEnv>& uni, const A32::Jit& jit,
-                              const WriteRecords& interp_write_records, const WriteRecords& jit_write_records) {
+static bool DoesBehaviorMatch(const A32Unicorn<ThumbTestEnv>& uni, const A32::Jit& jit, const WriteRecords& interp_write_records, const WriteRecords& jit_write_records) {
     const auto interp_regs = uni.GetRegisters();
     const auto jit_regs = jit.Regs();
 
-    return std::equal(interp_regs.begin(), interp_regs.end(), jit_regs.begin(), jit_regs.end()) &&
-           uni.GetCpsr() == jit.Cpsr() &&
-           interp_write_records == jit_write_records;
+    return std::equal(interp_regs.begin(), interp_regs.end(), jit_regs.begin(), jit_regs.end()) && uni.GetCpsr() == jit.Cpsr() && interp_write_records == jit_write_records;
 }
 
-static void RunInstance(size_t run_number, ThumbTestEnv& test_env, A32Unicorn<ThumbTestEnv>& uni, A32::Jit& jit, const ThumbTestEnv::RegisterArray& initial_regs,
-                        size_t instruction_count, size_t instructions_to_execute_count) {
+static void RunInstance(size_t run_number, ThumbTestEnv& test_env, A32Unicorn<ThumbTestEnv>& uni, A32::Jit& jit, const ThumbTestEnv::RegisterArray& initial_regs, size_t instruction_count, size_t instructions_to_execute_count) {
     uni.ClearPageCache();
     jit.ClearCache();
 
@@ -179,16 +142,8 @@ static void RunInstance(size_t run_number, ThumbTestEnv& test_env, A32Unicorn<Th
         printf("Failed at execution number %zu\n", run_number);
 
         printf("\nInstruction Listing: \n");
-        u32 pc = 0;
         for (size_t i = 0; i < instruction_count; i++) {
-            const u16 code = test_env.code_mem[pc/2];
-            if ((code & 0xF000) != 0xF000 && (code & 0xF800) != 0xE800) {
-                printf("%04x %s\n", code, A32::DisassembleThumb16(code).c_str());
-                pc += 2;
-            } else {
-                printf("%04x%04x thumb32\n", test_env.code_mem[pc/2], test_env.code_mem[pc/2+1]);
-                pc += 4;
-            }
+            printf("%04x %s\n", test_env.code_mem[i], A32::DisassembleThumb16(test_env.code_mem[i]).c_str());
         }
 
         printf("\nInitial Register Listing: \n");
@@ -220,15 +175,17 @@ static void RunInstance(size_t run_number, ThumbTestEnv& test_env, A32Unicorn<Th
         size_t num_insts = 0;
         while (num_insts < instructions_to_execute_count) {
             A32::LocationDescriptor descriptor = {u32(num_insts * 4), cpsr, A32::FPSCR{}};
-            IR::Block ir_block = A32::Translate(descriptor, [&test_env](u32 vaddr) { return test_env.MemoryReadCode(vaddr); }, {});
-            Optimization::A32GetSetElimination(ir_block);
+            IR::Block ir_block = A32::Translate(descriptor, &test_env, {});
+            Optimization::NamingPass(ir_block);
+            Optimization::A32GetSetElimination(ir_block, {.convert_nz_to_nzc = true});
             Optimization::DeadCodeElimination(ir_block);
             Optimization::A32ConstantMemoryReads(ir_block, &test_env);
             Optimization::ConstantPropagation(ir_block);
             Optimization::DeadCodeElimination(ir_block);
             Optimization::VerificationPass(ir_block);
             printf("\n\nIR:\n%s", IR::DumpBlock(ir_block).c_str());
-            printf("\n\nx86_64:\n%s", jit.Disassemble().c_str());
+            printf("\n\nx86_64:\n");
+            jit.DumpDisassembly();
             num_insts += ir_block.CycleCount();
         }
 
@@ -241,8 +198,10 @@ static void RunInstance(size_t run_number, ThumbTestEnv& test_env, A32Unicorn<Th
 
 void FuzzJitThumb16(const size_t instruction_count, const size_t instructions_to_execute_count, const size_t run_count, const std::function<u16()> instruction_generator) {
     ThumbTestEnv test_env;
+
     // Prepare memory.
-    test_env.code_mem.resize(instruction_count * 2 + 1);
+    test_env.code_mem.resize(instruction_count + 1);
+    test_env.code_mem.back() = 0xE7FE;  // b +#0
 
     // Prepare test subjects
     A32Unicorn uni{test_env};
@@ -250,25 +209,11 @@ void FuzzJitThumb16(const size_t instruction_count, const size_t instructions_to
 
     for (size_t run_number = 0; run_number < run_count; run_number++) {
         ThumbTestEnv::RegisterArray initial_regs;
-        std::generate_n(initial_regs.begin(), initial_regs.size() - 1, []{ return RandInt<u32>(0, 0xFFFFFFFF); });
+        std::generate_n(initial_regs.begin(), initial_regs.size() - 1, [] { return RandInt<u32>(0, 0xFFFFFFFF); });
         initial_regs[15] = 0;
-        
-        u32 pc = 0;
-        for (size_t i = 0; i < instruction_count; i++) {
-            const auto insn = instruction_generator(pc, i == instruction_count - 1);
-            if (boost::get<u16>(&insn)) {
-                const u16 code = boost::get<u16>(insn);
-                test_env.code_mem[pc / 2] = static_cast<u16>(code);
-                pc += 2;
-            } else {
-                const u32 code = boost::get<u32>(insn);
-                test_env.code_mem[pc/2] = code >> 16;
-                pc += 2;
-                test_env.code_mem[pc/2] = static_cast<u16>(code);
-                pc += 2;
-            }
-        }
-        test_env.code_mem[pc/2] = 0xE7FE; // b #+0
+
+        std::generate_n(test_env.code_mem.begin(), instruction_count, instruction_generator);
+
         RunInstance(run_number, test_env, uni, jit, initial_regs, instruction_count, instructions_to_execute_count);
     }
 }
@@ -279,7 +224,7 @@ void FuzzJitThumb32(const size_t instruction_count, const size_t instructions_to
     // Prepare memory.
     // A Thumb-32 instruction is 32-bits so we multiply our count
     test_env.code_mem.resize(instruction_count * 2 + 1);
-    test_env.code_mem.back() = 0xE7FE; // b +#0
+    test_env.code_mem.back() = 0xE7FE;  // b +#0
 
     // Prepare test subjects
     A32Unicorn uni{test_env};
@@ -287,13 +232,13 @@ void FuzzJitThumb32(const size_t instruction_count, const size_t instructions_to
 
     for (size_t run_number = 0; run_number < run_count; run_number++) {
         ThumbTestEnv::RegisterArray initial_regs;
-        std::generate_n(initial_regs.begin(), initial_regs.size() - 1, []{ return RandInt<u32>(0, 0xFFFFFFFF); });
+        std::generate_n(initial_regs.begin(), initial_regs.size() - 1, [] { return RandInt<u32>(0, 0xFFFFFFFF); });
         initial_regs[15] = 0;
 
         for (size_t i = 0; i < instruction_count; i++) {
             const auto instruction = instruction_generator();
-            const auto first_halfword = static_cast<u16>(Common::Bits<0, 15>(instruction));
-            const auto second_halfword = static_cast<u16>(Common::Bits<16, 31>(instruction));
+            const auto first_halfword = static_cast<u16>(mcl::bit::get_bits<0, 15>(instruction));
+            const auto second_halfword = static_cast<u16>(mcl::bit::get_bits<16, 31>(instruction));
 
             test_env.code_mem[i * 2 + 0] = second_halfword;
             test_env.code_mem[i * 2 + 1] = first_halfword;
@@ -305,46 +250,46 @@ void FuzzJitThumb32(const size_t instruction_count, const size_t instructions_to
 
 TEST_CASE("Fuzz Thumb instructions set 1", "[JitX64][Thumb][Thumb16]") {
     const std::array instructions = {
-        ThumbInstGen("00000xxxxxxxxxxx"), // LSL <Rd>, <Rm>, #<imm5>
-        ThumbInstGen("00001xxxxxxxxxxx"), // LSR <Rd>, <Rm>, #<imm5>
-        ThumbInstGen("00010xxxxxxxxxxx"), // ASR <Rd>, <Rm>, #<imm5>
-        ThumbInstGen("000110oxxxxxxxxx"), // ADD/SUB_reg
-        ThumbInstGen("000111oxxxxxxxxx"), // ADD/SUB_imm
-        ThumbInstGen("001ooxxxxxxxxxxx"), // ADD/SUB/CMP/MOV_imm
-        ThumbInstGen("010000ooooxxxxxx"), // Data Processing
-        ThumbInstGen("010001000hxxxxxx"), // ADD (high registers)
-        ThumbInstGen("0100010101xxxxxx",  // CMP (high registers)
-                     [](u32 inst){ return Common::Bits<3, 5>(inst) != 0b111; }), // R15 is UNPREDICTABLE
-        ThumbInstGen("0100010110xxxxxx",  // CMP (high registers)
-                     [](u32 inst){ return Common::Bits<0, 2>(inst) != 0b111; }), // R15 is UNPREDICTABLE
-        ThumbInstGen("010001100hxxxxxx"), // MOV (high registers)
-        ThumbInstGen("10110000oxxxxxxx"), // Adjust stack pointer
-        ThumbInstGen("10110010ooxxxxxx"), // SXT/UXT
-        ThumbInstGen("1011101000xxxxxx"), // REV
-        ThumbInstGen("1011101001xxxxxx"), // REV16
-        ThumbInstGen("1011101011xxxxxx"), // REVSH
-        ThumbInstGen("01001xxxxxxxxxxx"), // LDR Rd, [PC, #]
-        ThumbInstGen("0101oooxxxxxxxxx"), // LDR/STR Rd, [Rn, Rm]
-        ThumbInstGen("011xxxxxxxxxxxxx"), // LDR(B)/STR(B) Rd, [Rn, #]
-        ThumbInstGen("1000xxxxxxxxxxxx"), // LDRH/STRH Rd, [Rn, #offset]
-        ThumbInstGen("1001xxxxxxxxxxxx"), // LDR/STR Rd, [SP, #]
-        ThumbInstGen("1011010xxxxxxxxx",  // PUSH
-                     [](u32 inst){ return Common::Bits<0, 7>(inst) != 0; }), // Empty reg_list is UNPREDICTABLE
-        ThumbInstGen("10111100xxxxxxxx",  // POP (P = 0)
-                     [](u32 inst){ return Common::Bits<0, 7>(inst) != 0; }), // Empty reg_list is UNPREDICTABLE
-        ThumbInstGen("1100xxxxxxxxxxxx", // STMIA/LDMIA
+        ThumbInstGen("00000xxxxxxxxxxx"),                                                // LSL <Rd>, <Rm>, #<imm5>
+        ThumbInstGen("00001xxxxxxxxxxx"),                                                // LSR <Rd>, <Rm>, #<imm5>
+        ThumbInstGen("00010xxxxxxxxxxx"),                                                // ASR <Rd>, <Rm>, #<imm5>
+        ThumbInstGen("000110oxxxxxxxxx"),                                                // ADD/SUB_reg
+        ThumbInstGen("000111oxxxxxxxxx"),                                                // ADD/SUB_imm
+        ThumbInstGen("001ooxxxxxxxxxxx"),                                                // ADD/SUB/CMP/MOV_imm
+        ThumbInstGen("010000ooooxxxxxx"),                                                // Data Processing
+        ThumbInstGen("010001000hxxxxxx"),                                                // ADD (high registers)
+        ThumbInstGen("0100010101xxxxxx",                                                 // CMP (high registers)
+                     [](u32 inst) { return mcl::bit::get_bits<3, 5>(inst) != 0b111; }),  // R15 is UNPREDICTABLE
+        ThumbInstGen("0100010110xxxxxx",                                                 // CMP (high registers)
+                     [](u32 inst) { return mcl::bit::get_bits<0, 2>(inst) != 0b111; }),  // R15 is UNPREDICTABLE
+        ThumbInstGen("010001100hxxxxxx"),                                                // MOV (high registers)
+        ThumbInstGen("10110000oxxxxxxx"),                                                // Adjust stack pointer
+        ThumbInstGen("10110010ooxxxxxx"),                                                // SXT/UXT
+        ThumbInstGen("1011101000xxxxxx"),                                                // REV
+        ThumbInstGen("1011101001xxxxxx"),                                                // REV16
+        ThumbInstGen("1011101011xxxxxx"),                                                // REVSH
+        ThumbInstGen("01001xxxxxxxxxxx"),                                                // LDR Rd, [PC, #]
+        ThumbInstGen("0101oooxxxxxxxxx"),                                                // LDR/STR Rd, [Rn, Rm]
+        ThumbInstGen("011xxxxxxxxxxxxx"),                                                // LDR(B)/STR(B) Rd, [Rn, #]
+        ThumbInstGen("1000xxxxxxxxxxxx"),                                                // LDRH/STRH Rd, [Rn, #offset]
+        ThumbInstGen("1001xxxxxxxxxxxx"),                                                // LDR/STR Rd, [SP, #]
+        ThumbInstGen("1011010xxxxxxxxx",                                                 // PUSH
+                     [](u32 inst) { return mcl::bit::get_bits<0, 7>(inst) != 0; }),      // Empty reg_list is UNPREDICTABLE
+        ThumbInstGen("10111100xxxxxxxx",                                                 // POP (P = 0)
+                     [](u32 inst) { return mcl::bit::get_bits<0, 7>(inst) != 0; }),      // Empty reg_list is UNPREDICTABLE
+        ThumbInstGen("1100xxxxxxxxxxxx",                                                 // STMIA/LDMIA
                      [](u32 inst) {
                          // Ensure that the architecturally undefined case of
                          // the base register being within the list isn't hit.
-                         const u32 rn = Common::Bits<8, 10>(inst);
-                         return (inst & (1U << rn)) == 0 && Common::Bits<0, 7>(inst) != 0;
+                         const u32 rn = mcl::bit::get_bits<8, 10>(inst);
+                         return (inst & (1U << rn)) == 0 && mcl::bit::get_bits<0, 7>(inst) != 0;
                      }),
-        // TODO: We should properly test against swapped
-        //       endianness cases, however Unicorn doesn't
-        //       expose the intended endianness of a load/store
-        //       operation to memory through its hooks.
+    // TODO: We should properly test against swapped
+    //       endianness cases, however Unicorn doesn't
+    //       expose the intended endianness of a load/store
+    //       operation to memory through its hooks.
 #if 0
-        Thumb16InstGen("101101100101x000"), // SETEND
+        ThumbInstGen("101101100101x000"), // SETEND
 #endif
     };
 
@@ -371,167 +316,37 @@ TEST_CASE("Fuzz Thumb instructions set 1", "[JitX64][Thumb][Thumb16]") {
 #endif
 }
 
-TEST_CASE("Fuzz Thumb IT blocks", "[JitX64][Thumb]") {
-    std::vector instructions = {
-        Thumb16InstGen("00000xxxxxxxxxxx"), // LSL <Rd>, <Rm>, #<imm5>
-        Thumb16InstGen("00001xxxxxxxxxxx"), // LSR <Rd>, <Rm>, #<imm5>
-        Thumb16InstGen("00010xxxxxxxxxxx"), // ASR <Rd>, <Rm>, #<imm5>
-        Thumb16InstGen("000110oxxxxxxxxx"), // ADD/SUB_reg
-        Thumb16InstGen("000111oxxxxxxxxx"), // ADD/SUB_imm
-        Thumb16InstGen("001ooxxxxxxxxxxx"), // ADD/SUB/CMP/MOV_imm
-        Thumb16InstGen("010000ooooxxxxxx"), // Data Processing
-        Thumb16InstGen("010001000hxxxxxx"), // ADD (high registers)
-        Thumb16InstGen("0100010101xxxxxx",  // CMP (high registers)
-                     [](u16 inst){ return Common::Bits<3, 5>(inst) != 0b111; }), // R15 is UNPREDICTABLE
-        Thumb16InstGen("0100010110xxxxxx",  // CMP (high registers)
-                     [](u16 inst){ return Common::Bits<0, 2>(inst) != 0b111; }), // R15 is UNPREDICTABLE
-        Thumb16InstGen("010001100hxxxxxx") // MOV (high registers)6 inst)
-    };
-
-    const auto cond_instruction_select = [&](u32 pc, bool is_last_inst) -> ThumbInstruction {
-        if (pc == 4 || pc == 14) {
-            // IT
-            return Thumb16InstGen("10111111cccc1mmm",
-              [](u16 inst){ return Common::Bits<4, 7>(inst) != 0b1111 && Common::Bits<4, 7>(inst) != 0b1110; }).Generate(pc, is_last_inst);
-        }
-        const size_t inst_index = RandInt<size_t>(0, instructions.size() - 1);
-
-        return instructions[inst_index].Generate(pc, is_last_inst);
-    };
-
-    SECTION("short blocks") {
-        FuzzJitThumb(20, 21, 3000, cond_instruction_select);
-    }
-}
-
-TEST_CASE("Fuzz Thumb2 instructions set 1", "[JitX64][Thumb2]") {
-    const std::array instructions = {
-        Thumb32InstGen("11110x00010011110xxx00xxxxxxxxxx"), // MOV (imm)
-        Thumb32InstGen("11110x00001xnnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>), // BIC (imm)
-        Thumb32InstGen("11110x00000xnnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>), // AND (imm)
-        Thumb32InstGen("11110x00010xnnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>), // ORR (imm)
-        Thumb32InstGen("11110x000001nnnn0xxx1111xxxxxxxx"), // TST (imm)
-        Thumb32InstGen("11110x00011x11110xxxddddxxxxxxxx", T32PCMask<0, 0, 1, 0>), // MVN (imm)
-        Thumb32InstGen("11110x00011xnnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>), // ORN (imm)
-        Thumb32InstGen("11110x001001nnnn0xxx1111xxxxxxxx", T32PCMask<1, 0, 0, 0>), // TEQ (imm)
-        Thumb32InstGen("11110x00100xnnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>), // EOR (imm)
-        Thumb32InstGen("11110x010001nnnn0xxx1111xxxxxxxx", T32PCMask<1, 0, 0, 0>), // CMN (imm)
-        Thumb32InstGen("11110x01000xnnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>), // ADD (imm)
-        Thumb32InstGen("11110x01010xnnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>),// ADC (imm)
-        Thumb32InstGen("11110x01011xnnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>), // SBC (imm)
-        Thumb32InstGen("11110x011011nnnn0xxx1111xxxxxxxx", T32PCMask<1, 0, 0, 0>), // CMP (imm)
-        Thumb32InstGen("11110x01101xnnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>), // SUB (imm)
-        Thumb32InstGen("11110x01110xnnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>), // RSB (imm)
-        Thumb32InstGen("111010100001nnnn0xxx1111xxxxrrrr", T32PCMask<1, 0, 0, 1>), // TST (reg) 
-        Thumb32InstGen("11101010000xnnnn0xxxddddxxxxrrrr", T32PCMask<1, 0, 1, 1>), // AND (reg)
-        Thumb32InstGen("11101010001xnnnn0xxxddddxxxxrrrr", T32PCMask<1, 0, 1, 1>), // BIC (reg)
-        Thumb32InstGen("11101010010x11110xxxddddxxxxrrrr", T32PCMask<0, 0, 1, 1>), // LSL (imm) / LSR (imm) / ASR(imm) / RRX / ROR (imm)
-        Thumb32InstGen("11101010010xnnnn0xxxddddxxxxrrrr", T32PCMask<1, 0, 1, 1>), // ORR (reg)
-        Thumb32InstGen("11101010011x11110xxxddddxxxxrrrr", T32PCMask<0, 0, 1, 1>), // MVN (reg)
-        Thumb32InstGen("11101010011xnnnn0xxxddddxxxxrrrr", T32PCMask<1, 0, 1, 1>), // ORN (reg)
-        Thumb32InstGen("11101010100xnnnn0xxx1111xxxxrrrr", T32PCMask<1, 0, 0, 1>), // TEQ (reg) 
-        Thumb32InstGen("11101010100xnnnn0xxxddddxxxxrrrr", T32PCMask<1, 0, 1, 1>), // EOR (reg)
-        Thumb32InstGen("111010101100nnnn0xxxddddxxx0rrrr", T32PCMask<1, 0, 1, 1>), // PKH
-        Thumb32InstGen("111010110001nnnn0xxx1111xxxxrrrr", T32PCMask<1, 0, 0, 1>), // CMN (reg) 
-        Thumb32InstGen("11101011000xnnnn0xxxddddxxxxrrrr", T32PCMask<1, 0, 1, 1>), // ADD (reg) 
-        Thumb32InstGen("11101011010xnnnn0xxxddddxxxxrrrr", T32PCMask<1, 0, 1, 1>), // ADC (reg) 
-        Thumb32InstGen("11101011011xnnnn0xxxddddxxxxrrrr", T32PCMask<1, 0, 1, 1>), // SBC (reg) 
-        Thumb32InstGen("111010111011nnnn0xxx1111xxxxrrrr", T32PCMask<1, 0, 0, 1>), // CMP (reg) 
-        Thumb32InstGen("11101011101xnnnn0xxxddddxxxxrrrr", T32PCMask<1, 0, 1, 1>), // SUB (reg) 
-        Thumb32InstGen("11101011110xnnnn0xxxddddxxxxrrrr", T32PCMask<1, 0, 1, 1>), // RSB (reg) 
-        Thumb32InstGen("11110x10000011110xxxddddxxxxxxxx", T32PCMask<0, 0, 1, 0>), // ADR after  
-        Thumb32InstGen("11110x100000nnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>), // ADDW
-        Thumb32InstGen("11110x100100xxxx0xxxddddxxxxxxxx", T32PCMask<0, 0, 1, 0>), // MOVW
-        Thumb32InstGen("11110x10101011110xxxddddxxxxxxxx", T32PCMask<0, 0, 1, 0>), // ADR before
-        Thumb32InstGen("11110x101010nnnn0xxxddddxxxxxxxx", T32PCMask<1, 0, 1, 0>), // SUBW
-        Thumb32InstGen("11110x101100xxxx0xxxddddxxxxxxxx", T32PCMask<0, 0, 1, 0>), // MOVT
-        Thumb32InstGen("111100110010nnnn0000dddd0000mmmm", T32PCMask<1, 0, 1, 0>), // SSAT16
-        Thumb32InstGen("111110001000nnnnttttxxxxxxxxxxxx", T32PCMask<1, 1, 0, 0>), // STRB (imm) 2
-        Thumb32InstGen("111110000000nnnntttt000000xxrrrr", T32PCMask<1, 1, 0, 1>), // STRB
-        Thumb32InstGen("1111001100s0nnnn0kkkddddii0mmmmm", T32PCMask<1, 0, 1, 0>), // SSAT
-        Thumb32InstGen("111100110100nnnn0kkkddddii0mmmmm", T32PCMask<1, 0, 1, 0>), // SBFX
-        Thumb32InstGen("11110011011011110kkkddddii0mmmmm", T32PCMask<0, 0, 1, 0>), // BFC
-        Thumb32InstGen("111110000000nnnntttt1puwmmmmmmmm", T32PCMask<1, 1, 0, 0>), // STRB (imm) 1
-        Thumb32InstGen("1110100xx0W0nnnn0r0rrrrrrrrrrrrr", // STMIA / STMDB
-                     [](u32 inst) {
-            // Ensure that the undefined case of
-            // the base register being within the list isn't hit when W is true.
-            // In the spec, when LowestBit(reg_list) == r_n, it's defined, 
-            // but unicorn sees it as an invalid instruction.
-            const u32 op = Common::Bits<23, 24>(inst);
-            const u32 rn = Common::Bits<16, 19>(inst);
-            const bool W = Common::Bit<21>(inst);
-            const u32 reg_list = Common::Bits<0, 15>(inst);
-            // These are not STMIA or STMDB
-            if (op == 0b11 || op == 0b00) {
-                return false;
-            }
-            return rn != 15 && !(W && Common::Bit(rn, reg_list)) && Common::BitCount(reg_list) >= 2;
-        }),
-        Thumb32InstGen("1110100xx0W1nnnnrrrrrrrrrrrrrrrr", // LDMIA / LDMDB
-                     [](u32 inst) {
-            const u32 op = Common::Bits<23, 24>(inst);
-            const u32 rn = Common::Bits<16, 19>(inst);
-            const bool w = Common::Bit<21>(inst);
-            const u32 reg_list = Common::Bits<0, 15>(inst);
-            // These are not LDMIA or LDMDB
-            if (op == 0b11 || op == 0b00) {
-                return false;
-            }
-            return rn != 15 &&
-                !(w && Common::Bit(rn, reg_list)) && // Base register should not be in list when w is true
-                !Common::Bit(15, reg_list) && // Prevent jump 
-                Common::BitCount(reg_list) >= 2;
-        }),
-    };
-
-    const auto instruction_select = [&](u32 pc, bool is_last_inst) -> ThumbInstruction {
-        const size_t inst_index = RandInt<size_t>(0, instructions.size() - 1);
-
-        return instructions[inst_index].Generate(pc, is_last_inst);
-    };
-
-    SECTION("single instructions") {
-        FuzzJitThumb(1, 2, 10000, instruction_select);
-    }
-
-    SECTION("short blocks") {
-        FuzzJitThumb(5, 6, 3000, instruction_select);
-    }
-}
-
-
 TEST_CASE("Fuzz Thumb instructions set 2 (affects PC)", "[JitX64][Thumb][Thumb16]") {
     const std::array instructions = {
-        // TODO: We currently can't test BX/BLX as we have
-        //       no way of preventing the unpredictable
-        //       condition from occurring with the current interface.
-        //       (bits zero and one within the specified register
-        //       must not be address<1:0> == '10'.
+    // TODO: We currently can't test BX/BLX as we have
+    //       no way of preventing the unpredictable
+    //       condition from occurring with the current interface.
+    //       (bits zero and one within the specified register
+    //       must not be address<1:0> == '10'.
 #if 0
         ThumbInstGen("01000111xmmmm000",  // BLX/BX
                      [](u32 inst){
-                         const u32 Rm = Common::Bits<3, 6>(inst);
+                         const u32 Rm = mcl::bit::get_bits<3, 6>(inst);
                          return Rm != 15;
                      }),
 #endif
-        ThumbInstGen("1010oxxxxxxxxxxx"), // add to pc/sp
-        ThumbInstGen("11100xxxxxxxxxxx"), // B
-        ThumbInstGen("01000100h0xxxxxx"), // ADD (high registers)
-        ThumbInstGen("01000110h0xxxxxx"), // MOV (high registers)
-        ThumbInstGen("1101ccccxxxxxxxx",  // B<cond>
-                     [](u32 inst){
-                         const u32 c = Common::Bits<9, 12>(inst);
-                         return c < 0b1110; // Don't want SWI or undefined instructions.
+        ThumbInstGen("1010oxxxxxxxxxxx"),  // add to pc/sp
+        ThumbInstGen("11100xxxxxxxxxxx"),  // B
+        ThumbInstGen("01000100h0xxxxxx"),  // ADD (high registers)
+        ThumbInstGen("01000110h0xxxxxx"),  // MOV (high registers)
+        ThumbInstGen("1101ccccxxxxxxxx",   // B<cond>
+                     [](u32 inst) {
+                         const u32 c = mcl::bit::get_bits<9, 12>(inst);
+                         return c < 0b1110;  // Don't want SWI or undefined instructions.
                      }),
-        Thumb16InstGen("1011o0i1iiiiinnn"), // CBZ/CBNZ
-        Thumb16InstGen("10110110011x0xxx"), // CPS
+        ThumbInstGen("1011o0i1iiiiinnn"),  // CBZ/CBNZ
+        ThumbInstGen("10110110011x0xxx"),  // CPS
 
-        // TODO: We currently have no control over the generated
-        //       values when creating new pages, so we can't
-        //       reliably test this yet.
+    // TODO: We currently have no control over the generated
+    //       values when creating new pages, so we can't
+    //       reliably test this yet.
 #if 0
-        Thumb16InstGen("10111101xxxxxxxx"), // POP (R = 1)
+        ThumbInstGen("10111101xxxxxxxx"), // POP (R = 1)
 #endif
     };
 
@@ -546,129 +361,129 @@ TEST_CASE("Fuzz Thumb instructions set 2 (affects PC)", "[JitX64][Thumb][Thumb16
 
 TEST_CASE("Fuzz Thumb32 instructions set", "[JitX64][Thumb][Thumb32]") {
     const auto three_reg_not_r15 = [](u32 inst) {
-        const auto d = Common::Bits<8, 11>(inst);
-        const auto m = Common::Bits<0, 3>(inst);
-        const auto n = Common::Bits<16, 19>(inst);
+        const auto d = mcl::bit::get_bits<8, 11>(inst);
+        const auto m = mcl::bit::get_bits<0, 3>(inst);
+        const auto n = mcl::bit::get_bits<16, 19>(inst);
         return d != 15 && m != 15 && n != 15;
     };
 
     const std::array instructions = {
-        ThumbInstGen("111110101011nnnn1111dddd1000mmmm", // CLZ
+        ThumbInstGen("111110101011nnnn1111dddd1000mmmm",  // CLZ
                      [](u32 inst) {
-                         const auto d = Common::Bits<8, 11>(inst);
-                         const auto m = Common::Bits<0, 3>(inst);
-                         const auto n = Common::Bits<16, 19>(inst);
+                         const auto d = mcl::bit::get_bits<8, 11>(inst);
+                         const auto m = mcl::bit::get_bits<0, 3>(inst);
+                         const auto n = mcl::bit::get_bits<16, 19>(inst);
                          return m == n && d != 15 && m != 15;
                      }),
-        ThumbInstGen("111110101000nnnn1111dddd1000mmmm", // QADD
+        ThumbInstGen("111110101000nnnn1111dddd1000mmmm",  // QADD
                      three_reg_not_r15),
-        ThumbInstGen("111110101000nnnn1111dddd0001mmmm", // QADD8
+        ThumbInstGen("111110101000nnnn1111dddd0001mmmm",  // QADD8
                      three_reg_not_r15),
-        ThumbInstGen("111110101001nnnn1111dddd0001mmmm", // QADD16
+        ThumbInstGen("111110101001nnnn1111dddd0001mmmm",  // QADD16
                      three_reg_not_r15),
-        ThumbInstGen("111110101010nnnn1111dddd0001mmmm", // QASX
+        ThumbInstGen("111110101010nnnn1111dddd0001mmmm",  // QASX
                      three_reg_not_r15),
-        ThumbInstGen("111110101000nnnn1111dddd1001mmmm", // QDADD
+        ThumbInstGen("111110101000nnnn1111dddd1001mmmm",  // QDADD
                      three_reg_not_r15),
-        ThumbInstGen("111110101000nnnn1111dddd1011mmmm", // QDSUB
+        ThumbInstGen("111110101000nnnn1111dddd1011mmmm",  // QDSUB
                      three_reg_not_r15),
-        ThumbInstGen("111110101110nnnn1111dddd0001mmmm", // QSAX
+        ThumbInstGen("111110101110nnnn1111dddd0001mmmm",  // QSAX
                      three_reg_not_r15),
-        ThumbInstGen("111110101000nnnn1111dddd1010mmmm", // QSUB
+        ThumbInstGen("111110101000nnnn1111dddd1010mmmm",  // QSUB
                      three_reg_not_r15),
-        ThumbInstGen("111110101100nnnn1111dddd0001mmmm", // QSUB8
+        ThumbInstGen("111110101100nnnn1111dddd0001mmmm",  // QSUB8
                      three_reg_not_r15),
-        ThumbInstGen("111110101101nnnn1111dddd0001mmmm", // QSUB16
+        ThumbInstGen("111110101101nnnn1111dddd0001mmmm",  // QSUB16
                      three_reg_not_r15),
-        ThumbInstGen("111110101001nnnn1111dddd1010mmmm", // RBIT
+        ThumbInstGen("111110101001nnnn1111dddd1010mmmm",  // RBIT
                      [](u32 inst) {
-                         const auto d = Common::Bits<8, 11>(inst);
-                         const auto m = Common::Bits<0, 3>(inst);
-                         const auto n = Common::Bits<16, 19>(inst);
+                         const auto d = mcl::bit::get_bits<8, 11>(inst);
+                         const auto m = mcl::bit::get_bits<0, 3>(inst);
+                         const auto n = mcl::bit::get_bits<16, 19>(inst);
                          return m == n && d != 15 && m != 15;
                      }),
-        ThumbInstGen("111110101001nnnn1111dddd1000mmmm", // REV
+        ThumbInstGen("111110101001nnnn1111dddd1000mmmm",  // REV
                      [](u32 inst) {
-                         const auto d = Common::Bits<8, 11>(inst);
-                         const auto m = Common::Bits<0, 3>(inst);
-                         const auto n = Common::Bits<16, 19>(inst);
+                         const auto d = mcl::bit::get_bits<8, 11>(inst);
+                         const auto m = mcl::bit::get_bits<0, 3>(inst);
+                         const auto n = mcl::bit::get_bits<16, 19>(inst);
                          return m == n && d != 15 && m != 15;
                      }),
-        ThumbInstGen("111110101001nnnn1111dddd1001mmmm", // REV16
+        ThumbInstGen("111110101001nnnn1111dddd1001mmmm",  // REV16
                      [](u32 inst) {
-                         const auto d = Common::Bits<8, 11>(inst);
-                         const auto m = Common::Bits<0, 3>(inst);
-                         const auto n = Common::Bits<16, 19>(inst);
+                         const auto d = mcl::bit::get_bits<8, 11>(inst);
+                         const auto m = mcl::bit::get_bits<0, 3>(inst);
+                         const auto n = mcl::bit::get_bits<16, 19>(inst);
                          return m == n && d != 15 && m != 15;
                      }),
-        ThumbInstGen("111110101001nnnn1111dddd1011mmmm", // REVSH
+        ThumbInstGen("111110101001nnnn1111dddd1011mmmm",  // REVSH
                      [](u32 inst) {
-                         const auto d = Common::Bits<8, 11>(inst);
-                         const auto m = Common::Bits<0, 3>(inst);
-                         const auto n = Common::Bits<16, 19>(inst);
+                         const auto d = mcl::bit::get_bits<8, 11>(inst);
+                         const auto m = mcl::bit::get_bits<0, 3>(inst);
+                         const auto n = mcl::bit::get_bits<16, 19>(inst);
                          return m == n && d != 15 && m != 15;
                      }),
-        ThumbInstGen("111110101000nnnn1111dddd0000mmmm", // SADD8
+        ThumbInstGen("111110101000nnnn1111dddd0000mmmm",  // SADD8
                      three_reg_not_r15),
-        ThumbInstGen("111110101001nnnn1111dddd0000mmmm", // SADD16
+        ThumbInstGen("111110101001nnnn1111dddd0000mmmm",  // SADD16
                      three_reg_not_r15),
-        ThumbInstGen("111110101010nnnn1111dddd0000mmmm", // SASX
+        ThumbInstGen("111110101010nnnn1111dddd0000mmmm",  // SASX
                      three_reg_not_r15),
-        ThumbInstGen("111110101010nnnn1111dddd1000mmmm", // SEL
+        ThumbInstGen("111110101010nnnn1111dddd1000mmmm",  // SEL
                      three_reg_not_r15),
-        ThumbInstGen("111110101000nnnn1111dddd0010mmmm", // SHADD8
+        ThumbInstGen("111110101000nnnn1111dddd0010mmmm",  // SHADD8
                      three_reg_not_r15),
-        ThumbInstGen("111110101001nnnn1111dddd0010mmmm", // SHADD16
+        ThumbInstGen("111110101001nnnn1111dddd0010mmmm",  // SHADD16
                      three_reg_not_r15),
-        ThumbInstGen("111110101010nnnn1111dddd0010mmmm", // SHASX
+        ThumbInstGen("111110101010nnnn1111dddd0010mmmm",  // SHASX
                      three_reg_not_r15),
-        ThumbInstGen("111110101110nnnn1111dddd0010mmmm", // SHSAX
+        ThumbInstGen("111110101110nnnn1111dddd0010mmmm",  // SHSAX
                      three_reg_not_r15),
-        ThumbInstGen("111110101100nnnn1111dddd0010mmmm", // SHSUB8
+        ThumbInstGen("111110101100nnnn1111dddd0010mmmm",  // SHSUB8
                      three_reg_not_r15),
-        ThumbInstGen("111110101101nnnn1111dddd0010mmmm", // SHSUB16
+        ThumbInstGen("111110101101nnnn1111dddd0010mmmm",  // SHSUB16
                      three_reg_not_r15),
-        ThumbInstGen("111110101110nnnn1111dddd0000mmmm", // SSAX
+        ThumbInstGen("111110101110nnnn1111dddd0000mmmm",  // SSAX
                      three_reg_not_r15),
-        ThumbInstGen("111110101100nnnn1111dddd0000mmmm", // SSUB8
+        ThumbInstGen("111110101100nnnn1111dddd0000mmmm",  // SSUB8
                      three_reg_not_r15),
-        ThumbInstGen("111110101101nnnn1111dddd0000mmmm", // SSUB16
+        ThumbInstGen("111110101101nnnn1111dddd0000mmmm",  // SSUB16
                      three_reg_not_r15),
-        ThumbInstGen("111110101000nnnn1111dddd0100mmmm", // UADD8
+        ThumbInstGen("111110101000nnnn1111dddd0100mmmm",  // UADD8
                      three_reg_not_r15),
-        ThumbInstGen("111110101001nnnn1111dddd0100mmmm", // UADD16
+        ThumbInstGen("111110101001nnnn1111dddd0100mmmm",  // UADD16
                      three_reg_not_r15),
-        ThumbInstGen("111110101010nnnn1111dddd0100mmmm", // UASX
+        ThumbInstGen("111110101010nnnn1111dddd0100mmmm",  // UASX
                      three_reg_not_r15),
-        ThumbInstGen("111110101000nnnn1111dddd0110mmmm", // UHADD8
+        ThumbInstGen("111110101000nnnn1111dddd0110mmmm",  // UHADD8
                      three_reg_not_r15),
-        ThumbInstGen("111110101001nnnn1111dddd0110mmmm", // UHADD16
+        ThumbInstGen("111110101001nnnn1111dddd0110mmmm",  // UHADD16
                      three_reg_not_r15),
-        ThumbInstGen("111110101010nnnn1111dddd0110mmmm", // UHASX
+        ThumbInstGen("111110101010nnnn1111dddd0110mmmm",  // UHASX
                      three_reg_not_r15),
-        ThumbInstGen("111110101110nnnn1111dddd0110mmmm", // UHSAX
+        ThumbInstGen("111110101110nnnn1111dddd0110mmmm",  // UHSAX
                      three_reg_not_r15),
-        ThumbInstGen("111110101100nnnn1111dddd0110mmmm", // UHSUB8
+        ThumbInstGen("111110101100nnnn1111dddd0110mmmm",  // UHSUB8
                      three_reg_not_r15),
-        ThumbInstGen("111110101101nnnn1111dddd0110mmmm", // UHSUB16
+        ThumbInstGen("111110101101nnnn1111dddd0110mmmm",  // UHSUB16
                      three_reg_not_r15),
-        ThumbInstGen("111110101000nnnn1111dddd0101mmmm", // UQADD8
+        ThumbInstGen("111110101000nnnn1111dddd0101mmmm",  // UQADD8
                      three_reg_not_r15),
-        ThumbInstGen("111110101001nnnn1111dddd0101mmmm", // UQADD16
+        ThumbInstGen("111110101001nnnn1111dddd0101mmmm",  // UQADD16
                      three_reg_not_r15),
-        ThumbInstGen("111110101010nnnn1111dddd0101mmmm", // UQASX
+        ThumbInstGen("111110101010nnnn1111dddd0101mmmm",  // UQASX
                      three_reg_not_r15),
-        ThumbInstGen("111110101110nnnn1111dddd0101mmmm", // UQSAX
+        ThumbInstGen("111110101110nnnn1111dddd0101mmmm",  // UQSAX
                      three_reg_not_r15),
-        ThumbInstGen("111110101100nnnn1111dddd0101mmmm", // UQSUB8
+        ThumbInstGen("111110101100nnnn1111dddd0101mmmm",  // UQSUB8
                      three_reg_not_r15),
-        ThumbInstGen("111110101101nnnn1111dddd0101mmmm", // UQSUB16
+        ThumbInstGen("111110101101nnnn1111dddd0101mmmm",  // UQSUB16
                      three_reg_not_r15),
-        ThumbInstGen("111110101110nnnn1111dddd0100mmmm", // USAX
+        ThumbInstGen("111110101110nnnn1111dddd0100mmmm",  // USAX
                      three_reg_not_r15),
-        ThumbInstGen("111110101100nnnn1111dddd0100mmmm", // USUB8
+        ThumbInstGen("111110101100nnnn1111dddd0100mmmm",  // USUB8
                      three_reg_not_r15),
-        ThumbInstGen("111110101101nnnn1111dddd0100mmmm", // USUB16
+        ThumbInstGen("111110101101nnnn1111dddd0100mmmm",  // USUB16
                      three_reg_not_r15),
     };
 
@@ -694,7 +509,7 @@ TEST_CASE("Verify fix for off by one error in MemoryRead32 worked", "[Thumb][Thu
     A32Unicorn<ThumbTestEnv> uni{test_env};
     A32::Jit jit{GetUserConfig(&test_env)};
 
-    constexpr ThumbTestEnv::RegisterArray initial_regs {
+    constexpr ThumbTestEnv::RegisterArray initial_regs{
         0xe90ecd70,
         0x3e3b73c3,
         0x571616f9,
@@ -714,12 +529,12 @@ TEST_CASE("Verify fix for off by one error in MemoryRead32 worked", "[Thumb][Thu
     };
 
     test_env.code_mem = {
-        0x40B8, // lsls r0, r7, #0
-        0x01CA, // lsls r2, r1, #7
-        0x83A1, // strh r1, [r4, #28]
-        0x708A, // strb r2, [r1, #2]
-        0xBCC4, // pop {r2, r6, r7}
-        0xE7FE, // b +#0
+        0x40B8,  // lsls r0, r7, #0
+        0x01CA,  // lsls r2, r1, #7
+        0x83A1,  // strh r1, [r4, #28]
+        0x708A,  // strb r2, [r1, #2]
+        0xBCC4,  // pop {r2, r6, r7}
+        0xE7FE,  // b +#0
     };
 
     RunInstance(1, test_env, uni, jit, initial_regs, 5, 5);

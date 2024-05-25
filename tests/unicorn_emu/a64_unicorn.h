@@ -9,15 +9,16 @@
 #include <vector>
 
 #ifdef _MSC_VER
-#pragma warning(push, 0)
-#include <unicorn/unicorn.h>
-#pragma warning(pop)
+#    pragma warning(push, 0)
+#    include <unicorn/unicorn.h>
+#    pragma warning(pop)
 #else
-#include <unicorn/unicorn.h>
+#    include <unicorn/unicorn.h>
 #endif
 
-#include "common/common_types.h"
-#include "A64/testenv.h"
+#include <mcl/stdint.hpp>
+
+#include "../A64/testenv.h"
 
 class A64Unicorn final {
 public:

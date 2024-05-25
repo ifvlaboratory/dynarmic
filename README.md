@@ -1,77 +1,58 @@
 Dynarmic
 ========
 
-[![Travis CI Build Status](https://api.travis-ci.org/MerryMage/dynarmic.svg?branch=master)](https://travis-ci.org/MerryMage/dynarmic/branches) [![Appveyor CI Build status](https://ci.appveyor.com/api/projects/status/maeiqr41rgm1innm/branch/master?svg=true)](https://ci.appveyor.com/project/MerryMage/dynarmic/branch/master)
+[![Github Actions Build Status (x86-64)](https://github.com/MerryMage/dynarmic/actions/workflows/x86-64.yml/badge.svg)](https://github.com/MerryMage/dynarmic/actions/workflows/x86-64.yml) [![Github Actions Build Status (AArch64)](https://github.com/merryhime/dynarmic/actions/workflows/aarch64.yml/badge.svg)](https://github.com/MerryMage/dynarmic/actions/workflows/AArch64.yml)
 
 A dynamic recompiler for ARM.
 
+Highlight features:
+
+- Fast dynamic binary translation via Just-in-Time compilation
+- Clean API
+- Implemented in modern C++20
+- Hooks exposed for easy code instrumentation
+- Code injection support for very fine-grained instrumentation
+- Support for unusual address space setups (bring-your-own memory system)
+- Native support for most popular operating systems (Windows, macOS, Linux, FreeBSD, OpenBSD, NetBSD, Android)
+
+*Please note that an adversarial guest program [can determine if it is being run under dynarmic](#disadvantages-of-dynarmic). Preventing this is not a goal of this project.*
+
 ### Supported guest architectures
 
-* ARMv6K
-* 64-bit ARMv8
+* v3
+* v4
+* v4T
+* v5TE
+* v6K
+* v6T2
+* v7A
+* 32-bit v8
+* 64-bit v8
+
+You can specify the specific guest version using [ArchVersion](src/dynarmic/interface/A32/arch_version.h).
+
+There are no plans to support v1 or v2.
 
 ### Supported host architectures
 
 * x86-64
+* AArch64
 
-There are no plans to support x86-32.
+There are no plans to support any 32-bit architecture.
 
-Alternatives to Dynarmic
-------------------------
+Important API Changes in v6.x Series
+------------------------------------
 
-If you are looking at a recompiler which you can use with minimal effort to run ARM executables on non-native platforms, we would strongly recommend looking at qemu-user-static ([description of qemu-user-static](https://wiki.debian.org/QemuUserEmulation), [using qemu-user-static in combination with Docker to provide a complete emulated environment](https://github.com/multiarch/qemu-user-static)). Having a complete plug-and-play solution is out-of-scope of this project.
+* **v6.7.0**
+  * To support use cases where one wants to have the guest to have the same address space as the host, `nullptr` is now a valid value for `fastmem_pointer`.
+    **This change is not backwards-compatible.** If you were previously using `nullptr` to represent an invalid fastmem arena, you will now have to use `std::nullopt`.
 
-Here are some projects with the same goals as dynarmic:
-
-* [ChocolArm64 from Ryujinx](https://github.com/Ryujinx/Ryujinx/tree/master/ChocolArm64) - ARMv8 recompiler on top of RyuJIT
-* [Unicorn](https://www.unicorn-engine.org/) - Recompiling multi-architecture CPU emulator, based on QEMU
-* [SkyEye](http://skyeye.sourceforge.net) - Cached interpreter for ARM
-
-More general alternatives:
-
-* [tARMac](https://davidsharp.com/tarmac/) - Tarmac's use of armlets was initial inspiration for us to use an intermediate representation
-* [QEMU](https://www.qemu.org/) - Recompiling multi-architecture system emulator
-* [VisUAL](https://salmanarif.bitbucket.io/visual/index.html) - Visual ARM UAL emulator intended for education
-* A wide variety of other recompilers, interpreters and emulators can be found embedded in other projects, here are some we would recommend looking at:
-  * [firebird's recompiler](https://github.com/nspire-emus/firebird) - Takes more of a call-threaded approach to recompilation
-  * [higan's arm7tdmi emulator](https://gitlab.com/higan/higan/tree/master/higan/component/processor/arm7tdmi) - Very clean code-style
-  * [arm-js by ozaki-r](https://github.com/ozaki-r/arm-js) - Emulates ARMv7A and some peripherals of Versatile Express, in the browser
-
-Disadvantages of Dynarmic
--------------------------
-
-In the pursuit of speed, some behavior not commonly depended upon is elided. Therefore this emulator does not match spec.
-
-Known examples:
-
-* Only user-mode is emulated, there is no emulation of any other privilege levels.
-* FPSR state is approximate.
-* Misaligned loads/stores are not appropriately trapped in certain cases.
-* Exclusive monitor behavior may not match any known physical processor.
-
-As with most other hobby ARM emulation projects, no formal verification has been done. Use this code base at your own risk.
 
 Documentation
 -------------
 
 Design documentation can be found at [docs/Design.md](docs/Design.md).
 
-Plans
------
-
-### Near-term
-
-* Complete ARMv8 support
-
-### Medium-term
-
-* Optimizations
-
-### Long-term
-
-* ARMv7A guest support
-* ARMv5 guest support
-* ARMv8 host support
 
 Usage Example
 -------------
@@ -84,8 +65,8 @@ The below is a minimal example. Bring-your-own memory system.
 #include <cstdio>
 #include <exception>
 
-#include <dynarmic/A32/a32.h>
-#include <dynarmic/A32/config.h>
+#include "dynarmic/interface/A32/a32.h"
+#include "dynarmic/interface/A32/config.h"
 
 using u8 = std::uint8_t;
 using u16 = std::uint16_t;
@@ -194,12 +175,63 @@ int main(int argc, char** argv) {
 }
 ```
 
+Alternatives to Dynarmic
+------------------------
+
+Here are some projects with the same goals as dynarmic:
+
+* [Unicorn](https://www.unicorn-engine.org/) - Recompiling multi-architecture CPU emulator, based on QEMU
+* [SkyEye](http://skyeye.sourceforge.net) - Cached interpreter for ARM
+
+More general alternatives:
+
+* [tARMac](https://davidsharp.com/tarmac/) - Tarmac's use of armlets was initial inspiration for us to use an intermediate representation
+* [QEMU](https://www.qemu.org/) - Recompiling multi-architecture system emulator
+* [VisUAL](https://salmanarif.bitbucket.io/visual/index.html) - Visual ARM UAL emulator intended for education
+* A wide variety of other recompilers, interpreters and emulators can be found embedded in other projects, here are some we would recommend looking at:
+  * [firebird's recompiler](https://github.com/nspire-emus/firebird) - Takes more of a call-threaded approach to recompilation
+  * [higan's arm7tdmi emulator](https://github.com/higan-emu/higan/tree/master/higan/component/processor/arm7tdmi) - Very clean code-style
+  * [arm-js by ozaki-r](https://github.com/ozaki-r/arm-js) - Emulates ARMv7A and some peripherals of Versatile Express, in the browser
+
+Disadvantages of Dynarmic
+-------------------------
+
+In the pursuit of speed, some behavior not commonly depended upon is elided. Therefore this emulator does not match spec.
+Please note that this would mean that a guest application can easily determine if it is being run under instrumentation.
+
+Known examples:
+
+* Only user-mode is emulated, there is no emulation of any other privilege levels.
+* FPSR state is approximate.
+* Misaligned loads/stores are not appropriately trapped in certain cases.
+* Exclusive monitor behavior may not match any known physical processor.
+
+No formal verification has been done, and no security assessment has been made.
+Use this code base at your own risk.
+
 Legal
 -----
 
 dynarmic is under a 0BSD license. See LICENSE.txt for more details.
 
 dynarmic uses several other libraries, whose licenses are included below:
+
+### biscuit
+
+```
+Copyright 2021 Lioncash/Lioncache
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE.
+```
 
 ### catch
 
@@ -257,21 +289,30 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
-### mp
+### mcl & oaknut
 
 ```
-Copyright (C) 2017 MerryMage
+MIT License
 
-Permission to use, copy, modify, and/or distribute this software for
-any purpose with or without fee is hereby granted.
+Copyright (c) 2022 merryhime <https://mary.rs>
 
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
-AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
-OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```
 
 ### robin-map
@@ -349,4 +390,31 @@ THE POSSIBILITY OF SUCH DAMAGE.
 喪失、データの喪失、利益の喪失、業務の中断も含め、またそれに限定されない）直接
 損害、間接損害、偶発的な損害、特別損害、懲罰的損害、または結果損害について、
 一切責任を負わないものとします。
+```
+
+### zydis
+
+```
+The MIT License (MIT)
+
+Copyright (c) 2014-2020 Florian Bernd
+Copyright (c) 2014-2020 Joel Höner
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```

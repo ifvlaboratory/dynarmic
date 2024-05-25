@@ -8,24 +8,24 @@
 #include <string>
 #include <vector>
 
-#include <catch.hpp>
+#include <catch2/catch_test_macros.hpp>
+#include <mcl/scope_exit.hpp>
+#include <mcl/stdint.hpp>
 
-#include "common/common_types.h"
-#include "common/fp/fpcr.h"
-#include "common/fp/fpsr.h"
-#include "common/llvm_disassemble.h"
-#include "common/scope_exit.h"
-#include "frontend/A64/decoder/a64.h"
-#include "frontend/A64/location_descriptor.h"
-#include "frontend/A64/translate/translate.h"
-#include "frontend/A64/types.h"
-#include "frontend/ir/basic_block.h"
-#include "frontend/ir/opcodes.h"
-#include "fuzz_util.h"
-#include "ir_opt/passes.h"
-#include "rand_int.h"
-#include "testenv.h"
-#include "unicorn_emu/a64_unicorn.h"
+#include "../fuzz_util.h"
+#include "../rand_int.h"
+#include "../unicorn_emu/a64_unicorn.h"
+#include "./testenv.h"
+#include "dynarmic/common/fp/fpcr.h"
+#include "dynarmic/common/fp/fpsr.h"
+#include "dynarmic/common/llvm_disassemble.h"
+#include "dynarmic/frontend/A64/a64_location_descriptor.h"
+#include "dynarmic/frontend/A64/a64_types.h"
+#include "dynarmic/frontend/A64/decoder/a64.h"
+#include "dynarmic/frontend/A64/translate/a64_translate.h"
+#include "dynarmic/ir/basic_block.h"
+#include "dynarmic/ir/opcodes.h"
+#include "dynarmic/ir/opt/passes.h"
 
 // Must be declared last for all necessary operator<< to be declared prior to this.
 #include <fmt/format.h>
@@ -59,10 +59,10 @@ static u32 GenRandomInst(u64 pc, bool is_last_inst) {
     static const struct InstructionGeneratorInfo {
         std::vector<InstructionGenerator> generators;
         std::vector<InstructionGenerator> invalid;
-    } instructions = []{
-        const std::vector<std::tuple<std::string, const char*>> list {
+    } instructions = [] {
+        const std::vector<std::tuple<std::string, const char*>> list{
 #define INST(fn, name, bitstring) {#fn, bitstring},
-#include "frontend/A64/decoder/a64.inc"
+#include "dynarmic/frontend/A64/decoder/a64.inc"
 #undef INST
         };
 
@@ -70,15 +70,24 @@ static u32 GenRandomInst(u64 pc, bool is_last_inst) {
         std::vector<InstructionGenerator> invalid;
 
         // List of instructions not to test
-        const std::vector<std::string> do_not_test {
+        const std::vector<std::string> do_not_test{
             // Unimplemented in QEMU
             "STLLR",
             // Unimplemented in QEMU
             "LDLAR",
             // Dynarmic and QEMU currently differ on how the exclusive monitor's address range works.
-            "STXR", "STLXR", "STXP", "STLXP", "LDXR", "LDAXR", "LDXP", "LDAXP",
+            "STXR",
+            "STLXR",
+            "STXP",
+            "STLXP",
+            "LDXR",
+            "LDAXR",
+            "LDXP",
+            "LDAXP",
             // Behaviour differs from QEMU
-            "MSR_reg", "MSR_imm", "MRS",
+            "MSR_reg",
+            "MSR_imm",
+            "MRS",
         };
 
         for (const auto& [fn, bitstring] : list) {
@@ -108,16 +117,15 @@ static u32 GenRandomInst(u64 pc, bool is_last_inst) {
 }
 
 static u32 GenFloatInst(u64 pc, bool is_last_inst) {
-    static const std::vector<InstructionGenerator> instruction_generators = []{
-        const std::vector<std::tuple<std::string, std::string, const char*>> list {
+    static const std::vector<InstructionGenerator> instruction_generators = [] {
+        const std::vector<std::tuple<std::string, std::string, const char*>> list{
 #define INST(fn, name, bitstring) {#fn, #name, bitstring},
-#include "frontend/A64/decoder/a64.inc"
+#include "dynarmic/frontend/A64/decoder/a64.inc"
 #undef INST
         };
 
         // List of instructions not to test
-        const std::vector<std::string> do_not_test {
-        };
+        const std::vector<std::string> do_not_test{};
 
         std::vector<InstructionGenerator> result;
 
@@ -139,7 +147,7 @@ static u32 GenFloatInst(u64 pc, bool is_last_inst) {
         const size_t index = RandInt<size_t>(0, instruction_generators.size() - 1);
         const u32 instruction = instruction_generators[index].Generate();
 
-        if ((instruction & 0x00800000) == 0 && ShouldTestInst(instruction, pc, is_last_inst)) {
+        if (ShouldTestInst(instruction, pc, is_last_inst)) {
             return instruction;
         }
     }
@@ -154,13 +162,11 @@ static Dynarmic::A64::UserConfig GetUserConfig(A64TestEnv& jit_env) {
     return jit_user_config;
 }
 
-static void RunTestInstance(Dynarmic::A64::Jit& jit, A64Unicorn& uni, A64TestEnv& jit_env, A64TestEnv& uni_env,
-                            const A64Unicorn::RegisterArray& regs, const A64Unicorn::VectorArray& vecs, const size_t instructions_start,
-                            const std::vector<u32>& instructions, const u32 pstate, const u32 fpcr) {
+static void RunTestInstance(Dynarmic::A64::Jit& jit, A64Unicorn& uni, A64TestEnv& jit_env, A64TestEnv& uni_env, const A64Unicorn::RegisterArray& regs, const A64Unicorn::VectorArray& vecs, const size_t instructions_start, const std::vector<u32>& instructions, const u32 pstate, const u32 fpcr) {
     jit_env.code_mem = instructions;
     uni_env.code_mem = instructions;
-    jit_env.code_mem.emplace_back(0x14000000); // B .
-    uni_env.code_mem.emplace_back(0x14000000); // B .
+    jit_env.code_mem.emplace_back(0x14000000);  // B .
+    uni_env.code_mem.emplace_back(0x14000000);  // B .
     jit_env.code_mem_start_address = instructions_start;
     uni_env.code_mem_start_address = instructions_start;
     jit_env.modified_memory.clear();
@@ -202,10 +208,10 @@ static void RunTestInstance(Dynarmic::A64::Jit& jit, A64Unicorn& uni, A64TestEnv
 
         fmt::print("Initial register listing:\n");
         for (size_t i = 0; i < regs.size(); ++i) {
-            fmt::print("{:3s}: {:016x}\n", static_cast<A64::Reg>(i), regs[i]);
+            fmt::print("{:3s}: {:016x}\n", A64::RegToString(static_cast<A64::Reg>(i)), regs[i]);
         }
         for (size_t i = 0; i < vecs.size(); ++i) {
-            fmt::print("{:3s}: {}\n", static_cast<A64::Vec>(i), vecs[i]);
+            fmt::print("{:3s}: {:016x}{:016x}\n", A64::VecToString(static_cast<A64::Vec>(i)), vecs[i][1], vecs[i][0]);
         }
         fmt::print("sp : {:016x}\n", initial_sp);
         fmt::print("pc : {:016x}\n", instructions_start);
@@ -222,11 +228,14 @@ static void RunTestInstance(Dynarmic::A64::Jit& jit, A64Unicorn& uni, A64TestEnv
         fmt::print("     unicorn          dynarmic\n");
         const auto uni_regs = uni.GetRegisters();
         for (size_t i = 0; i < regs.size(); ++i) {
-            fmt::print("{:3s}: {:016x} {:016x} {}\n", static_cast<A64::Reg>(i), uni_regs[i], jit.GetRegisters()[i], uni_regs[i] != jit.GetRegisters()[i] ? "*" : "");
+            fmt::print("{:3s}: {:016x} {:016x} {}\n", A64::RegToString(static_cast<A64::Reg>(i)), uni_regs[i], jit.GetRegisters()[i], uni_regs[i] != jit.GetRegisters()[i] ? "*" : "");
         }
         const auto uni_vecs = uni.GetVectors();
         for (size_t i = 0; i < vecs.size(); ++i) {
-            fmt::print("{:3s}: {} {} {}\n", static_cast<A64::Vec>(i), uni_vecs[i], jit.GetVectors()[i], uni_vecs[i] != jit.GetVectors()[i] ? "*" : "");
+            fmt::print("{:3s}: {:016x}{:016x} {:016x}{:016x} {}\n", A64::VecToString(static_cast<A64::Vec>(i)),
+                       uni_vecs[i][1], uni_vecs[i][0],
+                       jit.GetVectors()[i][1], jit.GetVectors()[i][0],
+                       uni_vecs[i] != jit.GetVectors()[i] ? "*" : "");
         }
         fmt::print("sp : {:016x} {:016x} {}\n", uni.GetSP(), jit.GetSP(), uni.GetSP() != jit.GetSP() ? "*" : "");
         fmt::print("pc : {:016x} {:016x} {}\n", uni.GetPC(), jit.GetPC(), uni.GetPC() != jit.GetPC() ? "*" : "");
@@ -256,6 +265,8 @@ static void RunTestInstance(Dynarmic::A64::Jit& jit, A64Unicorn& uni, A64TestEnv
         const auto get_code = [&jit_env](u64 vaddr) { return jit_env.MemoryReadCode(vaddr); };
         IR::Block ir_block = A64::Translate({instructions_start, FP::FPCR{fpcr}}, get_code, {});
         Optimization::A64CallbackConfigPass(ir_block, GetUserConfig(jit_env));
+        Optimization::NamingPass(ir_block);
+
         fmt::print("IR:\n");
         fmt::print("{}\n", IR::DumpBlock(ir_block));
 
@@ -263,11 +274,12 @@ static void RunTestInstance(Dynarmic::A64::Jit& jit, A64Unicorn& uni, A64TestEnv
         Optimization::DeadCodeElimination(ir_block);
         Optimization::ConstantPropagation(ir_block);
         Optimization::DeadCodeElimination(ir_block);
+
         fmt::print("Optimized IR:\n");
         fmt::print("{}\n", IR::DumpBlock(ir_block));
 
         fmt::print("x86_64:\n");
-        fmt::print("{}\n", jit.Disassemble());
+        jit.DumpDisassembly();
 
         fmt::print("Interrupts:\n");
         for (auto& i : uni_env.interrupts) {
@@ -302,7 +314,7 @@ TEST_CASE("A64: Single random instruction", "[a64]") {
     std::vector<u32> instructions(1);
 
     for (size_t iteration = 0; iteration < 100000; ++iteration) {
-        std::generate(regs.begin(), regs.end(), []{ return RandInt<u64>(0, ~u64(0)); });
+        std::generate(regs.begin(), regs.end(), [] { return RandInt<u64>(0, ~u64(0)); });
         std::generate(vecs.begin(), vecs.end(), RandomVector);
 
         instructions[0] = GenRandomInst(0, true);
@@ -324,49 +336,49 @@ TEST_CASE("A64: Floating point instructions", "[a64]") {
     Dynarmic::A64::Jit jit{GetUserConfig(jit_env)};
     A64Unicorn uni{uni_env};
 
-    static constexpr std::array<u64, 80> float_numbers {
-        0x00000000, // positive zero
-        0x00000001, // smallest positive denormal
-        0x00000076, //
-        0x00002b94, //
-        0x00636d24, //
-        0x007fffff, // largest positive denormal
-        0x00800000, // smallest positive normalised real
-        0x00800002, //
-        0x01398437, //
-        0x0ba98d27, //
-        0x0ba98d7a, //
-        0x751f853a, //
-        0x7f7ffff0, //
-        0x7f7fffff, // largest positive normalised real
-        0x7f800000, // positive infinity
-        0x7f800001, // first positive SNaN
-        0x7f984a37, //
-        0x7fbfffff, // last positive SNaN
-        0x7fc00000, // first positive QNaN
-        0x7fd9ba98, //
-        0x7fffffff, // last positive QNaN
-        0x80000000, // negative zero
-        0x80000001, // smallest negative denormal
-        0x80000076, //
-        0x80002b94, //
-        0x80636d24, //
-        0x807fffff, // largest negative denormal
-        0x80800000, // smallest negative normalised real
-        0x80800002, //
-        0x81398437, //
-        0x8ba98d27, //
-        0x8ba98d7a, //
-        0xf51f853a, //
-        0xff7ffff0, //
-        0xff7fffff, // largest negative normalised real
-        0xff800000, // negative infinity
-        0xff800001, // first negative SNaN
-        0xff984a37, //
-        0xffbfffff, // last negative SNaN
-        0xffc00000, // first negative QNaN
-        0xffd9ba98, //
-        0xffffffff, // last negative QNaN
+    static constexpr std::array<u64, 80> float_numbers{
+        0x00000000,  // positive zero
+        0x00000001,  // smallest positive denormal
+        0x00000076,  //
+        0x00002b94,  //
+        0x00636d24,  //
+        0x007fffff,  // largest positive denormal
+        0x00800000,  // smallest positive normalised real
+        0x00800002,  //
+        0x01398437,  //
+        0x0ba98d27,  //
+        0x0ba98d7a,  //
+        0x751f853a,  //
+        0x7f7ffff0,  //
+        0x7f7fffff,  // largest positive normalised real
+        0x7f800000,  // positive infinity
+        0x7f800001,  // first positive SNaN
+        0x7f984a37,  //
+        0x7fbfffff,  // last positive SNaN
+        0x7fc00000,  // first positive QNaN
+        0x7fd9ba98,  //
+        0x7fffffff,  // last positive QNaN
+        0x80000000,  // negative zero
+        0x80000001,  // smallest negative denormal
+        0x80000076,  //
+        0x80002b94,  //
+        0x80636d24,  //
+        0x807fffff,  // largest negative denormal
+        0x80800000,  // smallest negative normalised real
+        0x80800002,  //
+        0x81398437,  //
+        0x8ba98d27,  //
+        0x8ba98d7a,  //
+        0xf51f853a,  //
+        0xff7ffff0,  //
+        0xff7fffff,  // largest negative normalised real
+        0xff800000,  // negative infinity
+        0xff800001,  // first negative SNaN
+        0xff984a37,  //
+        0xffbfffff,  // last negative SNaN
+        0xffc00000,  // first negative QNaN
+        0xffd9ba98,  //
+        0xffffffff,  // last negative QNaN
         // some random numbers follow
         0x4f3495cb,
         0xe73a5134,
@@ -397,23 +409,26 @@ TEST_CASE("A64: Floating point instructions", "[a64]") {
         0xc79b271e,
         0x460e8c84,
         // some 64-bit-float upper-halves
-        0x7ff00000, // +SNaN / +Inf
-        0x7ff0abcd, // +SNaN
-        0x7ff80000, // +QNaN
-        0x7ff81234, // +QNaN
-        0xfff00000, // -SNaN / -Inf
-        0xfff05678, // -SNaN
-        0xfff80000, // -QNaN
-        0xfff809ef, // -QNaN
-        0x3ff00000, // Number near +1.0
-        0xbff00000, // Number near -1.0
+        0x7ff00000,  // +SNaN / +Inf
+        0x7ff0abcd,  // +SNaN
+        0x7ff80000,  // +QNaN
+        0x7ff81234,  // +QNaN
+        0xfff00000,  // -SNaN / -Inf
+        0xfff05678,  // -SNaN
+        0xfff80000,  // -QNaN
+        0xfff809ef,  // -QNaN
+        0x3ff00000,  // Number near +1.0
+        0xbff00000,  // Number near -1.0
     };
 
-    const auto gen_float = [&]{
+    const auto gen_float = [&] {
+        if (RandInt<size_t>(0, 1) == 0) {
+            return RandInt<u64>(0, 0xffffffff);
+        }
         return float_numbers[RandInt<size_t>(0, float_numbers.size() - 1)];
     };
 
-    const auto gen_vector = [&]{
+    const auto gen_vector = [&] {
         u64 upper = (gen_float() << 32) | gen_float();
         u64 lower = (gen_float() << 32) | gen_float();
         return Vector{lower, upper};
@@ -473,7 +488,6 @@ TEST_CASE("A64: Small random block", "[a64]") {
         RunTestInstance(jit, uni, jit_env, uni_env, regs, vecs, start_address, instructions, pstate, fpcr);
     }
 }
-
 
 TEST_CASE("A64: Large random block", "[a64]") {
     A64TestEnv jit_env{};
