@@ -105,4 +105,4 @@ bool ThumbTranslatorVisitor::thumb32_USADA8(Reg n, Reg a, Reg d, Reg m) {
     return true;
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

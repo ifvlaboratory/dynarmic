@@ -10,14 +10,13 @@
 #include <optional>
 #include <vector>
 
-
 #include "common/common_types.h"
 #include "frontend/decoder/decoder_detail.h"
 #include "frontend/decoder/matcher.h"
 
 namespace Dynarmic::A32 {
 
-template <typename Visitor>
+template<typename Visitor>
 using ThumbVFPMatcher = Decoder::Matcher<Visitor, u32>;
 
 template<typename V>
@@ -36,4 +35,4 @@ std::optional<std::reference_wrapper<const ThumbVFPMatcher<V>>> DecodeThumbVFP(u
     return iter != table.end() ? std::optional<std::reference_wrapper<const ThumbVFPMatcher<V>>>(*iter) : std::nullopt;
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

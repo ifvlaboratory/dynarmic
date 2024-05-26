@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: 0BSD
  */
 
+#include "frontend/A32/translate/impl/translate_thumb.h"
+
 #include <tuple>
 
 #include <dynarmic/A32/config.h>
@@ -10,18 +12,18 @@
 #include "common/bit_util.h"
 #include "frontend/A32/decoder/thumb16.h"
 #include "frontend/A32/decoder/thumb32.h"
-#include "frontend/A32/decoder/thumb32_vfp.h"
 #include "frontend/A32/decoder/thumb32_asimd.h"
+#include "frontend/A32/decoder/thumb32_vfp.h"
 #include "frontend/A32/ir_emitter.h"
 #include "frontend/A32/location_descriptor.h"
-#include "frontend/A32/translate/impl/translate_thumb.h"
 #include "frontend/A32/translate/translate.h"
 
 namespace Dynarmic::A32 {
 namespace {
 
 enum class ThumbInstSize {
-    Thumb16, Thumb32
+    Thumb16,
+    Thumb32
 };
 
 bool IsThumb16(u16 first_part) {
@@ -43,7 +45,7 @@ std::tuple<u32, ThumbInstSize> ReadThumbInstruction(u32 arm_pc, const MemoryRead
     return std::make_tuple(static_cast<u32>((first_part << 16U) | second_part), ThumbInstSize::Thumb32);
 }
 
-} // local namespace
+}  // namespace
 
 static bool CondCanContinue(ConditionalState cond_state, const A32::IREmitter& ir) {
     ASSERT_MSG(cond_state != ConditionalState::Break, "Should never happen.");
@@ -85,7 +87,7 @@ IR::Block TranslateThumb(LocationDescriptor descriptor, const MemoryReadCodeFunc
                 should_continue = visitor.thumb32_UDF();
             }
         }
-        
+
         if (visitor.cond_state == ConditionalState::Break) {
             break;
         }
@@ -108,7 +110,7 @@ IR::Block TranslateThumb(LocationDescriptor descriptor, const MemoryReadCodeFunc
             }
         }
     }
-    
+
     ASSERT_MSG(block.HasTerminal(), "Terminal has not been set");
 
     block.SetEndLocation(visitor.ir.current_location);
@@ -153,74 +155,74 @@ bool ThumbTranslatorVisitor::ConditionPassed() {
     Cond cond;
     const auto it = ir.current_location.IT();
     if (!it.IsInITBlock()) {
-       cond = Cond::AL;
+        cond = Cond::AL;
     } else {
-       cond = it.Cond();
+        cond = it.Cond();
     }
-    
+
     // Do we need to end this block and try again with a new block?
     bool should_stop = false;
     // Are we emitting an instruction to conditional part of this block?
     bool step_cond = false;
-    
+
     switch (cond_state) {
-        case ConditionalState::None: {
-            if (cond == Cond::AL) {
-                // Unconditional
-                should_stop = false;
-                break;
-            }
-            // No AL cond
-            if (!ir.block.empty()) {
-                // Give me an empty block
-                should_stop = true;
-                break;
-            }
-            // We've not emitted instructions yet.
-            // We'll emit one instruction, and set the block-entry conditional appropriately.
-            cond_state = ConditionalState::Translating;
-            ir.block.SetCondition(cond);
-            step_cond = true;
+    case ConditionalState::None: {
+        if (cond == Cond::AL) {
+            // Unconditional
+            should_stop = false;
             break;
         }
-        case ConditionalState::Trailing: {
-            if (cond == Cond::AL) {
-                should_stop = false;
-                break;
-            }
-            // No AL cond
-            if (!ir.block.empty()) {
-                should_stop = true;
-                break;
-            }
+        // No AL cond
+        if (!ir.block.empty()) {
+            // Give me an empty block
+            should_stop = true;
             break;
         }
-        case ConditionalState::Translating: {
-            // Jump inside conditional block
-            if (ir.block.ConditionFailedLocation() != ir.current_location) {
-                cond_state = ConditionalState::Trailing;
-                should_stop = !ir.block.empty();
-                break;
-            }
-            // Try adding unconditional instructions to end of this block
-            // not stepping the conditional
-            if (cond == Cond::AL) {
-                cond_state = ConditionalState::Trailing;
-                should_stop = false;
-                break;
-            }
-            // cond has changed, abort
-            if (cond != ir.block.GetCondition()) {
-                should_stop = true;
-                break;
-            }
-            step_cond = true;
+        // We've not emitted instructions yet.
+        // We'll emit one instruction, and set the block-entry conditional appropriately.
+        cond_state = ConditionalState::Translating;
+        ir.block.SetCondition(cond);
+        step_cond = true;
+        break;
+    }
+    case ConditionalState::Trailing: {
+        if (cond == Cond::AL) {
+            should_stop = false;
             break;
         }
-        default: {
-            ASSERT_MSG(cond_state != ConditionalState::Break,
-                             "This should never happen. We requested a break but that wasn't honored.");
+        // No AL cond
+        if (!ir.block.empty()) {
+            should_stop = true;
+            break;
         }
+        break;
+    }
+    case ConditionalState::Translating: {
+        // Jump inside conditional block
+        if (ir.block.ConditionFailedLocation() != ir.current_location) {
+            cond_state = ConditionalState::Trailing;
+            should_stop = !ir.block.empty();
+            break;
+        }
+        // Try adding unconditional instructions to end of this block
+        // not stepping the conditional
+        if (cond == Cond::AL) {
+            cond_state = ConditionalState::Trailing;
+            should_stop = false;
+            break;
+        }
+        // cond has changed, abort
+        if (cond != ir.block.GetCondition()) {
+            should_stop = true;
+            break;
+        }
+        step_cond = true;
+        break;
+    }
+    default: {
+        ASSERT_MSG(cond_state != ConditionalState::Break,
+                   "This should never happen. We requested a break but that wasn't honored.");
+    }
     }
 
     if (step_cond) {
@@ -236,13 +238,13 @@ bool ThumbTranslatorVisitor::ConditionPassed() {
         ir.block.ConditionFailedCycleCount() = ir.block.CycleCount() + 1;
         ir.block.SetConditionFailedLocation(next_failed_location);
     }
-    
+
     if (should_stop) {
         cond_state = ConditionalState::Break;
         ir.SetTerm(IR::Term::LinkBlockFast{ir.current_location});
         return false;
     }
-    
+
     return true;
 }
 
@@ -253,4 +255,4 @@ bool ThumbTranslatorVisitor::RaiseException(Exception exception) {
     return false;
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

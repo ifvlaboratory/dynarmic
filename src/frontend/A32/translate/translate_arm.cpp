@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: 0BSD
  */
 
+#include "frontend/A32/translate/impl/translate_arm.h"
+
 #include <algorithm>
 
 #include <dynarmic/A32/config.h>
@@ -11,7 +13,6 @@
 #include "frontend/A32/decoder/asimd.h"
 #include "frontend/A32/decoder/vfp.h"
 #include "frontend/A32/location_descriptor.h"
-#include "frontend/A32/translate/impl/translate_arm.h"
 #include "frontend/A32/translate/translate.h"
 #include "frontend/A32/types.h"
 #include "frontend/ir/basic_block.h"
@@ -193,4 +194,4 @@ IR::ResultAndCarry<IR::U32> ArmTranslatorVisitor::EmitRegShift(IR::U32 value, Sh
     UNREACHABLE();
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

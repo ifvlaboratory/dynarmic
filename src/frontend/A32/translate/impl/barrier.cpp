@@ -30,4 +30,4 @@ bool ArmTranslatorVisitor::arm_ISB([[maybe_unused]] Imm<4> option) {
     return false;
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

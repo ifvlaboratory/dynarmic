@@ -24,8 +24,10 @@ namespace Dynarmic::A64 {
  */
 class IREmitter : public IR::IREmitter {
 public:
-    explicit IREmitter(IR::Block& block) : IR::IREmitter(block) {}
-    explicit IREmitter(IR::Block& block, LocationDescriptor descriptor) : IR::IREmitter(block), current_location(descriptor) {}
+    explicit IREmitter(IR::Block& block)
+            : IR::IREmitter(block) {}
+    explicit IREmitter(IR::Block& block, LocationDescriptor descriptor)
+            : IR::IREmitter(block), current_location(descriptor) {}
 
     std::optional<LocationDescriptor> current_location;
 
@@ -47,7 +49,7 @@ public:
     void DataMemoryBarrier();
     void InstructionSynchronizationBarrier();
     IR::U32 GetCNTFRQ();
-    IR::U64 GetCNTPCT(); // TODO: Ensure sub-basic-block cycle counts are updated before this.
+    IR::U64 GetCNTPCT();  // TODO: Ensure sub-basic-block cycle counts are updated before this.
     IR::U32 GetCTR();
     IR::U32 GetDCZID();
     IR::U64 GetTPIDR();
@@ -95,4 +97,4 @@ public:
     void SetPC(const IR::U64& value);
 };
 
-} // namespace Dynarmic::A64
+}  // namespace Dynarmic::A64

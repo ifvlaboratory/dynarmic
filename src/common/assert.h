@@ -15,55 +15,55 @@ namespace Dynarmic::Common {
 
 namespace detail {
 
-template <typename... Ts>
+template<typename... Ts>
 [[noreturn]] void TerminateHelper(fmt::string_view msg, Ts... args) {
     Terminate(msg, fmt::make_format_args(args...));
 }
 
-} // namespace detail
+}  // namespace detail
 
-} // namespace Dynarmic::Common
+}  // namespace Dynarmic::Common
 
 #if defined(NDEBUG)
-    #if defined(__clang) || defined(__GNUC__)
-        #define UNREACHABLE() __builtin_unreachable()
-        #define ASSUME(expr) [&]{ if (!(expr)) __builtin_unreachable(); }()
-    #elif defined(_MSC_VER)
-        #define UNREACHABLE() __assume(0)
-        #define ASSUME(expr) __assume(expr)
-    #else
-        #define UNREACHABLE() ASSERT_FALSE("Unreachable code!")
-        #define ASSUME(expr)
-    #endif
+#    if defined(__clang) || defined(__GNUC__)
+#        define UNREACHABLE() __builtin_unreachable()
+#        define ASSUME(expr) [&] { if (!(expr)) __builtin_unreachable(); }()
+#    elif defined(_MSC_VER)
+#        define UNREACHABLE() __assume(0)
+#        define ASSUME(expr) __assume(expr)
+#    else
+#        define UNREACHABLE() ASSERT_FALSE("Unreachable code!")
+#        define ASSUME(expr)
+#    endif
 #else
-    #define UNREACHABLE() ASSERT_FALSE("Unreachable code!")
-    #define ASSUME(expr)
+#    define UNREACHABLE() ASSERT_FALSE("Unreachable code!")
+#    define ASSUME(expr)
 #endif
 
 #ifdef DYNARMIC_IGNORE_ASSERTS
-    #define ASSERT(expr) ASSUME(expr)
-    #define ASSERT_MSG(expr, ...) ASSUME(expr)
-    #define ASSERT_FALSE(...) UNREACHABLE()
+#    define ASSERT(expr) ASSUME(expr)
+#    define ASSERT_MSG(expr, ...) ASSUME(expr)
+#    define ASSERT_FALSE(...) UNREACHABLE()
 #else
-    #define ASSERT(expr)                                                                        \
-        [&]{                                                                                    \
-            if (UNLIKELY(!(expr))) {                                                            \
-                ::Dynarmic::Common::detail::TerminateHelper(#expr);                             \
-            }                                                                                   \
+#    define ASSERT(expr)                                            \
+        [&] {                                                       \
+            if (UNLIKELY(!(expr))) {                                \
+                ::Dynarmic::Common::detail::TerminateHelper(#expr); \
+            }                                                       \
         }()
-    #define ASSERT_MSG(expr, ...)                                                               \
-        [&]{                                                                                    \
-            if (UNLIKELY(!(expr))) {                                                            \
-                ::Dynarmic::Common::detail::TerminateHelper(#expr "\nMessage: " __VA_ARGS__);   \
-            }                                                                                   \
+#    define ASSERT_MSG(expr, ...)                                                             \
+        [&] {                                                                                 \
+            if (UNLIKELY(!(expr))) {                                                          \
+                ::Dynarmic::Common::detail::TerminateHelper(#expr "\nMessage: " __VA_ARGS__); \
+            }                                                                                 \
         }()
-    #define ASSERT_FALSE(...) ::Dynarmic::Common::detail::TerminateHelper("false\nMessage: " __VA_ARGS__)
+#    define ASSERT_FALSE(...) ::Dynarmic::Common::detail::TerminateHelper("false\nMessage: " __VA_ARGS__)
 #endif
 
 #if defined(NDEBUG) || defined(DYNARMIC_IGNORE_ASSERTS)
-    #define DEBUG_ASSERT(expr) ASSUME(expr)
-    #define DEBUG_ASSERT_MSG(expr, ...) ASSUME(expr)
+#    define DEBUG_ASSERT(expr) ASSUME(expr)
+#    define DEBUG_ASSERT_MSG(expr, ...) ASSUME(expr)
 #else
-    #define DEBUG_ASSERT(expr) ASSERT(expr)
-    #define DEBUG_ASSERT_MSG(expr, ...) ASSERT_MSG(expr, __VA_ARGS__)
+#    define DEBUG_ASSERT(expr) ASSERT(expr)
+#    define DEBUG_ASSERT_MSG(expr, ...) ASSERT_MSG(expr, __VA_ARGS__)
 #endif

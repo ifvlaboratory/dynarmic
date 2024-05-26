@@ -4,6 +4,7 @@
  */
 
 #include <dynarmic/A32/config.h>
+
 #include "frontend/A32/translate/impl/translate_arm.h"
 
 namespace Dynarmic::A32 {
@@ -76,4 +77,4 @@ bool ArmTranslatorVisitor::arm_YIELD() {
     return RaiseException(Exception::Yield);
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

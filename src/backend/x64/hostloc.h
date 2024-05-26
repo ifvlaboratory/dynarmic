@@ -13,10 +13,44 @@ namespace Dynarmic::Backend::X64 {
 
 enum class HostLoc {
     // Ordering of the registers is intentional. See also: HostLocToX64.
-    RAX, RCX, RDX, RBX, RSP, RBP, RSI, RDI, R8, R9, R10, R11, R12, R13, R14, R15,
-    XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
-    XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15,
-    CF, PF, AF, ZF, SF, OF,
+    RAX,
+    RCX,
+    RDX,
+    RBX,
+    RSP,
+    RBP,
+    RSI,
+    RDI,
+    R8,
+    R9,
+    R10,
+    R11,
+    R12,
+    R13,
+    R14,
+    R15,
+    XMM0,
+    XMM1,
+    XMM2,
+    XMM3,
+    XMM4,
+    XMM5,
+    XMM6,
+    XMM7,
+    XMM8,
+    XMM9,
+    XMM10,
+    XMM11,
+    XMM12,
+    XMM13,
+    XMM14,
+    XMM15,
+    CF,
+    PF,
+    AF,
+    ZF,
+    SF,
+    OF,
     FirstSpill,
 };
 
@@ -111,7 +145,7 @@ const HostLocList any_xmm = {
 Xbyak::Reg64 HostLocToReg64(HostLoc loc);
 Xbyak::Xmm HostLocToXmm(HostLoc loc);
 
-template <typename JitStateType>
+template<typename JitStateType>
 Xbyak::Address SpillToOpArg(HostLoc loc) {
     ASSERT(HostLocIsSpill(loc));
 
@@ -121,4 +155,4 @@ Xbyak::Address SpillToOpArg(HostLoc loc) {
     return JitStateType::GetSpillLocationFromIndex(i);
 }
 
-} // namespace Dynarmic::Backend::X64
+}  // namespace Dynarmic::Backend::X64

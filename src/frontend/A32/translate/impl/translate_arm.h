@@ -6,10 +6,10 @@
 #pragma once
 
 #include "common/bit_util.h"
-#include "frontend/imm.h"
 #include "frontend/A32/location_descriptor.h"
-#include "frontend/A32/translate/translate.h"
 #include "frontend/A32/translate/helper.h"
+#include "frontend/A32/translate/translate.h"
+#include "frontend/imm.h"
 
 namespace Dynarmic::A32 {
 
@@ -18,7 +18,8 @@ enum class Exception;
 struct ArmTranslatorVisitor final : public A32TranslatorVisitor {
     using instruction_return_type = bool;
 
-    explicit ArmTranslatorVisitor(IR::Block& block, LocationDescriptor descriptor, const TranslationOptions& options) : A32TranslatorVisitor(block, descriptor, options) {
+    explicit ArmTranslatorVisitor(IR::Block& block, LocationDescriptor descriptor, const TranslationOptions& options)
+            : A32TranslatorVisitor(block, descriptor, options) {
         ASSERT_MSG(!descriptor.TFlag(), "The processor must be in Arm mode");
     }
 
@@ -420,8 +421,7 @@ struct ArmTranslatorVisitor final : public A32TranslatorVisitor {
     bool vfp_VLDM_a2(Cond cond, bool p, bool u, bool D, bool w, Reg n, size_t Vd, Imm<8> imm8);
 
     // Advanced SIMD one register, modified immediate
-    bool asimd_VMOV_imm(Imm<1> a, bool D, Imm<1> b, Imm<1> c, Imm<1> d, size_t Vd,
-                        Imm<4> cmode, bool Q, bool op, Imm<1> e, Imm<1> f, Imm<1> g, Imm<1> h);
+    bool asimd_VMOV_imm(Imm<1> a, bool D, Imm<1> b, Imm<1> c, Imm<1> d, size_t Vd, Imm<4> cmode, bool Q, bool op, Imm<1> e, Imm<1> f, Imm<1> g, Imm<1> h);
 
     // Advanced SIMD three register with same length
     bool asimd_VHADD(bool U, bool D, size_t sz, size_t Vn, size_t Vd, bool N, bool Q, bool M, size_t Vm);
@@ -557,4 +557,4 @@ struct ArmTranslatorVisitor final : public A32TranslatorVisitor {
     bool v8_VLD_single(bool D, Reg n, size_t Vd, size_t sz, size_t nn, size_t index_align, Reg m);
 };
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

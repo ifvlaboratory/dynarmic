@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: 0BSD
  */
 
-#include "common/common_types.h"
 #include "common/u128.h"
+
+#include "common/common_types.h"
 
 namespace Dynarmic {
 
@@ -138,4 +139,4 @@ u128 StickyLogicalShiftRight(u128 operand, int amount) {
     return {};
 }
 
-} // namespace Dynarmic
+}  // namespace Dynarmic

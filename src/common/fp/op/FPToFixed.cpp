@@ -3,13 +3,14 @@
  * SPDX-License-Identifier: 0BSD
  */
 
+#include "common/fp/op/FPToFixed.h"
+
 #include "common/assert.h"
 #include "common/bit_util.h"
 #include "common/common_types.h"
 #include "common/fp/fpcr.h"
 #include "common/fp/fpsr.h"
 #include "common/fp/mantissa_util.h"
-#include "common/fp/op/FPToFixed.h"
 #include "common/fp/process_exception.h"
 #include "common/fp/rounding_mode.h"
 #include "common/fp/unpacked.h"
@@ -98,4 +99,4 @@ template u64 FPToFixed<u16>(size_t ibits, u16 op, size_t fbits, bool unsigned_, 
 template u64 FPToFixed<u32>(size_t ibits, u32 op, size_t fbits, bool unsigned_, FPCR fpcr, RoundingMode rounding, FPSR& fpsr);
 template u64 FPToFixed<u64>(size_t ibits, u64 op, size_t fbits, bool unsigned_, FPCR fpcr, RoundingMode rounding, FPSR& fpsr);
 
-} // namespace Dynarmic::FP
+}  // namespace Dynarmic::FP

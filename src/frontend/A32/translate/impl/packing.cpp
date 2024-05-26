@@ -37,4 +37,4 @@ bool ArmTranslatorVisitor::arm_PKHTB(Cond cond, Reg n, Reg d, Imm<5> imm5, Reg m
     return true;
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

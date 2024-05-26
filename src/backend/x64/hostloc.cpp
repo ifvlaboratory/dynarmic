@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: 0BSD
  */
 
-#include <xbyak.h>
-
 #include "backend/x64/hostloc.h"
+
+#include <xbyak.h>
 
 namespace Dynarmic::Backend::X64 {
 
@@ -19,4 +19,4 @@ Xbyak::Xmm HostLocToXmm(HostLoc loc) {
     return Xbyak::Xmm(static_cast<int>(loc) - static_cast<int>(HostLoc::XMM0));
 }
 
-} // namespace Dynarmic::Backend::X64
+}  // namespace Dynarmic::Backend::X64

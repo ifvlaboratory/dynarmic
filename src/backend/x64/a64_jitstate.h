@@ -18,8 +18,8 @@ namespace Dynarmic::Backend::X64 {
 class BlockOfCode;
 
 #ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable:4324) // Structure was padded due to alignment specifier
+#    pragma warning(push)
+#    pragma warning(disable : 4324)  // Structure was padded due to alignment specifier
 #endif
 
 struct A64JitState {
@@ -40,10 +40,10 @@ struct A64JitState {
         cpsr_nzcv = NZCV::ToX64(new_pstate);
     }
 
-    alignas(16) std::array<u64, 64> vec{}; // Extension registers.
+    alignas(16) std::array<u64, 64> vec{};  // Extension registers.
 
     static constexpr size_t SpillCount = 64;
-    alignas(16) std::array<std::array<u64, 2>, SpillCount> spill{}; // Spill.
+    alignas(16) std::array<std::array<u64, 2>, SpillCount> spill{};  // Spill.
     static Xbyak::Address GetSpillLocationFromIndex(size_t i) {
         using namespace Xbyak::util;
         return xword[r15 + offsetof(A64JitState, spill) + i * sizeof(u64) * 2];
@@ -62,7 +62,7 @@ struct A64JitState {
     static constexpr u64 RESERVATION_GRANULE_MASK = 0xFFFF'FFFF'FFFF'FFF0ull;
     u8 exclusive_state = 0;
 
-    static constexpr size_t RSBSize = 8; // MUST be a power of 2.
+    static constexpr size_t RSBSize = 8;  // MUST be a power of 2.
     static constexpr size_t RSBPtrMask = RSBSize - 1;
     u32 rsb_ptr = 0;
     std::array<u64, RSBSize> rsb_location_descriptors;
@@ -88,9 +88,9 @@ struct A64JitState {
 };
 
 #ifdef _MSC_VER
-#pragma warning(pop)
+#    pragma warning(pop)
 #endif
 
 using CodePtr = const void*;
 
-} // namespace Dynarmic::Backend::X64
+}  // namespace Dynarmic::Backend::X64

@@ -10,10 +10,9 @@
 #include <set>
 #include <tuple>
 
-#include <tsl/robin_map.h>
-
 #include <dynarmic/A32/a32.h>
 #include <dynarmic/A32/config.h>
+#include <tsl/robin_map.h>
 
 #include "backend/x64/a32_jitstate.h"
 #include "backend/x64/block_range_information.h"
@@ -75,8 +74,8 @@ protected:
     std::array<FastDispatchEntry, fast_dispatch_table_size> fast_dispatch_table;
     void ClearFastDispatchTable();
 
-    std::map<std::tuple<size_t, int, int>, void(*)()> read_fallbacks;
-    std::map<std::tuple<size_t, int, int>, void(*)()> write_fallbacks;
+    std::map<std::tuple<size_t, int, int>, void (*)()> read_fallbacks;
+    std::map<std::tuple<size_t, int, int>, void (*)()> write_fallbacks;
     void GenFastmemFallbacks();
 
     const void* terminal_handler_pop_rsb_hint;
@@ -137,4 +136,4 @@ protected:
     void EmitPatchMovRcx(CodePtr target_code_ptr = nullptr) override;
 };
 
-} // namespace Dynarmic::Backend::X64
+}  // namespace Dynarmic::Backend::X64

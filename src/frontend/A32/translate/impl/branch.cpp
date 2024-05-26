@@ -4,7 +4,6 @@
  */
 
 #include "common/bit_util.h"
-
 #include "frontend/A32/translate/impl/translate_arm.h"
 
 namespace Dynarmic::A32 {
@@ -85,4 +84,4 @@ bool ArmTranslatorVisitor::arm_BXJ(Cond cond, Reg m) {
     return arm_BX(cond, m);
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

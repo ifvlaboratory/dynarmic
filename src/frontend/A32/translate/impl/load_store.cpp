@@ -218,7 +218,7 @@ bool ArmTranslatorVisitor::arm_LDRD_lit(Cond cond, bool U, Reg t, Imm<4> imm8a, 
         return UnpredictableInstruction();
     }
 
-    if (t+1 == Reg::PC) {
+    if (t + 1 == Reg::PC) {
         return UnpredictableInstruction();
     }
 
@@ -226,7 +226,7 @@ bool ArmTranslatorVisitor::arm_LDRD_lit(Cond cond, bool U, Reg t, Imm<4> imm8a, 
         return true;
     }
 
-    const Reg t2 = t+1;
+    const Reg t2 = t + 1;
     const u32 imm32 = concatenate(imm8a, imm8b).ZeroExtend();
     const bool add = U;
 
@@ -255,11 +255,11 @@ bool ArmTranslatorVisitor::arm_LDRD_imm(Cond cond, bool P, bool U, bool W, Reg n
         return UnpredictableInstruction();
     }
 
-    if ((!P || W) && (n == t || n == t+1)) {
+    if ((!P || W) && (n == t || n == t + 1)) {
         return UnpredictableInstruction();
     }
 
-    if (t+1 == Reg::PC) {
+    if (t + 1 == Reg::PC) {
         return UnpredictableInstruction();
     }
 
@@ -267,7 +267,7 @@ bool ArmTranslatorVisitor::arm_LDRD_imm(Cond cond, bool P, bool U, bool W, Reg n
         return true;
     }
 
-    const Reg t2 = t+1;
+    const Reg t2 = t + 1;
     const u32 imm32 = concatenate(imm8a, imm8b).ZeroExtend();
 
     const auto offset = ir.Imm32(imm32);
@@ -292,11 +292,11 @@ bool ArmTranslatorVisitor::arm_LDRD_reg(Cond cond, bool P, bool U, bool W, Reg n
         return UnpredictableInstruction();
     }
 
-    if (t+1 == Reg::PC || m == Reg::PC || m == t || m == t+1) {
+    if (t + 1 == Reg::PC || m == Reg::PC || m == t || m == t + 1) {
         return UnpredictableInstruction();
     }
 
-    if ((!P || W) && (n == Reg::PC || n == t || n == t+1)) {
+    if ((!P || W) && (n == Reg::PC || n == t || n == t + 1)) {
         return UnpredictableInstruction();
     }
 
@@ -304,7 +304,7 @@ bool ArmTranslatorVisitor::arm_LDRD_reg(Cond cond, bool P, bool U, bool W, Reg n
         return true;
     }
 
-    const Reg t2 = t+1;
+    const Reg t2 = t + 1;
     const auto offset = ir.GetRegister(m);
     const auto address_a = GetAddress(ir, P, U, W, n, offset);
     const auto address_b = ir.Add(address_a, ir.Imm32(4));
@@ -881,4 +881,4 @@ bool ArmTranslatorVisitor::arm_STM_usr() {
     return InterpretThisInstruction();
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

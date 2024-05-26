@@ -18,19 +18,13 @@ class DynarmicCP15 final : public Dynarmic::A32::Coprocessor {
 public:
     using CoprocReg = Dynarmic::A32::CoprocReg;
 
-    std::optional<Callback> CompileInternalOperation(bool two, unsigned opc1, CoprocReg CRd,
-                                                     CoprocReg CRn, CoprocReg CRm,
-                                                     unsigned opc2) override;
-    CallbackOrAccessOneWord CompileSendOneWord(bool two, unsigned opc1, CoprocReg CRn,
-                                               CoprocReg CRm, unsigned opc2) override;
+    std::optional<Callback> CompileInternalOperation(bool two, unsigned opc1, CoprocReg CRd, CoprocReg CRn, CoprocReg CRm, unsigned opc2) override;
+    CallbackOrAccessOneWord CompileSendOneWord(bool two, unsigned opc1, CoprocReg CRn, CoprocReg CRm, unsigned opc2) override;
     CallbackOrAccessTwoWords CompileSendTwoWords(bool two, unsigned opc, CoprocReg CRm) override;
-    CallbackOrAccessOneWord CompileGetOneWord(bool two, unsigned opc1, CoprocReg CRn, CoprocReg CRm,
-                                              unsigned opc2) override;
+    CallbackOrAccessOneWord CompileGetOneWord(bool two, unsigned opc1, CoprocReg CRn, CoprocReg CRm, unsigned opc2) override;
     CallbackOrAccessTwoWords CompileGetTwoWords(bool two, unsigned opc, CoprocReg CRm) override;
-    std::optional<Callback> CompileLoadWords(bool two, bool long_transfer, CoprocReg CRd,
-                                             std::optional<u8> option) override;
-    std::optional<Callback> CompileStoreWords(bool two, bool long_transfer, CoprocReg CRd,
-                                              std::optional<u8> option) override;
+    std::optional<Callback> CompileLoadWords(bool two, bool long_transfer, CoprocReg CRd, std::optional<u8> option) override;
+    std::optional<Callback> CompileStoreWords(bool two, bool long_transfer, CoprocReg CRd, std::optional<u8> option) override;
 
     u32 uprw = 0;
     u32 uro = 0;

@@ -25,7 +25,7 @@ namespace Dynarmic::Backend::X64 {
 
 using namespace Xbyak::util;
 
-template <typename Function>
+template<typename Function>
 static void EmitVectorOperation(BlockOfCode& code, EmitContext& ctx, IR::Inst* inst, Function fn) {
     auto args = ctx.reg_alloc.GetArgumentInfo(inst);
 
@@ -37,7 +37,7 @@ static void EmitVectorOperation(BlockOfCode& code, EmitContext& ctx, IR::Inst* i
     ctx.reg_alloc.DefineValue(inst, xmm_a);
 }
 
-template <typename Function>
+template<typename Function>
 static void EmitAVXVectorOperation(BlockOfCode& code, EmitContext& ctx, IR::Inst* inst, Function fn) {
     auto args = ctx.reg_alloc.GetArgumentInfo(inst);
 
@@ -49,7 +49,7 @@ static void EmitAVXVectorOperation(BlockOfCode& code, EmitContext& ctx, IR::Inst
     ctx.reg_alloc.DefineValue(inst, xmm_a);
 }
 
-template <typename Lambda>
+template<typename Lambda>
 static void EmitOneArgumentFallback(BlockOfCode& code, EmitContext& ctx, IR::Inst* inst, Lambda lambda) {
     const auto fn = static_cast<mp::equivalent_function_type<Lambda>*>(lambda);
     constexpr u32 stack_space = 2 * 16;
@@ -72,7 +72,7 @@ static void EmitOneArgumentFallback(BlockOfCode& code, EmitContext& ctx, IR::Ins
     ctx.reg_alloc.DefineValue(inst, result);
 }
 
-template <typename Lambda>
+template<typename Lambda>
 static void EmitOneArgumentFallbackWithSaturation(BlockOfCode& code, EmitContext& ctx, IR::Inst* inst, Lambda lambda) {
     const auto fn = static_cast<mp::equivalent_function_type<Lambda>*>(lambda);
     constexpr u32 stack_space = 2 * 16;
@@ -97,7 +97,7 @@ static void EmitOneArgumentFallbackWithSaturation(BlockOfCode& code, EmitContext
     ctx.reg_alloc.DefineValue(inst, result);
 }
 
-template <typename Lambda>
+template<typename Lambda>
 static void EmitTwoArgumentFallbackWithSaturation(BlockOfCode& code, EmitContext& ctx, IR::Inst* inst, Lambda lambda) {
     const auto fn = static_cast<mp::equivalent_function_type<Lambda>*>(lambda);
     constexpr u32 stack_space = 3 * 16;
@@ -125,7 +125,7 @@ static void EmitTwoArgumentFallbackWithSaturation(BlockOfCode& code, EmitContext
     ctx.reg_alloc.DefineValue(inst, result);
 }
 
-template <typename Lambda>
+template<typename Lambda>
 static void EmitTwoArgumentFallback(BlockOfCode& code, EmitContext& ctx, IR::Inst* inst, Lambda lambda) {
     const auto fn = static_cast<mp::equivalent_function_type<Lambda>*>(lambda);
     constexpr u32 stack_space = 3 * 16;
@@ -168,7 +168,7 @@ void EmitX64::EmitVectorGetElement8(EmitContext& ctx, IR::Inst* inst) {
         if (index % 2 == 1) {
             code.shr(dest, 8);
         } else {
-            code.and_(dest, 0xFF); // TODO: Remove when zext handling is corrected
+            code.and_(dest, 0xFF);  // TODO: Remove when zext handling is corrected
         }
     }
 
@@ -513,7 +513,7 @@ void EmitX64::EmitVectorArithmeticShiftRight64(EmitContext& ctx, IR::Inst* inst)
     ctx.reg_alloc.DefineValue(inst, result);
 }
 
-template <typename T>
+template<typename T>
 static constexpr T VShift(T x, T y) {
     const s8 shift_amount = static_cast<s8>(static_cast<u8>(y));
     const s64 bit_size = static_cast<s64>(Common::BitSize<T>());
@@ -740,7 +740,7 @@ void EmitX64::EmitVectorBroadcast64(EmitContext& ctx, IR::Inst* inst) {
     ctx.reg_alloc.DefineValue(inst, a);
 }
 
-template <typename T>
+template<typename T>
 static void EmitVectorCountLeadingZeros(VectorArray<T>& result, const VectorArray<T>& data) {
     for (size_t i = 0; i < result.size(); i++) {
         T element = data[i];
@@ -1873,7 +1873,7 @@ void EmitX64::EmitVectorMinS64(EmitContext& ctx, IR::Inst* inst) {
         return;
     }
 
-    EmitTwoArgumentFallback(code, ctx, inst, [](VectorArray<s64>& result, const VectorArray<s64>& a, const VectorArray<s64>& b){
+    EmitTwoArgumentFallback(code, ctx, inst, [](VectorArray<s64>& result, const VectorArray<s64>& a, const VectorArray<s64>& b) {
         std::transform(a.begin(), a.end(), b.begin(), result.begin(), [](auto x, auto y) { return std::min(x, y); });
     });
 }
@@ -1953,7 +1953,7 @@ void EmitX64::EmitVectorMinU64(EmitContext& ctx, IR::Inst* inst) {
         return;
     }
 
-    EmitTwoArgumentFallback(code, ctx, inst, [](VectorArray<u64>& result, const VectorArray<u64>& a, const VectorArray<u64>& b){
+    EmitTwoArgumentFallback(code, ctx, inst, [](VectorArray<u64>& result, const VectorArray<u64>& a, const VectorArray<u64>& b) {
         std::transform(a.begin(), a.end(), b.begin(), result.begin(), [](auto x, auto y) { return std::min(x, y); });
     });
 }
@@ -2164,7 +2164,7 @@ void EmitX64::EmitVectorPairedAddLower16(EmitContext& ctx, IR::Inst* inst) {
         code.paddd(xmm_a, tmp);
         code.pxor(tmp, tmp);
         code.psrad(xmm_a, 16);
-        code.packssdw(xmm_a, tmp); // Note: packusdw is SSE4.1, hence the arithmetic shift above.
+        code.packssdw(xmm_a, tmp);  // Note: packusdw is SSE4.1, hence the arithmetic shift above.
     }
 
     ctx.reg_alloc.DefineValue(inst, xmm_a);
@@ -2393,7 +2393,7 @@ void EmitX64::EmitVectorPairedAddUnsignedWiden32(EmitContext& ctx, IR::Inst* ins
     ctx.reg_alloc.DefineValue(inst, a);
 }
 
-template <typename T, typename Function>
+template<typename T, typename Function>
 static void PairedOperation(VectorArray<T>& result, const VectorArray<T>& x, const VectorArray<T>& y, Function fn) {
     const size_t range = x.size() / 2;
 
@@ -2406,12 +2406,12 @@ static void PairedOperation(VectorArray<T>& result, const VectorArray<T>& x, con
     }
 }
 
-template <typename T>
+template<typename T>
 static void PairedMax(VectorArray<T>& result, const VectorArray<T>& x, const VectorArray<T>& y) {
     PairedOperation(result, x, y, [](auto a, auto b) { return std::max(a, b); });
 }
 
-template <typename T>
+template<typename T>
 static void PairedMin(VectorArray<T>& result, const VectorArray<T>& x, const VectorArray<T>& y) {
     PairedOperation(result, x, y, [](auto a, auto b) { return std::min(a, b); });
 }
@@ -2586,7 +2586,7 @@ void EmitX64::EmitVectorPairedMinU32(EmitContext& ctx, IR::Inst* inst) {
     }
 }
 
-template <typename D, typename T>
+template<typename D, typename T>
 static D PolynomialMultiply(T lhs, T rhs) {
     constexpr size_t bit_size = Common::BitSize<T>();
     const std::bitset<bit_size> operand(lhs);
@@ -2742,8 +2742,8 @@ void EmitX64::EmitVectorPopulationCount(EmitContext& ctx, IR::Inst* inst) {
         code.movdqa(high_a, low_a);
         code.psrlw(high_a, 4);
         code.movdqa(tmp1, code.MConst(xword, 0x0F0F0F0F0F0F0F0F, 0x0F0F0F0F0F0F0F0F));
-        code.pand(high_a, tmp1); // High nibbles
-        code.pand(low_a, tmp1); // Low nibbles
+        code.pand(high_a, tmp1);  // High nibbles
+        code.pand(low_a, tmp1);   // Low nibbles
 
         code.movdqa(tmp1, code.MConst(xword, 0x0302020102010100, 0x0403030203020201));
         code.movdqa(tmp2, tmp1);
@@ -2914,7 +2914,7 @@ void EmitX64::EmitVectorRoundingHalvingAddU32(EmitContext& ctx, IR::Inst* inst) 
     EmitVectorRoundingHalvingAddUnsigned(32, ctx, inst, code);
 }
 
-template <typename T, typename U>
+template<typename T, typename U>
 static void RoundingShiftLeft(VectorArray<T>& out, const VectorArray<T>& lhs, const VectorArray<U>& rhs) {
     using signed_type = std::make_signed_t<T>;
     using unsigned_type = std::make_unsigned_t<T>;
@@ -2931,8 +2931,7 @@ static void RoundingShiftLeft(VectorArray<T>& out, const VectorArray<T>& lhs, co
                 out[i] = static_cast<T>(static_cast<unsigned_type>(lhs[i]) << extended_shift);
             }
         } else {
-            if ((std::is_unsigned_v<T> && extended_shift < -bit_size) ||
-                (std::is_signed_v<T> && extended_shift <= -bit_size)) {
+            if ((std::is_unsigned_v<T> && extended_shift < -bit_size) || (std::is_signed_v<T> && extended_shift <= -bit_size)) {
                 out[i] = 0;
             } else {
                 const s64 shift_value = -extended_shift - 1;
@@ -3333,7 +3332,6 @@ static void EmitVectorSignedSaturatedAbs(size_t esize, BlockOfCode& code, EmitCo
 
     ctx.reg_alloc.DefineValue(inst, data);
 }
-
 
 void EmitX64::EmitVectorSignedSaturatedAbs8(EmitContext& ctx, IR::Inst* inst) {
     EmitVectorSignedSaturatedAbs(8, code, ctx, inst);
@@ -3853,7 +3851,7 @@ static void EmitVectorSignedSaturatedNarrowToUnsigned(size_t original_esize, Blo
         break;
     case 32:
         ASSERT(code.HasSSE41());
-        code.packusdw(dest, dest); // SSE4.1
+        code.packusdw(dest, dest);  // SSE4.1
         code.movdqa(reconstructed, dest);
         code.punpcklwd(reconstructed, zero);
         break;
@@ -4008,10 +4006,10 @@ void EmitX64::EmitVectorSignedSaturatedNeg64(EmitContext& ctx, IR::Inst* inst) {
 // MSVC requires the capture within the saturate lambda, but it's
 // determined to be unnecessary via clang and GCC.
 #ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-lambda-capture"
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wunused-lambda-capture"
 #endif
-template <typename T, typename U = std::make_unsigned_t<T>>
+template<typename T, typename U = std::make_unsigned_t<T>>
 static bool VectorSignedSaturatedShiftLeft(VectorArray<T>& dst, const VectorArray<T>& data, const VectorArray<T>& shift_values) {
     static_assert(std::is_signed_v<T>, "T must be signed.");
 
@@ -4050,7 +4048,7 @@ static bool VectorSignedSaturatedShiftLeft(VectorArray<T>& dst, const VectorArra
     return qc_flag;
 }
 #ifdef __clang__
-#pragma clang diagnostic pop
+#    pragma clang diagnostic pop
 #endif
 
 void EmitX64::EmitVectorSignedSaturatedShiftLeft8(EmitContext& ctx, IR::Inst* inst) {
@@ -4069,7 +4067,7 @@ void EmitX64::EmitVectorSignedSaturatedShiftLeft64(EmitContext& ctx, IR::Inst* i
     EmitTwoArgumentFallbackWithSaturation(code, ctx, inst, VectorSignedSaturatedShiftLeft<s64>);
 }
 
-template <typename T, typename U = std::make_unsigned_t<T>>
+template<typename T, typename U = std::make_unsigned_t<T>>
 static bool VectorSignedSaturatedShiftLeftUnsigned(VectorArray<T>& dst, const VectorArray<T>& data, const VectorArray<T>& shift_values) {
     static_assert(std::is_signed_v<T>, "T must be signed.");
 
@@ -4150,7 +4148,7 @@ void EmitX64::EmitVectorTableLookup64(EmitContext& ctx, IR::Inst* inst) {
     auto args = ctx.reg_alloc.GetArgumentInfo(inst);
     auto table = ctx.reg_alloc.GetArgumentInfo(inst->GetArg(1).GetInst());
 
-    const size_t table_size = std::count_if(table.begin(), table.end(), [](const auto& elem){ return !elem.IsVoid(); });
+    const size_t table_size = std::count_if(table.begin(), table.end(), [](const auto& elem) { return !elem.IsVoid(); });
     const bool is_defaults_zero = inst->GetArg(0).IsZero();
 
     // TODO: AVX512VL implementation when available (VPERMB / VPERMI2B / VPERMT2B)
@@ -4302,8 +4300,7 @@ void EmitX64::EmitVectorTableLookup64(EmitContext& ctx, IR::Inst* inst) {
                     result[i] = table[index][elem];
                 }
             }
-        }
-    );
+        });
 
     code.movq(result, qword[rsp + ABI_SHADOW_SPACE + 4 * 8]);
     code.add(rsp, stack_space + ABI_SHADOW_SPACE);
@@ -4317,7 +4314,7 @@ void EmitX64::EmitVectorTableLookup128(EmitContext& ctx, IR::Inst* inst) {
     auto args = ctx.reg_alloc.GetArgumentInfo(inst);
     auto table = ctx.reg_alloc.GetArgumentInfo(inst->GetArg(1).GetInst());
 
-    const size_t table_size = std::count_if(table.begin(), table.end(), [](const auto& elem){ return !elem.IsVoid(); });
+    const size_t table_size = std::count_if(table.begin(), table.end(), [](const auto& elem) { return !elem.IsVoid(); });
     const bool is_defaults_zero = !inst->GetArg(0).IsImmediate() && inst->GetArg(0).GetInst()->GetOpcode() == IR::Opcode::ZeroVector;
 
     // TODO: AVX512VL implementation when available (VPERMB / VPERMI2B / VPERMT2B)
@@ -4432,8 +4429,7 @@ void EmitX64::EmitVectorTableLookup128(EmitContext& ctx, IR::Inst* inst) {
                     result[i] = table[index][elem];
                 }
             }
-        }
-    );
+        });
 
     code.movaps(result, xword[rsp + ABI_SHADOW_SPACE + (table_size + 0) * 16]);
     code.add(rsp, stack_space + ABI_SHADOW_SPACE);
@@ -4716,7 +4712,7 @@ void EmitX64::EmitVectorUnsignedRecipSqrtEstimate(EmitContext& ctx, IR::Inst* in
 
 // Simple generic case for 8, 16, and 32-bit values. 64-bit values
 // will need to be special-cased as we can't simply use a larger integral size.
-template <typename T, typename U = std::make_unsigned_t<T>>
+template<typename T, typename U = std::make_unsigned_t<T>>
 static bool EmitVectorUnsignedSaturatedAccumulateSigned(VectorArray<U>& result, const VectorArray<T>& lhs, const VectorArray<T>& rhs) {
     static_assert(std::is_signed_v<T>, "T must be signed.");
     static_assert(Common::BitSize<T>() < 64, "T must be less than 64 bits in size.");
@@ -4817,7 +4813,7 @@ void EmitX64::EmitVectorUnsignedSaturatedNarrow64(EmitContext& ctx, IR::Inst* in
     });
 }
 
-template <typename T, typename S = std::make_signed_t<T>>
+template<typename T, typename S = std::make_signed_t<T>>
 static bool VectorUnsignedSaturatedShiftLeft(VectorArray<T>& dst, const VectorArray<T>& data, const VectorArray<T>& shift_values) {
     static_assert(std::is_unsigned_v<T>, "T must be an unsigned type.");
 
@@ -4921,7 +4917,7 @@ void EmitX64::EmitVectorZeroUpper(EmitContext& ctx, IR::Inst* inst) {
     auto args = ctx.reg_alloc.GetArgumentInfo(inst);
     const Xbyak::Xmm a = ctx.reg_alloc.UseScratchXmm(args[0]);
 
-    code.movq(a, a); // TODO: !IsLastUse
+    code.movq(a, a);  // TODO: !IsLastUse
 
     ctx.reg_alloc.DefineValue(inst, a);
 }
@@ -4932,4 +4928,4 @@ void EmitX64::EmitZeroVector(EmitContext& ctx, IR::Inst* inst) {
     ctx.reg_alloc.DefineValue(inst, a);
 }
 
-} // namespace Dynarmic::Backend::X64
+}  // namespace Dynarmic::Backend::X64

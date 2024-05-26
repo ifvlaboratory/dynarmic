@@ -75,4 +75,4 @@ void A32ConstantMemoryReads(IR::Block& block, A32::UserCallbacks* cb) {
     }
 }
 
-} // namespace Dynarmic::Optimization
+}  // namespace Dynarmic::Optimization

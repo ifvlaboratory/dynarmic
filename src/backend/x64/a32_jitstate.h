@@ -16,8 +16,8 @@ namespace Dynarmic::Backend::X64 {
 class BlockOfCode;
 
 #ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable:4324) // Structure was padded due to alignment specifier
+#    pragma warning(push)
+#    pragma warning(disable : 4324)  // Structure was padded due to alignment specifier
 #endif
 
 struct A32JitState {
@@ -25,7 +25,7 @@ struct A32JitState {
 
     A32JitState() { ResetRSB(); }
 
-    std::array<u32, 16> Reg{}; // Current register file.
+    std::array<u32, 16> Reg{};  // Current register file.
     // TODO: Mode-specific register sets unimplemented.
 
     u32 upper_location_descriptor = 0;
@@ -37,10 +37,10 @@ struct A32JitState {
     u32 Cpsr() const;
     void SetCpsr(u32 cpsr);
 
-    alignas(16) std::array<u32, 64> ExtReg{}; // Extension registers.
+    alignas(16) std::array<u32, 64> ExtReg{};  // Extension registers.
 
     static constexpr size_t SpillCount = 64;
-    alignas(16) std::array<std::array<u64, 2>, SpillCount> spill{}; // Spill.
+    alignas(16) std::array<std::array<u64, 2>, SpillCount> spill{};  // Spill.
     static Xbyak::Address GetSpillLocationFromIndex(size_t i) {
         using namespace Xbyak::util;
         return xword[r15 + offsetof(A32JitState, spill) + i * sizeof(u64) * 2];
@@ -58,7 +58,7 @@ struct A32JitState {
     // Exclusive state
     u32 exclusive_state = 0;
 
-    static constexpr size_t RSBSize = 8; // MUST be a power of 2.
+    static constexpr size_t RSBSize = 8;  // MUST be a power of 2.
     static constexpr size_t RSBPtrMask = RSBSize - 1;
     u32 rsb_ptr = 0;
     std::array<u64, RSBSize> rsb_location_descriptors;
@@ -66,7 +66,7 @@ struct A32JitState {
     void ResetRSB();
 
     u32 fpsr_exc = 0;
-    u32 fpsr_qc = 0; // Dummy value
+    u32 fpsr_qc = 0;  // Dummy value
     u32 fpsr_nzcv = 0;
     u32 Fpscr() const;
     void SetFpscr(u32 FPSCR);
@@ -102,9 +102,9 @@ struct A32JitState {
 };
 
 #ifdef _MSC_VER
-#pragma warning(pop)
+#    pragma warning(pop)
 #endif
 
 using CodePtr = const void*;
 
-} // namespace Dynarmic::Backend::X64
+}  // namespace Dynarmic::Backend::X64

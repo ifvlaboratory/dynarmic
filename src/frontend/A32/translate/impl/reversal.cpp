@@ -86,4 +86,4 @@ bool ArmTranslatorVisitor::arm_REVSH(Cond cond, Reg d, Reg m) {
     return true;
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

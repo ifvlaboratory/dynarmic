@@ -10,10 +10,10 @@
 
 #include "common/bit_util.h"
 #include "common/string_util.h"
-#include "frontend/imm.h"
 #include "frontend/A32/decoder/thumb16.h"
 #include "frontend/A32/disassembler/disassembler.h"
 #include "frontend/A32/types.h"
+#include "frontend/imm.h"
 
 namespace Dynarmic::A32 {
 
@@ -290,9 +290,8 @@ public:
         out += ' ';
         out += A32::CondToString(static_cast<Cond>(firstcond.ZeroExtend()));
         return out;
-   }
+    }
 
-    
     std::string thumb16_SXTH(Reg m, Reg d) {
         return fmt::format("sxth {}, {}", d, m);
     }
@@ -310,12 +309,14 @@ public:
     }
 
     std::string thumb16_PUSH(bool M, RegList reg_list) {
-        if (M) reg_list |= 1U << 14U;
+        if (M)
+            reg_list |= 1U << 14U;
         return fmt::format("push {{{}}}", RegListToString(reg_list));
     }
 
     std::string thumb16_POP(bool P, RegList reg_list) {
-        if (P) reg_list |= 1U << 15U;
+        if (P)
+            reg_list |= 1U << 15U;
         return fmt::format("pop {{{}}}", RegListToString(reg_list));
     }
 
@@ -397,4 +398,4 @@ std::string DisassembleThumb16(u16 instruction) {
     return !decoder ? fmt::format("UNKNOWN: {:x}", instruction) : decoder->get().call(visitor, instruction);
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

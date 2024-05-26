@@ -117,4 +117,4 @@ bool ArmTranslatorVisitor::arm_SRS() {
     return InterpretThisInstruction();
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

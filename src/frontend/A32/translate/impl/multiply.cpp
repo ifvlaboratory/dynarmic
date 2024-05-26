@@ -743,4 +743,4 @@ bool ArmTranslatorVisitor::arm_SMUSD(Cond cond, Reg d, Reg m, bool M, Reg n) {
     return true;
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

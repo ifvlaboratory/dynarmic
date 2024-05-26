@@ -22,16 +22,20 @@ class Callback {
 public:
     virtual ~Callback();
 
-    virtual void EmitCall(BlockOfCode& code, std::function<void(RegList)> fn = [](RegList){}) const = 0;
+    virtual void EmitCall(
+        BlockOfCode& code, std::function<void(RegList)> fn = [](RegList) {}) const
+        = 0;
     virtual void EmitCallWithReturnPointer(BlockOfCode& code, std::function<void(Xbyak::Reg64, RegList)> fn) const = 0;
 };
 
 class SimpleCallback final : public Callback {
 public:
-    template <typename Function>
-    SimpleCallback(Function fn) : fn(reinterpret_cast<void(*)()>(fn)) {}
+    template<typename Function>
+    SimpleCallback(Function fn)
+            : fn(reinterpret_cast<void (*)()>(fn)) {}
 
-    void EmitCall(BlockOfCode& code, std::function<void(RegList)> fn = [](RegList){}) const override;
+    void EmitCall(
+        BlockOfCode& code, std::function<void(RegList)> fn = [](RegList) {}) const override;
     void EmitCallWithReturnPointer(BlockOfCode& code, std::function<void(Xbyak::Reg64, RegList)> fn) const override;
 
 private:
@@ -40,10 +44,12 @@ private:
 
 class ArgCallback final : public Callback {
 public:
-    template <typename Function>
-    ArgCallback(Function fn, u64 arg) : fn(reinterpret_cast<void(*)()>(fn)), arg(arg) {}
+    template<typename Function>
+    ArgCallback(Function fn, u64 arg)
+            : fn(reinterpret_cast<void (*)()>(fn)), arg(arg) {}
 
-    void EmitCall(BlockOfCode& code, std::function<void(RegList)> fn = [](RegList){}) const override;
+    void EmitCall(
+        BlockOfCode& code, std::function<void(RegList)> fn = [](RegList) {}) const override;
     void EmitCallWithReturnPointer(BlockOfCode& code, std::function<void(Xbyak::Reg64, RegList)> fn) const override;
 
 private:
@@ -51,4 +57,4 @@ private:
     u64 arg;
 };
 
-} // namespace Dynarmic::Backend::X64
+}  // namespace Dynarmic::Backend::X64

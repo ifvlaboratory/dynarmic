@@ -5,7 +5,6 @@
 
 #include "common/assert.h"
 #include "common/bit_util.h"
-
 #include "frontend/A32/translate/impl/translate_arm.h"
 #include "frontend/A32/translate/impl/translate_thumb.h"
 
@@ -58,8 +57,7 @@ std::pair<size_t, size_t> ElementSizeAndShiftAmount(bool right_shift, bool L, si
     }
 }
 
-bool ShiftRight(A32TranslatorVisitor& v, bool U, bool D, size_t imm6, size_t Vd, bool L, bool Q, bool M, size_t Vm,
-                Accumulating accumulate, Rounding rounding) {
+bool ShiftRight(A32TranslatorVisitor& v, bool U, bool D, size_t imm6, size_t Vd, bool L, bool Q, bool M, size_t Vm, Accumulating accumulate, Rounding rounding) {
     if (!L && Common::Bits<3, 5>(imm6) == 0) {
         return v.DecodeError();
     }
@@ -90,8 +88,7 @@ bool ShiftRight(A32TranslatorVisitor& v, bool U, bool D, size_t imm6, size_t Vd,
     return true;
 }
 
-bool ShiftRightNarrowing(ArmTranslatorVisitor& v, bool D, size_t imm6, size_t Vd, bool M, size_t Vm,
-                         Rounding rounding, Narrowing narrowing, Signedness signedness) {
+bool ShiftRightNarrowing(ArmTranslatorVisitor& v, bool D, size_t imm6, size_t Vd, bool M, size_t Vm, Rounding rounding, Narrowing narrowing, Signedness signedness) {
     if (Common::Bits<3, 5>(imm6) == 0) {
         return v.DecodeError();
     }
@@ -139,7 +136,7 @@ bool ShiftRightNarrowing(ArmTranslatorVisitor& v, bool D, size_t imm6, size_t Vd
     v.ir.SetVector(d, result);
     return true;
 }
-} // Anonymous namespace
+}  // Anonymous namespace
 
 bool ArmTranslatorVisitor::asimd_SHR(bool U, bool D, size_t imm6, size_t Vd, bool L, bool Q, bool M, size_t Vm) {
     return ShiftRight(*this, U, D, imm6, Vd, L, Q, M, Vm,
@@ -353,4 +350,4 @@ bool ArmTranslatorVisitor::asimd_VCVT_fixed(bool U, bool D, size_t imm6, size_t 
     return true;
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

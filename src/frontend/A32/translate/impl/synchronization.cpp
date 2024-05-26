@@ -61,7 +61,7 @@ bool ArmTranslatorVisitor::arm_LDA(Cond cond, Reg n, Reg t) {
     }
 
     const auto address = ir.GetRegister(n);
-    ir.SetRegister(t, ir.ReadMemory32(address)); // AccType::Ordered
+    ir.SetRegister(t, ir.ReadMemory32(address));  // AccType::Ordered
     return true;
 }
 // LDAB<c> <Rt>, [<Rn>]
@@ -75,7 +75,7 @@ bool ArmTranslatorVisitor::arm_LDAB(Cond cond, Reg n, Reg t) {
     }
 
     const auto address = ir.GetRegister(n);
-    ir.SetRegister(t, ir.ZeroExtendToWord(ir.ReadMemory8(address))); // AccType::Ordered
+    ir.SetRegister(t, ir.ZeroExtendToWord(ir.ReadMemory8(address)));  // AccType::Ordered
     return true;
 }
 // LDAH<c> <Rt>, [<Rn>]
@@ -89,7 +89,7 @@ bool ArmTranslatorVisitor::arm_LDAH(Cond cond, Reg n, Reg t) {
     }
 
     const auto address = ir.GetRegister(n);
-    ir.SetRegister(t, ir.ZeroExtendToWord(ir.ReadMemory16(address))); // AccType::Ordered
+    ir.SetRegister(t, ir.ZeroExtendToWord(ir.ReadMemory16(address)));  // AccType::Ordered
     return true;
 }
 
@@ -104,7 +104,7 @@ bool ArmTranslatorVisitor::arm_LDAEX(Cond cond, Reg n, Reg t) {
     }
 
     const auto address = ir.GetRegister(n);
-    ir.SetRegister(t, ir.ExclusiveReadMemory32(address)); // AccType::Ordered
+    ir.SetRegister(t, ir.ExclusiveReadMemory32(address));  // AccType::Ordered
     return true;
 }
 
@@ -119,7 +119,7 @@ bool ArmTranslatorVisitor::arm_LDAEXB(Cond cond, Reg n, Reg t) {
     }
 
     const auto address = ir.GetRegister(n);
-    ir.SetRegister(t, ir.ZeroExtendByteToWord(ir.ExclusiveReadMemory8(address))); // AccType::Ordered
+    ir.SetRegister(t, ir.ZeroExtendByteToWord(ir.ExclusiveReadMemory8(address)));  // AccType::Ordered
     return true;
 }
 
@@ -134,10 +134,10 @@ bool ArmTranslatorVisitor::arm_LDAEXD(Cond cond, Reg n, Reg t) {
     }
 
     const auto address = ir.GetRegister(n);
-    const auto [lo, hi] = ir.ExclusiveReadMemory64(address); // AccType::Ordered
+    const auto [lo, hi] = ir.ExclusiveReadMemory64(address);  // AccType::Ordered
     // DO NOT SWAP hi AND lo IN BIG ENDIAN MODE, THIS IS CORRECT BEHAVIOUR
     ir.SetRegister(t, lo);
-    ir.SetRegister(t+1, hi);
+    ir.SetRegister(t + 1, hi);
     return true;
 }
 
@@ -152,7 +152,7 @@ bool ArmTranslatorVisitor::arm_LDAEXH(Cond cond, Reg n, Reg t) {
     }
 
     const auto address = ir.GetRegister(n);
-    ir.SetRegister(t, ir.ZeroExtendHalfToWord(ir.ExclusiveReadMemory16(address))); // AccType::Ordered
+    ir.SetRegister(t, ir.ZeroExtendHalfToWord(ir.ExclusiveReadMemory16(address)));  // AccType::Ordered
     return true;
 }
 
@@ -167,7 +167,7 @@ bool ArmTranslatorVisitor::arm_STL(Cond cond, Reg n, Reg t) {
     }
 
     const auto address = ir.GetRegister(n);
-    ir.WriteMemory32(address, ir.GetRegister(t)); // AccType::Ordered
+    ir.WriteMemory32(address, ir.GetRegister(t));  // AccType::Ordered
     return true;
 }
 
@@ -182,7 +182,7 @@ bool ArmTranslatorVisitor::arm_STLB(Cond cond, Reg n, Reg t) {
     }
 
     const auto address = ir.GetRegister(n);
-    ir.WriteMemory8(address, ir.LeastSignificantByte(ir.GetRegister(t))); // AccType::Ordered
+    ir.WriteMemory8(address, ir.LeastSignificantByte(ir.GetRegister(t)));  // AccType::Ordered
     return true;
 }
 
@@ -197,7 +197,7 @@ bool ArmTranslatorVisitor::arm_STLH(Cond cond, Reg n, Reg t) {
     }
 
     const auto address = ir.GetRegister(n);
-    ir.WriteMemory16(address, ir.LeastSignificantHalf(ir.GetRegister(t))); // AccType::Ordered
+    ir.WriteMemory16(address, ir.LeastSignificantHalf(ir.GetRegister(t)));  // AccType::Ordered
     return true;
 }
 
@@ -217,7 +217,7 @@ bool ArmTranslatorVisitor::arm_STLEXB(Cond cond, Reg n, Reg d, Reg t) {
 
     const auto address = ir.GetRegister(n);
     const auto value = ir.LeastSignificantByte(ir.GetRegister(t));
-    const auto passed = ir.ExclusiveWriteMemory8(address, value); // AccType::Ordered
+    const auto passed = ir.ExclusiveWriteMemory8(address, value);  // AccType::Ordered
     ir.SetRegister(d, passed);
     return true;
 }
@@ -227,7 +227,7 @@ bool ArmTranslatorVisitor::arm_STLEXD(Cond cond, Reg n, Reg d, Reg t) {
         return UnpredictableInstruction();
     }
 
-    if (d == n || d == t || d == t+1) {
+    if (d == n || d == t || d == t + 1) {
         return UnpredictableInstruction();
     }
 
@@ -239,7 +239,7 @@ bool ArmTranslatorVisitor::arm_STLEXD(Cond cond, Reg n, Reg d, Reg t) {
     const auto address = ir.GetRegister(n);
     const auto value_lo = ir.GetRegister(t);
     const auto value_hi = ir.GetRegister(t2);
-    const auto passed = ir.ExclusiveWriteMemory64(address, value_lo, value_hi); // AccType::Ordered
+    const auto passed = ir.ExclusiveWriteMemory64(address, value_lo, value_hi);  // AccType::Ordered
     ir.SetRegister(d, passed);
     return true;
 }
@@ -260,7 +260,7 @@ bool ArmTranslatorVisitor::arm_STLEXH(Cond cond, Reg n, Reg d, Reg t) {
 
     const auto address = ir.GetRegister(n);
     const auto value = ir.LeastSignificantHalf(ir.GetRegister(t));
-    const auto passed = ir.ExclusiveWriteMemory16(address, value); // AccType::Ordered
+    const auto passed = ir.ExclusiveWriteMemory16(address, value);  // AccType::Ordered
     ir.SetRegister(d, passed);
     return true;
 }
@@ -330,7 +330,7 @@ bool ArmTranslatorVisitor::arm_LDREXD(Cond cond, Reg n, Reg t) {
     const auto [lo, hi] = ir.ExclusiveReadMemory64(address);
     // DO NOT SWAP hi AND lo IN BIG ENDIAN MODE, THIS IS CORRECT BEHAVIOUR
     ir.SetRegister(t, lo);
-    ir.SetRegister(t+1, hi);
+    ir.SetRegister(t + 1, hi);
     return true;
 }
 
@@ -417,7 +417,7 @@ bool ArmTranslatorVisitor::arm_STREXD(Cond cond, Reg n, Reg d, Reg t) {
         return UnpredictableInstruction();
     }
 
-    if (d == n || d == t || d == t+1) {
+    if (d == n || d == t || d == t + 1) {
         return UnpredictableInstruction();
     }
 
@@ -478,4 +478,4 @@ bool ArmTranslatorVisitor::arm_STREXH(Cond cond, Reg n, Reg d, Reg t) {
     return true;
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

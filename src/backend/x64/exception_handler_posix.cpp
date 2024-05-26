@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: 0BSD
  */
 
-#include "backend/x64/exception_handler.h"
+#include <signal.h>
 
 #include <cstring>
 #include <functional>
@@ -11,11 +11,11 @@
 #include <mutex>
 #include <vector>
 
-#include <signal.h>
+#include "backend/x64/exception_handler.h"
 #ifdef __APPLE__
-#include <sys/ucontext.h>
+#    include <sys/ucontext.h>
 #else
-#include <ucontext.h>
+#    include <ucontext.h>
 #endif
 
 #include "backend/x64/block_of_code.h"
@@ -121,16 +121,16 @@ void SigHandler::SigAction(int sig, siginfo_t* info, void* raw_context) {
     ASSERT(sig == SIGSEGV || sig == SIGBUS);
 
 #if defined(__APPLE__)
-    #define CTX_RIP (((ucontext_t*)raw_context)->uc_mcontext->__ss.__rip)
-    #define CTX_RSP (((ucontext_t*)raw_context)->uc_mcontext->__ss.__rsp)
+#    define CTX_RIP (((ucontext_t*)raw_context)->uc_mcontext->__ss.__rip)
+#    define CTX_RSP (((ucontext_t*)raw_context)->uc_mcontext->__ss.__rsp)
 #elif defined(__linux__)
-    #define CTX_RIP (((ucontext_t*)raw_context)->uc_mcontext.gregs[REG_RIP])
-    #define CTX_RSP (((ucontext_t*)raw_context)->uc_mcontext.gregs[REG_RSP])
+#    define CTX_RIP (((ucontext_t*)raw_context)->uc_mcontext.gregs[REG_RIP])
+#    define CTX_RSP (((ucontext_t*)raw_context)->uc_mcontext.gregs[REG_RSP])
 #elif defined(__FreeBSD__)
-    #define CTX_RIP (((ucontext_t*)raw_context)->uc_mcontext.mc_rip)
-    #define CTX_RSP (((ucontext_t*)raw_context)->uc_mcontext.mc_rsp)
+#    define CTX_RIP (((ucontext_t*)raw_context)->uc_mcontext.mc_rip)
+#    define CTX_RSP (((ucontext_t*)raw_context)->uc_mcontext.mc_rsp)
 #else
-    #error "Unknown platform"
+#    error "Unknown platform"
 #endif
 
     {
@@ -154,26 +154,25 @@ void SigHandler::SigAction(int sig, siginfo_t* info, void* raw_context) {
 
     struct sigaction* retry_sa = sig == SIGSEGV ? &sig_handler.old_sa_segv : &sig_handler.old_sa_bus;
     if (retry_sa->sa_flags & SA_SIGINFO) {
-      retry_sa->sa_sigaction(sig, info, raw_context);
-      return;
+        retry_sa->sa_sigaction(sig, info, raw_context);
+        return;
     }
     if (retry_sa->sa_handler == SIG_DFL) {
-      signal(sig, SIG_DFL);
-      return;
+        signal(sig, SIG_DFL);
+        return;
     }
     if (retry_sa->sa_handler == SIG_IGN) {
-      return;
+        return;
     }
     retry_sa->sa_handler(sig);
 }
 
-} // anonymous namespace
+}  // anonymous namespace
 
 struct ExceptionHandler::Impl final {
     Impl(BlockOfCode& code)
-        : code_begin(Common::BitCast<u64>(code.getCode()))
-        , code_end(code_begin + code.GetTotalCodeSize())
-    {}
+            : code_begin(Common::BitCast<u64>(code.getCode()))
+            , code_end(code_begin + code.GetTotalCodeSize()) {}
 
     void SetCallback(std::function<FakeCall(u64)> cb) {
         CodeBlockInfo cbi;
@@ -206,4 +205,4 @@ void ExceptionHandler::SetFastmemCallback(std::function<FakeCall(u64)> cb) {
     impl->SetCallback(cb);
 }
 
-} // namespace Dynarmic::Backend::X64
+}  // namespace Dynarmic::Backend::X64

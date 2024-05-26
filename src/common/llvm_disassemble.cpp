@@ -8,8 +8,8 @@
 #include <fmt/format.h>
 
 #ifdef DYNARMIC_USE_LLVM
-#include <llvm-c/Disassembler.h>
-#include <llvm-c/Target.h>
+#    include <llvm-c/Disassembler.h>
+#    include <llvm-c/Target.h>
 #endif
 
 #include "common/assert.h"
@@ -100,4 +100,4 @@ std::string DisassembleAArch64([[maybe_unused]] u32 instruction, [[maybe_unused]
     return result;
 }
 
-} // namespace Dynarmic::Common
+}  // namespace Dynarmic::Common

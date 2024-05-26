@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: 0BSD
  */
 
+#include "backend/x64/block_of_code.h"
+
 #include <array>
 #include <cstring>
 
@@ -10,14 +12,13 @@
 
 #include "backend/x64/a32_jitstate.h"
 #include "backend/x64/abi.h"
-#include "backend/x64/block_of_code.h"
 #include "backend/x64/perf_map.h"
 #include "common/assert.h"
 
 #ifdef _WIN32
-    #include <windows.h>
+#    include <windows.h>
 #else
-    #include <sys/mman.h>
+#    include <sys/mman.h>
 #endif
 
 namespace Dynarmic::Backend::X64 {
@@ -59,27 +60,26 @@ CustomXbyakAllocator s_allocator;
 
 #ifdef DYNARMIC_ENABLE_NO_EXECUTE_SUPPORT
 void ProtectMemory(const void* base, size_t size, bool is_executable) {
-#ifdef _WIN32
+#    ifdef _WIN32
     DWORD oldProtect = 0;
     VirtualProtect(const_cast<void*>(base), size, is_executable ? PAGE_EXECUTE_READ : PAGE_READWRITE, &oldProtect);
-#else
+#    else
     static const size_t pageSize = sysconf(_SC_PAGESIZE);
     const size_t iaddr = reinterpret_cast<size_t>(base);
     const size_t roundAddr = iaddr & ~(pageSize - static_cast<size_t>(1));
     const int mode = is_executable ? (PROT_READ | PROT_EXEC) : (PROT_READ | PROT_WRITE);
     mprotect(reinterpret_cast<void*>(roundAddr), size + (iaddr - roundAddr), mode);
-#endif
+#    endif
 }
 #endif
 
-} // anonymous namespace
+}  // anonymous namespace
 
 BlockOfCode::BlockOfCode(RunCodeCallbacks cb, JitStateInfo jsi, std::function<void(BlockOfCode&)> rcp)
         : Xbyak::CodeGenerator(TOTAL_CODE_SIZE, nullptr, &s_allocator)
         , cb(std::move(cb))
         , jsi(jsi)
-        , constant_pool(*this, CONSTANT_POOL_SIZE)
-{
+        , constant_pool(*this, CONSTANT_POOL_SIZE) {
     EnableWriting();
     GenRunCode(rcp);
 }
@@ -165,7 +165,7 @@ void BlockOfCode::GenRunCode(std::function<void(BlockOfCode&)> rcp) {
     ABI_PushCalleeSaveRegistersAndAdjustStack(*this);
 
     mov(r15, ABI_PARAM1);
-    mov(rbx, ABI_PARAM2); // save temporarily in non-volatile register
+    mov(rbx, ABI_PARAM2);  // save temporarily in non-volatile register
 
     cb.GetTicksRemaining->EmitCall(*this);
     mov(qword[r15 + jsi.offsetof_cycles_to_run], ABI_RETURN);
@@ -411,4 +411,4 @@ bool BlockOfCode::DoesCpuSupport([[maybe_unused]] Xbyak::util::Cpu::Type type) c
 #endif
 }
 
-} // namespace Dynarmic::Backend::X64
+}  // namespace Dynarmic::Backend::X64

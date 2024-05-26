@@ -18,10 +18,10 @@
 
 namespace Dynarmic::A32 {
 
-template <typename Visitor>
+template<typename Visitor>
 using ThumbASIMDMatcher = Decoder::Matcher<Visitor, u32>;
 
-template <typename V>
+template<typename V>
 std::vector<ThumbASIMDMatcher<V>> GetASIMDDecodeTable() {
     std::vector<ThumbASIMDMatcher<V>> table = {
 
@@ -74,4 +74,4 @@ std::optional<std::reference_wrapper<const ThumbASIMDMatcher<V>>> DecodeThumbASI
     return iter != table.end() ? std::optional<std::reference_wrapper<const ThumbASIMDMatcher<V>>>(*iter) : std::nullopt;
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

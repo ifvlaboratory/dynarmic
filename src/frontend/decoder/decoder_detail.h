@@ -7,11 +7,11 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <tuple>
 
 #include <mp/traits/function_info.h>
 
-#include <cassert>
 #include "common/bit_util.h"
 
 namespace Dynarmic::Decoder::detail {
@@ -24,7 +24,7 @@ namespace Dynarmic::Decoder::detail {
 template<class MatcherT>
 struct detail {
 private:
-    using opcode_type  = typename MatcherT::opcode_type;
+    using opcode_type = typename MatcherT::opcode_type;
     using visitor_type = typename MatcherT::visitor_type;
 
     static constexpr size_t opcode_bitsize = Common::BitSize<opcode_type>();
@@ -93,7 +93,7 @@ private:
             }
         }
 
-        ASSERT(std::all_of(masks.begin(), masks.end(), [](auto m){ return m != 0; }));
+        ASSERT(std::all_of(masks.begin(), masks.end(), [](auto m) { return m != 0; }));
 
         return std::make_tuple(masks, shifts);
     }
@@ -107,14 +107,14 @@ private:
     struct VisitorCaller;
 
 #ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable:4800) // forcing value to bool 'true' or 'false' (performance warning)
+#    pragma warning(push)
+#    pragma warning(disable : 4800)  // forcing value to bool 'true' or 'false' (performance warning)
 #endif
-    template<typename Visitor, typename ...Args, typename CallRetT>
-    struct VisitorCaller<CallRetT(Visitor::*)(Args...)> {
-        template<size_t ...iota>
+    template<typename Visitor, typename... Args, typename CallRetT>
+    struct VisitorCaller<CallRetT (Visitor::*)(Args...)> {
+        template<size_t... iota>
         static auto Make(std::integer_sequence<size_t, iota...>,
-                         CallRetT (Visitor::* const fn)(Args...),
+                         CallRetT (Visitor::*const fn)(Args...),
                          const std::array<opcode_type, sizeof...(iota)> arg_masks,
                          const std::array<size_t, sizeof...(iota)> arg_shifts) {
             static_assert(std::is_same_v<visitor_type, Visitor>, "Member function is not from Matcher's Visitor");
@@ -127,11 +127,11 @@ private:
         }
     };
 
-    template<typename Visitor, typename ...Args, typename CallRetT>
-    struct VisitorCaller<CallRetT(Visitor::*)(Args...) const> {
-        template<size_t ...iota>
+    template<typename Visitor, typename... Args, typename CallRetT>
+    struct VisitorCaller<CallRetT (Visitor::*)(Args...) const> {
+        template<size_t... iota>
         static auto Make(std::integer_sequence<size_t, iota...>,
-                         CallRetT (Visitor::* const fn)(Args...) const,
+                         CallRetT (Visitor::*const fn)(Args...) const,
                          const std::array<opcode_type, sizeof...(iota)> arg_masks,
                          const std::array<size_t, sizeof...(iota)> arg_shifts) {
             static_assert(std::is_same_v<visitor_type, const Visitor>, "Member function is not from Matcher's Visitor");
@@ -144,7 +144,7 @@ private:
         }
     };
 #ifdef _MSC_VER
-#pragma warning(pop)
+#    pragma warning(pop)
 #endif
 
 public:
@@ -165,4 +165,4 @@ public:
     }
 };
 
-} // namespace Dynarmic::Decoder::detail
+}  // namespace Dynarmic::Decoder::detail

@@ -54,4 +54,4 @@ void A64CallbackConfigPass(IR::Block& block, const A64::UserConfig& conf) {
     }
 }
 
-} // namespace Dynarmic::Optimization
+}  // namespace Dynarmic::Optimization

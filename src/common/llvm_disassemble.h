@@ -15,4 +15,4 @@ std::string DisassembleX64(const void* pos, const void* end);
 std::string DisassembleAArch32(u32 instruction, u64 pc = 0);
 std::string DisassembleAArch64(u32 instruction, u64 pc = 0);
 
-} // namespace Dynarmic::Common
+}  // namespace Dynarmic::Common

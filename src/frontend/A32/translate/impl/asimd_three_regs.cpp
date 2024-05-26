@@ -4,7 +4,6 @@
  */
 
 #include "common/bit_util.h"
-
 #include "frontend/A32/translate/impl/translate_arm.h"
 #include "frontend/A32/translate/impl/translate_thumb.h"
 
@@ -28,7 +27,7 @@ enum class WidenBehaviour {
     Both,
 };
 
-template <bool WithDst, typename Callable>
+template<bool WithDst, typename Callable>
 bool BitwiseInstruction(A32TranslatorVisitor& v, bool D, size_t Vn, size_t Vd, bool N, bool Q, bool M, size_t Vm, Callable fn) {
     if (Q && (Common::Bit<0>(Vd) || Common::Bit<0>(Vn) || Common::Bit<0>(Vm))) {
         return v.UndefinedInstruction();
@@ -54,7 +53,7 @@ bool BitwiseInstruction(A32TranslatorVisitor& v, bool D, size_t Vn, size_t Vd, b
     return true;
 }
 
-template <typename Callable>
+template<typename Callable>
 bool FloatingPointInstruction(ArmTranslatorVisitor& v, bool D, bool sz, size_t Vn, size_t Vd, bool N, bool Q, bool M, size_t Vm, Callable fn) {
     if (Q && (Common::Bit<0>(Vd) || Common::Bit<0>(Vn) || Common::Bit<0>(Vm))) {
         return v.UndefinedInstruction();
@@ -77,8 +76,7 @@ bool FloatingPointInstruction(ArmTranslatorVisitor& v, bool D, bool sz, size_t V
     return true;
 }
 
-bool IntegerComparison(ArmTranslatorVisitor& v, bool U, bool D, size_t sz, size_t Vn, size_t Vd, bool N, bool Q, bool M, size_t Vm,
-                       Comparison comparison) {
+bool IntegerComparison(ArmTranslatorVisitor& v, bool U, bool D, size_t sz, size_t Vn, size_t Vd, bool N, bool Q, bool M, size_t Vm, Comparison comparison) {
     if (sz == 0b11) {
         return v.UndefinedInstruction();
     }
@@ -113,8 +111,7 @@ bool IntegerComparison(ArmTranslatorVisitor& v, bool U, bool D, size_t sz, size_
     return true;
 }
 
-bool FloatComparison(ArmTranslatorVisitor& v, bool D, bool sz, size_t Vn, size_t Vd, bool N, bool Q, bool M, size_t Vm,
-                     Comparison comparison) {
+bool FloatComparison(ArmTranslatorVisitor& v, bool D, bool sz, size_t Vn, size_t Vd, bool N, bool Q, bool M, size_t Vm, Comparison comparison) {
     if (sz) {
         return v.UndefinedInstruction();
     }
@@ -150,8 +147,7 @@ bool FloatComparison(ArmTranslatorVisitor& v, bool D, bool sz, size_t Vn, size_t
     return true;
 }
 
-bool AbsoluteDifference(ArmTranslatorVisitor& v, bool U, bool D, size_t sz, size_t Vn, size_t Vd, bool N, bool Q, bool M, size_t Vm,
-                        AccumulateBehavior accumulate) {
+bool AbsoluteDifference(ArmTranslatorVisitor& v, bool U, bool D, size_t sz, size_t Vn, size_t Vd, bool N, bool Q, bool M, size_t Vm, AccumulateBehavior accumulate) {
     if (sz == 0b11) {
         return v.UndefinedInstruction();
     }
@@ -183,8 +179,7 @@ bool AbsoluteDifference(ArmTranslatorVisitor& v, bool U, bool D, size_t sz, size
     return true;
 }
 
-bool AbsoluteDifferenceLong(ArmTranslatorVisitor& v, bool U, bool D, size_t sz, size_t Vn, size_t Vd, bool N, bool M, size_t Vm,
-                            AccumulateBehavior accumulate) {
+bool AbsoluteDifferenceLong(ArmTranslatorVisitor& v, bool U, bool D, size_t sz, size_t Vn, size_t Vd, bool N, bool M, size_t Vm, AccumulateBehavior accumulate) {
     if (sz == 0b11) {
         return v.DecodeError();
     }
@@ -218,7 +213,7 @@ bool AbsoluteDifferenceLong(ArmTranslatorVisitor& v, bool U, bool D, size_t sz, 
     return true;
 }
 
-template <typename Callable>
+template<typename Callable>
 bool WideInstruction(ArmTranslatorVisitor& v, bool U, bool D, size_t sz, size_t Vn, size_t Vd, bool N, bool M, size_t Vm, WidenBehaviour widen_behaviour, Callable fn) {
     const size_t esize = 8U << sz;
     const bool widen_first = widen_behaviour == WidenBehaviour::Both;
@@ -246,7 +241,7 @@ bool WideInstruction(ArmTranslatorVisitor& v, bool U, bool D, size_t sz, size_t 
     return true;
 }
 
-} // Anonymous namespace
+}  // Anonymous namespace
 
 // ASIMD Three registers of the same length
 
@@ -900,4 +895,4 @@ bool ArmTranslatorVisitor::asimd_VMULL(bool U, bool D, size_t sz, size_t Vn, siz
     return true;
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

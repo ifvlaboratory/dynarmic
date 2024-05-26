@@ -76,7 +76,7 @@ void SSAT16Helper(A32::IREmitter& ir, Reg d, Reg n, size_t saturate_to) {
 }
 
 void SBFXHelper(A32::IREmitter& ir, Reg d, Reg n, u32 lsbit, u32 width_num) {
-//    const u32 msb = lsbit + width_num;
+    //    const u32 msb = lsbit + width_num;
     constexpr size_t max_width = Common::BitSize<u32>();
     const u32 width = width_num + 1;
     const u8 left_shift_amount = static_cast<u8>(max_width - width - lsbit);
@@ -110,4 +110,4 @@ IR::U32 GetAddress(A32::IREmitter& ir, bool P, bool U, bool W, Reg n, IR::U32 of
     return address;
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32::Helper

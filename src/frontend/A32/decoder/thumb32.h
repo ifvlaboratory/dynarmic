@@ -16,10 +16,10 @@
 
 namespace Dynarmic::A32 {
 
-template <typename Visitor>
+template<typename Visitor>
 using Thumb32Matcher = Decoder::Matcher<Visitor, u32>;
 
-template <typename V>
+template<typename V>
 std::vector<Thumb32Matcher<V>> GetThumb32DecodeTable() {
     std::vector<Thumb32Matcher<V>> table = {
 
@@ -35,8 +35,8 @@ std::vector<Thumb32Matcher<V>> GetThumb32DecodeTable() {
     });
 
     // Exceptions to the above rule of thumb.
-    const std::set<std::string> comes_first {
-            "LDR (lit)",
+    const std::set<std::string> comes_first{
+        "LDR (lit)",
     };
 
     std::stable_partition(table.begin(), table.end(), [&](const auto& matcher) {
@@ -56,4 +56,4 @@ std::optional<std::reference_wrapper<const Thumb32Matcher<V>>> DecodeThumb32(u32
     return iter != table.end() ? std::optional<std::reference_wrapper<const Thumb32Matcher<V>>>(*iter) : std::nullopt;
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

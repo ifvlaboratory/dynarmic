@@ -44,4 +44,4 @@ bool ArmTranslatorVisitor::arm_UDF() {
     return UndefinedInstruction();
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

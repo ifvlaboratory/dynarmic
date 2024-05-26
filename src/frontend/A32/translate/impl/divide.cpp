@@ -10,8 +10,7 @@ namespace Dynarmic::A32 {
 namespace {
 using DivideFunction = IR::U32U64 (IREmitter::*)(const IR::U32U64&, const IR::U32U64&);
 
-bool DivideOperation(ArmTranslatorVisitor& v, Cond cond, Reg d, Reg m, Reg n,
-                     DivideFunction fn) {
+bool DivideOperation(ArmTranslatorVisitor& v, Cond cond, Reg d, Reg m, Reg n, DivideFunction fn) {
     if (d == Reg::PC || m == Reg::PC || n == Reg::PC) {
         return v.UnpredictableInstruction();
     }
@@ -27,7 +26,7 @@ bool DivideOperation(ArmTranslatorVisitor& v, Cond cond, Reg d, Reg m, Reg n,
     v.ir.SetRegister(d, result);
     return true;
 }
-} // Anonymous namespace
+}  // Anonymous namespace
 
 // SDIV<c> <Rd>, <Rn>, <Rm>
 bool ArmTranslatorVisitor::arm_SDIV(Cond cond, Reg d, Reg m, Reg n) {
@@ -61,4 +60,4 @@ bool ThumbTranslatorVisitor::thumb32_UDIV(Reg n, Reg d, Reg m) {
     return true;
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

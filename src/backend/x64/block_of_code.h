@@ -71,12 +71,12 @@ public:
     void LookupBlock();
 
     /// Code emitter: Calls the function
-    template <typename FunctionPointer>
+    template<typename FunctionPointer>
     void CallFunction(FunctionPointer fn) {
         static_assert(std::is_pointer_v<FunctionPointer> && std::is_function_v<std::remove_pointer_t<FunctionPointer>>,
                       "Supplied type must be a pointer to a function");
 
-        const u64 address  = reinterpret_cast<u64>(fn);
+        const u64 address = reinterpret_cast<u64>(fn);
         const u64 distance = address - (getCurr<u64>() + 5);
 
         if (distance >= 0x0000000080000000ULL && distance < 0xFFFFFFFF80000000ULL) {
@@ -89,7 +89,7 @@ public:
     }
 
     /// Code emitter: Calls the lambda. Lambda must not have any captures.
-    template <typename Lambda>
+    template<typename Lambda>
     void CallLambda(Lambda l) {
         CallFunction(Common::FptrCast(l));
     }
@@ -175,7 +175,7 @@ private:
     CodePtr near_code_ptr;
     CodePtr far_code_ptr;
 
-    using RunCodeFuncType = void(*)(void*, CodePtr);
+    using RunCodeFuncType = void (*)(void*, CodePtr);
     RunCodeFuncType run_code = nullptr;
     RunCodeFuncType step_code = nullptr;
     static constexpr size_t MXCSR_ALREADY_EXITED = 1 << 0;
@@ -187,4 +187,4 @@ private:
     bool DoesCpuSupport(Xbyak::util::Cpu::Type type) const;
 };
 
-} // namespace Dynarmic::Backend::X64
+}  // namespace Dynarmic::Backend::X64

@@ -3,10 +3,9 @@
  * SPDX-License-Identifier: 0BSD
  */
 
-#include "common/bit_util.h"
-
 #include <array>
 
+#include "common/bit_util.h"
 #include "frontend/A32/translate/impl/translate_arm.h"
 
 namespace Dynarmic::A32 {
@@ -72,8 +71,7 @@ enum class AccumulateBehavior {
     Accumulate,
 };
 
-bool PairedAddOperation(ArmTranslatorVisitor& v, bool D, size_t sz, size_t Vd, bool op, bool Q, bool M, size_t Vm,
-                        AccumulateBehavior accumulate) {
+bool PairedAddOperation(ArmTranslatorVisitor& v, bool D, size_t sz, size_t Vd, bool op, bool Q, bool M, size_t Vm, AccumulateBehavior accumulate) {
     if (sz == 0b11) {
         return v.UndefinedInstruction();
     }
@@ -103,7 +101,7 @@ bool PairedAddOperation(ArmTranslatorVisitor& v, bool D, size_t sz, size_t Vd, b
     return true;
 }
 
-} // Anonymous namespace
+}  // Anonymous namespace
 
 bool ArmTranslatorVisitor::asimd_VREV(bool D, size_t sz, size_t Vd, size_t op, bool Q, bool M, size_t Vm) {
     if (op + sz >= 3) {
@@ -127,11 +125,11 @@ bool ArmTranslatorVisitor::asimd_VREV(bool D, size_t sz, size_t Vd, size_t op, b
                                           ir.VectorLogicalShiftLeft(esize, reg_m, shift));
 
             switch (sz) {
-            case 0: // 8-bit elements
+            case 0:  // 8-bit elements
                 result = ir.VectorShuffleLowHalfwords(result, 0b00011011);
                 result = ir.VectorShuffleHighHalfwords(result, 0b00011011);
                 break;
-            case 1: // 16-bit elements
+            case 1:  // 16-bit elements
                 result = ir.VectorShuffleLowHalfwords(result, 0b01001110);
                 result = ir.VectorShuffleHighHalfwords(result, 0b01001110);
                 break;
@@ -534,7 +532,7 @@ bool ArmTranslatorVisitor::asimd_VZIP(bool D, size_t sz, size_t Vd, bool Q, bool
     const auto reg_d = ir.GetVector(d);
     const auto reg_m = ir.GetVector(m);
 
-    if (Q){
+    if (Q) {
         const auto result_d = ir.VectorInterleaveLower(esize, reg_d, reg_m);
         const auto result_m = ir.VectorInterleaveUpper(esize, reg_d, reg_m);
 
@@ -684,4 +682,4 @@ bool ArmTranslatorVisitor::asimd_VCVT_integer(bool D, size_t sz, size_t Vd, bool
     return true;
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

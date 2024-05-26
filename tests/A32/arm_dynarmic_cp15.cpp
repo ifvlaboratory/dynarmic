@@ -2,20 +2,22 @@
 // Licensed under GPLv2 or any later version
 // Refer to the license.txt file included.
 
-#include <fmt/format.h>
-#include "common/assert.h"
 #include "arm_dynarmic_cp15.h"
+
+#include <fmt/format.h>
+
+#include "common/assert.h"
 
 using Callback = Dynarmic::A32::Coprocessor::Callback;
 using CallbackOrAccessOneWord = Dynarmic::A32::Coprocessor::CallbackOrAccessOneWord;
 using CallbackOrAccessTwoWords = Dynarmic::A32::Coprocessor::CallbackOrAccessTwoWords;
 
-template <>
+template<>
 struct fmt::formatter<Dynarmic::A32::CoprocReg> {
     static constexpr auto parse(format_parse_context& ctx) {
         return ctx.begin();
     }
-    template <typename FormatContext>
+    template<typename FormatContext>
     auto format(const Dynarmic::A32::CoprocReg& reg, FormatContext& ctx) {
         return format_to(ctx.out(), "cp{}", static_cast<size_t>(reg));
     }
@@ -23,14 +25,11 @@ struct fmt::formatter<Dynarmic::A32::CoprocReg> {
 
 static u32 dummy_value;
 
-std::optional<Callback> DynarmicCP15::CompileInternalOperation(bool /*two*/, unsigned /*opc1*/,
-                                                               CoprocReg /*CRd*/, CoprocReg /*CRn*/,
-                                                               CoprocReg /*CRm*/, unsigned /*opc2*/) {
+std::optional<Callback> DynarmicCP15::CompileInternalOperation(bool /*two*/, unsigned /*opc1*/, CoprocReg /*CRd*/, CoprocReg /*CRn*/, CoprocReg /*CRm*/, unsigned /*opc2*/) {
     return std::nullopt;
 }
 
-CallbackOrAccessOneWord DynarmicCP15::CompileSendOneWord(bool two, unsigned opc1, CoprocReg CRn,
-                                                         CoprocReg CRm, unsigned opc2) {
+CallbackOrAccessOneWord DynarmicCP15::CompileSendOneWord(bool two, unsigned opc1, CoprocReg CRn, CoprocReg CRm, unsigned opc2) {
     if (!two && CRn == CoprocReg::C7 && opc1 == 0 && CRm == CoprocReg::C5 && opc2 == 4) {
         // CP15_FLUSH_PREFETCH_BUFFER
         // This is a dummy write, we ignore the value written here.
@@ -39,8 +38,8 @@ CallbackOrAccessOneWord DynarmicCP15::CompileSendOneWord(bool two, unsigned opc1
 
     if (!two && CRn == CoprocReg::C7 && opc1 == 0 && CRm == CoprocReg::C10) {
         switch (opc2) {
-        case 4: // CP15_DATA_SYNC_BARRIER
-        case 5: // CP15_DATA_MEMORY_BARRIER
+        case 4:  // CP15_DATA_SYNC_BARRIER
+        case 5:  // CP15_DATA_MEMORY_BARRIER
             // This is a dummy write, we ignore the value written here.
             return &dummy_value;
         default:
@@ -60,8 +59,7 @@ CallbackOrAccessTwoWords DynarmicCP15::CompileSendTwoWords(bool /*two*/, unsigne
     return {};
 }
 
-CallbackOrAccessOneWord DynarmicCP15::CompileGetOneWord(bool two, unsigned opc1, CoprocReg CRn,
-                                                        CoprocReg CRm, unsigned opc2) {
+CallbackOrAccessOneWord DynarmicCP15::CompileGetOneWord(bool two, unsigned opc1, CoprocReg CRn, CoprocReg CRm, unsigned opc2) {
     if (!two && CRn == CoprocReg::C13 && opc1 == 0 && CRm == CoprocReg::C0) {
         switch (opc2) {
         case 2:
@@ -91,12 +89,10 @@ CallbackOrAccessTwoWords DynarmicCP15::CompileGetTwoWords(bool two, unsigned opc
     return {};
 }
 
-std::optional<Callback> DynarmicCP15::CompileLoadWords(bool /*two*/, bool /*long_transfer*/, CoprocReg /*CRd*/,
-                                                       std::optional<u8> /*option*/) {
+std::optional<Callback> DynarmicCP15::CompileLoadWords(bool /*two*/, bool /*long_transfer*/, CoprocReg /*CRd*/, std::optional<u8> /*option*/) {
     return std::nullopt;
 }
 
-std::optional<Callback> DynarmicCP15::CompileStoreWords(bool /*two*/, bool /*long_transfer*/, CoprocReg /*CRd*/,
-                                                        std::optional<u8> /*option*/) {
+std::optional<Callback> DynarmicCP15::CompileStoreWords(bool /*two*/, bool /*long_transfer*/, CoprocReg /*CRd*/, std::optional<u8> /*option*/) {
     return std::nullopt;
 }

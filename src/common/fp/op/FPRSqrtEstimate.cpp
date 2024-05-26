@@ -3,11 +3,12 @@
  * SPDX-License-Identifier: 0BSD
  */
 
+#include "common/fp/op/FPRSqrtEstimate.h"
+
 #include "common/common_types.h"
 #include "common/fp/fpcr.h"
 #include "common/fp/fpsr.h"
 #include "common/fp/info.h"
-#include "common/fp/op/FPRSqrtEstimate.h"
 #include "common/fp/process_exception.h"
 #include "common/fp/process_nan.h"
 #include "common/fp/unpacked.h"
@@ -53,4 +54,4 @@ template u16 FPRSqrtEstimate<u16>(u16 op, FPCR fpcr, FPSR& fpsr);
 template u32 FPRSqrtEstimate<u32>(u32 op, FPCR fpcr, FPSR& fpsr);
 template u64 FPRSqrtEstimate<u64>(u64 op, FPCR fpcr, FPSR& fpsr);
 
-} // namespace Dynarmic::FP
+}  // namespace Dynarmic::FP

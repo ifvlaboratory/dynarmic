@@ -10,14 +10,13 @@
 #include <optional>
 #include <vector>
 
-
 #include "common/common_types.h"
 #include "frontend/decoder/decoder_detail.h"
 #include "frontend/decoder/matcher.h"
 
 namespace Dynarmic::A32 {
 
-template <typename Visitor>
+template<typename Visitor>
 using VFPMatcher = Decoder::Matcher<Visitor, u32>;
 
 template<typename V>
@@ -27,7 +26,7 @@ std::optional<std::reference_wrapper<const VFPMatcher<V>>> DecodeVFP(u32 instruc
     static const struct Tables {
         Table unconditional;
         Table conditional;
-    } tables = []{
+    } tables = [] {
         Table list = {
 
 #define INST(fn, name, bitstring) Decoder::detail::detail<VFPMatcher<V>>::GetMatcher(&V::fn, name, bitstring),
@@ -55,4 +54,4 @@ std::optional<std::reference_wrapper<const VFPMatcher<V>>> DecodeVFP(u32 instruc
     return iter != table.end() ? std::optional<std::reference_wrapper<const VFPMatcher<V>>>(*iter) : std::nullopt;
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: 0BSD
  */
 
-#include "frontend/A32/location_descriptor.h"
 #include "frontend/A32/translate/translate.h"
+
+#include "frontend/A32/location_descriptor.h"
 #include "frontend/ir/basic_block.h"
 
 namespace Dynarmic::A32 {
@@ -23,4 +24,4 @@ bool TranslateSingleInstruction(IR::Block& block, LocationDescriptor descriptor,
     return (descriptor.TFlag() ? TranslateSingleThumbInstruction : TranslateSingleArmInstruction)(block, descriptor, instruction);
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

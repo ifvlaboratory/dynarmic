@@ -7,10 +7,9 @@
 #include <memory>
 
 #include <boost/icl/interval_set.hpp>
-#include <fmt/format.h>
-
 #include <dynarmic/A32/a32.h>
 #include <dynarmic/A32/context.h>
+#include <fmt/format.h>
 
 #include "backend/x64/a32_emit_x64.h"
 #include "backend/x64/a32_jitstate.h"
@@ -55,8 +54,7 @@ struct Jit::Impl {
             : block_of_code(GenRunCodeCallbacks(conf.callbacks, &GetCurrentBlockThunk, this), JitStateInfo{jit_state}, GenRCP(conf))
             , emitter(block_of_code, conf, jit)
             , conf(std::move(conf))
-            , jit_interface(jit)
-    {}
+            , jit_interface(jit) {}
 
     A32JitState jit_state;
     BlockOfCode block_of_code;
@@ -70,7 +68,7 @@ struct Jit::Impl {
     bool invalidate_entire_cache = false;
 
     void Execute() {
-        const CodePtr current_codeptr = [this]{
+        const CodePtr current_codeptr = [this] {
             // RSB optimization
             const u32 new_rsb_ptr = (jit_state.rsb_ptr - 1) & A32JitState::RSBPtrMask;
             if (jit_state.GetUniqueHash() == jit_state.rsb_location_descriptors[new_rsb_ptr]) {
@@ -136,7 +134,7 @@ struct Jit::Impl {
 
     void RequestCacheInvalidation() {
         if (jit_interface->is_executing) {
-//            jit_state.halt_requested = true;
+            //            jit_state.halt_requested = true;
             return;
         }
 
@@ -193,14 +191,17 @@ private:
     }
 };
 
-Jit::Jit(UserConfig conf) : impl(std::make_unique<Impl>(this, std::move(conf))) {}
+Jit::Jit(UserConfig conf)
+        : impl(std::make_unique<Impl>(this, std::move(conf))) {}
 
 Jit::~Jit() = default;
 
 void Jit::Run() {
     ASSERT(!is_executing);
     is_executing = true;
-    SCOPE_EXIT { this->is_executing = false; };
+    SCOPE_EXIT {
+        this->is_executing = false;
+    };
 
     impl->jit_state.halt_requested = false;
 
@@ -212,7 +213,9 @@ void Jit::Run() {
 void Jit::Step() {
     ASSERT(!is_executing);
     is_executing = true;
-    SCOPE_EXIT { this->is_executing = false; };
+    SCOPE_EXIT {
+        this->is_executing = false;
+    };
 
     impl->jit_state.halt_requested = true;
 
@@ -295,10 +298,15 @@ struct Context::Impl {
     size_t invalid_cache_generation;
 };
 
-Context::Context() : impl(std::make_unique<Context::Impl>()) { impl->jit_state.ResetRSB(); }
+Context::Context()
+        : impl(std::make_unique<Context::Impl>()) {
+    impl->jit_state.ResetRSB();
+}
 Context::~Context() = default;
-Context::Context(const Context& ctx) : impl(std::make_unique<Context::Impl>(*ctx.impl)) {}
-Context::Context(Context&& ctx) noexcept : impl(std::move(ctx.impl)) {}
+Context::Context(const Context& ctx)
+        : impl(std::make_unique<Context::Impl>(*ctx.impl)) {}
+Context::Context(Context&& ctx) noexcept
+        : impl(std::move(ctx.impl)) {}
 Context& Context::operator=(const Context& ctx) {
     *impl = *ctx.impl;
     return *this;
@@ -349,4 +357,4 @@ std::string Jit::Disassemble() const {
     return Common::DisassembleX64(impl->block_of_code.GetCodeBegin(), impl->block_of_code.getCurr());
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

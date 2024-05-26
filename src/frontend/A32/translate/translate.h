@@ -4,17 +4,16 @@
  */
 #pragma once
 
+#include <dynarmic/A32/arch_version.h>
 #include <dynarmic/A32/config.h>
 
 #include "common/common_types.h"
 #include "frontend/A32/ir_emitter.h"
 #include "frontend/A32/types.h"
 
-#include <dynarmic/A32/arch_version.h>
-
 namespace Dynarmic::IR {
 class Block;
-} // namespace Dynarmic::IR
+}  // namespace Dynarmic::IR
 
 namespace Dynarmic::A32 {
 
@@ -48,8 +47,8 @@ enum class ConditionalState {
 };
 
 struct A32TranslatorVisitor {
-
-    explicit A32TranslatorVisitor(IR::Block& block, LocationDescriptor descriptor, const TranslationOptions& options) : ir(block, descriptor, options.arch_version), options(options) {
+    explicit A32TranslatorVisitor(IR::Block& block, LocationDescriptor descriptor, const TranslationOptions& options)
+            : ir(block, descriptor, options.arch_version), options(options) {
     }
 
     ConditionalState cond_state = ConditionalState::None;
@@ -57,22 +56,24 @@ struct A32TranslatorVisitor {
     A32::IREmitter ir;
     TranslationOptions options;
 
-    template <typename FnT> bool EmitVfpVectorOperation(bool sz, ExtReg d, ExtReg n, ExtReg m, const FnT& fn);
-    template <typename FnT> bool EmitVfpVectorOperation(bool sz, ExtReg d, ExtReg m, const FnT& fn);
+    template<typename FnT>
+    bool EmitVfpVectorOperation(bool sz, ExtReg d, ExtReg n, ExtReg m, const FnT& fn);
+    template<typename FnT>
+    bool EmitVfpVectorOperation(bool sz, ExtReg d, ExtReg m, const FnT& fn);
 
     // Creates an immediate of the given value
     IR::UAny I(size_t bitsize, u64 value) {
         switch (bitsize) {
-            case 8:
-                return ir.Imm8(static_cast<u8>(value));
-            case 16:
-                return ir.Imm16(static_cast<u16>(value));
-            case 32:
-                return ir.Imm32(static_cast<u32>(value));
-            case 64:
-                return ir.Imm64(value);
-            default:
-                ASSERT_FALSE("Imm - get: Invalid bitsize");
+        case 8:
+            return ir.Imm8(static_cast<u8>(value));
+        case 16:
+            return ir.Imm16(static_cast<u16>(value));
+        case 32:
+            return ir.Imm32(static_cast<u32>(value));
+        case 64:
+            return ir.Imm64(value);
+        default:
+            ASSERT_FALSE("Imm - get: Invalid bitsize");
         }
     }
 
@@ -118,4 +119,4 @@ IR::Block Translate(LocationDescriptor descriptor, const MemoryReadCodeFuncType&
  */
 bool TranslateSingleInstruction(IR::Block& block, LocationDescriptor descriptor, u32 instruction);
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

@@ -58,7 +58,7 @@ constexpr std::array<HostLoc, 18> ABI_ALL_CALLEE_SAVE = {
     HostLoc::XMM15,
 };
 
-constexpr size_t ABI_SHADOW_SPACE = 32; // bytes
+constexpr size_t ABI_SHADOW_SPACE = 32;  // bytes
 
 #else
 
@@ -106,7 +106,7 @@ constexpr std::array<HostLoc, 6> ABI_ALL_CALLEE_SAVE = {
     HostLoc::R15,
 };
 
-constexpr size_t ABI_SHADOW_SPACE = 0; // bytes
+constexpr size_t ABI_SHADOW_SPACE = 0;  // bytes
 
 #endif
 
@@ -120,4 +120,4 @@ void ABI_PopCallerSaveRegistersAndAdjustStack(BlockOfCode& code, size_t frame_si
 void ABI_PushCallerSaveRegistersAndAdjustStackExcept(BlockOfCode& code, HostLoc exception);
 void ABI_PopCallerSaveRegistersAndAdjustStackExcept(BlockOfCode& code, HostLoc exception);
 
-} // namespace Dynarmic::Backend::X64
+}  // namespace Dynarmic::Backend::X64

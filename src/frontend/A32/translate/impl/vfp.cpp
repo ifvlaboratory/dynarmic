@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: 0BSD
  */
 
+#include <array>
+
 #include "frontend/A32/translate/impl/translate_arm.h"
 #include "frontend/A32/translate/impl/translate_thumb.h"
 
-#include <array>
-
 namespace Dynarmic::A32 {
 
-template <typename FnT>
+template<typename FnT>
 bool A32TranslatorVisitor::EmitVfpVectorOperation(bool sz, ExtReg d, ExtReg n, ExtReg m, const FnT& fn) {
     if (!ir.current_location.FPSCR().Stride()) {
         return UnpredictableInstruction();
@@ -77,9 +77,9 @@ bool A32TranslatorVisitor::EmitVfpVectorOperation(bool sz, ExtReg d, ExtReg n, E
     return true;
 }
 
-template <typename FnT>
+template<typename FnT>
 bool A32TranslatorVisitor::EmitVfpVectorOperation(bool sz, ExtReg d, ExtReg m, const FnT& fn) {
-    return EmitVfpVectorOperation(sz, d, ExtReg::S0, m, [fn](ExtReg d, ExtReg, ExtReg m){
+    return EmitVfpVectorOperation(sz, d, ExtReg::S0, m, [fn](ExtReg d, ExtReg, ExtReg m) {
         fn(d, m);
     });
 }
@@ -647,7 +647,7 @@ bool ArmTranslatorVisitor::vfp_VMOV_2u32_2f32(Cond cond, Reg t2, Reg t, bool M, 
     }
 
     ir.SetExtendedRegister(m, ir.GetRegister(t));
-    ir.SetExtendedRegister(m+1, ir.GetRegister(t2));
+    ir.SetExtendedRegister(m + 1, ir.GetRegister(t2));
     return true;
 }
 
@@ -667,7 +667,7 @@ bool ArmTranslatorVisitor::vfp_VMOV_2f32_2u32(Cond cond, Reg t2, Reg t, bool M, 
     }
 
     ir.SetRegister(t, ir.GetExtendedRegister(m));
-    ir.SetRegister(t2, ir.GetExtendedRegister(m+1));
+    ir.SetRegister(t2, ir.GetExtendedRegister(m + 1));
     return true;
 }
 
@@ -1331,7 +1331,7 @@ bool ArmTranslatorVisitor::vfp_VCVT_f_to_f(Cond cond, bool D, size_t Vd, bool sz
         return true;
     }
 
-    const auto d = ToExtReg(!sz, Vd, D); // Destination is of opposite size to source
+    const auto d = ToExtReg(!sz, Vd, D);  // Destination is of opposite size to source
     const auto m = ToExtReg(sz, Vm, M);
     const auto reg_m = ir.GetExtendedRegister(m);
     const auto rounding_mode = ir.current_location.FPSCR().RMode();
@@ -1354,7 +1354,7 @@ bool ThumbTranslatorVisitor::vfp_VCVT_f_to_f(bool D, size_t Vd, bool sz, bool M,
         return true;
     }
 
-    const auto d = ToExtReg(!sz, Vd, D); // Destination is of opposite size to source
+    const auto d = ToExtReg(!sz, Vd, D);  // Destination is of opposite size to source
     const auto m = ToExtReg(sz, Vm, M);
     const auto reg_m = ir.GetExtendedRegister(m);
     const auto rounding_mode = ir.current_location.FPSCR().RMode();
@@ -1384,13 +1384,13 @@ bool ArmTranslatorVisitor::vfp_VCVT_from_int(Cond cond, bool D, size_t Vd, bool 
 
     if (sz) {
         const auto result = is_signed
-                          ? ir.FPSignedFixedToDouble(reg_m, 0, rounding_mode)
-                          : ir.FPUnsignedFixedToDouble(reg_m, 0, rounding_mode);
+                              ? ir.FPSignedFixedToDouble(reg_m, 0, rounding_mode)
+                              : ir.FPUnsignedFixedToDouble(reg_m, 0, rounding_mode);
         ir.SetExtendedRegister(d, result);
     } else {
         const auto result = is_signed
-                          ? ir.FPSignedFixedToSingle(reg_m, 0, rounding_mode)
-                          : ir.FPUnsignedFixedToSingle(reg_m, 0, rounding_mode);
+                              ? ir.FPSignedFixedToSingle(reg_m, 0, rounding_mode)
+                              : ir.FPUnsignedFixedToSingle(reg_m, 0, rounding_mode);
         ir.SetExtendedRegister(d, result);
     }
 
@@ -1411,13 +1411,13 @@ bool ThumbTranslatorVisitor::vfp_VCVT_from_int(bool D, size_t Vd, bool sz, bool 
 
     if (sz) {
         const auto result = is_signed
-                            ? ir.FPSignedFixedToDouble(reg_m, 0, rounding_mode)
-                            : ir.FPUnsignedFixedToDouble(reg_m, 0, rounding_mode);
+                              ? ir.FPSignedFixedToDouble(reg_m, 0, rounding_mode)
+                              : ir.FPUnsignedFixedToDouble(reg_m, 0, rounding_mode);
         ir.SetExtendedRegister(d, result);
     } else {
         const auto result = is_signed
-                            ? ir.FPSignedFixedToSingle(reg_m, 0, rounding_mode)
-                            : ir.FPUnsignedFixedToSingle(reg_m, 0, rounding_mode);
+                              ? ir.FPSignedFixedToSingle(reg_m, 0, rounding_mode)
+                              : ir.FPUnsignedFixedToSingle(reg_m, 0, rounding_mode);
         ir.SetExtendedRegister(d, result);
     }
 
@@ -1660,7 +1660,7 @@ bool ArmTranslatorVisitor::vfp_VPOP(Cond cond, bool D, size_t Vd, bool sz, Imm<8
     const ExtReg d = ToExtReg(sz, Vd, D);
     const size_t regs = sz ? imm8.ZeroExtend() >> 1U : imm8.ZeroExtend();
 
-    if (regs == 0 || RegNumber(d)+regs > 32) {
+    if (regs == 0 || RegNumber(d) + regs > 32) {
         return UnpredictableInstruction();
     }
 
@@ -1705,7 +1705,7 @@ bool ThumbTranslatorVisitor::vfp_VPOP(bool D, size_t Vd, bool sz, Imm<8> imm8) {
     const ExtReg d = ToExtReg(sz, Vd, D);
     const size_t regs = sz ? imm8.ZeroExtend() >> 1U : imm8.ZeroExtend();
 
-    if (regs == 0 || RegNumber(d)+regs > 32) {
+    if (regs == 0 || RegNumber(d) + regs > 32) {
         return UnpredictableInstruction();
     }
 
@@ -1742,7 +1742,7 @@ bool ArmTranslatorVisitor::vfp_VPUSH(Cond cond, bool D, size_t Vd, bool sz, Imm<
     const ExtReg d = ToExtReg(sz, Vd, D);
     const size_t regs = sz ? imm8.ZeroExtend() >> 1U : imm8.ZeroExtend();
 
-    if (regs == 0 || RegNumber(d)+regs > 32) {
+    if (regs == 0 || RegNumber(d) + regs > 32) {
         return UnpredictableInstruction();
     }
 
@@ -1763,7 +1763,8 @@ bool ArmTranslatorVisitor::vfp_VPUSH(Cond cond, bool D, size_t Vd, bool sz, Imm<
             const auto reg_d = ir.GetExtendedRegister(d + i);
             auto lo = ir.LeastSignificantWord(reg_d);
             auto hi = ir.MostSignificantWord(reg_d).result;
-            if (ir.current_location.EFlag()) std::swap(lo, hi);
+            if (ir.current_location.EFlag())
+                std::swap(lo, hi);
             ir.WriteMemory32(address, lo);
             address = ir.Add(address, ir.Imm32(4));
             ir.WriteMemory32(address, hi);
@@ -1786,7 +1787,7 @@ bool ThumbTranslatorVisitor::vfp_VPUSH(bool D, size_t Vd, bool sz, Imm<8> imm8) 
     const ExtReg d = ToExtReg(sz, Vd, D);
     const size_t regs = sz ? imm8.ZeroExtend() >> 1U : imm8.ZeroExtend();
 
-    if (regs == 0 || RegNumber(d)+regs > 32) {
+    if (regs == 0 || RegNumber(d) + regs > 32) {
         return UnpredictableInstruction();
     }
 
@@ -1803,7 +1804,8 @@ bool ThumbTranslatorVisitor::vfp_VPUSH(bool D, size_t Vd, bool sz, Imm<8> imm8) 
             const auto reg_d = ir.GetExtendedRegister(d + i);
             auto lo = ir.LeastSignificantWord(reg_d);
             auto hi = ir.MostSignificantWord(reg_d).result;
-            if (ir.current_location.EFlag()) std::swap(lo, hi);
+            if (ir.current_location.EFlag())
+                std::swap(lo, hi);
             ir.WriteMemory32(address, lo);
             address = ir.Add(address, ir.Imm32(4));
             ir.WriteMemory32(address, hi);
@@ -1903,7 +1905,7 @@ bool ThumbTranslatorVisitor::vfp_VSTR(bool U, bool D, Reg n, size_t Vd, bool sz,
         return true;
     }
 
-    if(n == Reg::PC) {
+    if (n == Reg::PC) {
         return UnpredictableInstruction();
     }
 
@@ -1948,7 +1950,7 @@ bool ArmTranslatorVisitor::vfp_VSTM_a1(Cond cond, bool p, bool u, bool D, bool w
     const auto d = ToExtReg(true, Vd, D);
     const size_t regs = imm8.ZeroExtend() / 2;
 
-    if (regs == 0 || regs > 16 || A32::RegNumber(d)+regs > 32) {
+    if (regs == 0 || regs > 16 || A32::RegNumber(d) + regs > 32) {
         return UnpredictableInstruction();
     }
 
@@ -2003,7 +2005,7 @@ bool ThumbTranslatorVisitor::vfp_VSTM_a1(bool p, bool u, bool D, bool w, Reg n, 
     const auto d = ToExtReg(true, Vd, D);
     const size_t regs = imm8.ZeroExtend() / 2;
 
-    if (regs == 0 || regs > 16 || A32::RegNumber(d)+regs > 32) {
+    if (regs == 0 || regs > 16 || A32::RegNumber(d) + regs > 32) {
         return UnpredictableInstruction();
     }
 
@@ -2051,7 +2053,7 @@ bool ArmTranslatorVisitor::vfp_VSTM_a2(Cond cond, bool p, bool u, bool D, bool w
     const auto d = ToExtReg(false, Vd, D);
     const size_t regs = imm8.ZeroExtend();
 
-    if (regs == 0 || A32::RegNumber(d)+regs > 32) {
+    if (regs == 0 || A32::RegNumber(d) + regs > 32) {
         return UnpredictableInstruction();
     }
 
@@ -2097,7 +2099,7 @@ bool ThumbTranslatorVisitor::vfp_VSTM_a2(bool p, bool u, bool D, bool w, Reg n, 
     const auto d = ToExtReg(false, Vd, D);
     const size_t regs = imm8.ZeroExtend();
 
-    if (regs == 0 || A32::RegNumber(d)+regs > 32) {
+    if (regs == 0 || A32::RegNumber(d) + regs > 32) {
         return UnpredictableInstruction();
     }
 
@@ -2136,7 +2138,7 @@ bool ArmTranslatorVisitor::vfp_VLDM_a1(Cond cond, bool p, bool u, bool D, bool w
     const auto d = ToExtReg(true, Vd, D);
     const size_t regs = imm8.ZeroExtend() / 2;
 
-    if (regs == 0 || regs > 16 || A32::RegNumber(d)+regs > 32) {
+    if (regs == 0 || regs > 16 || A32::RegNumber(d) + regs > 32) {
         return UnpredictableInstruction();
     }
 
@@ -2189,7 +2191,7 @@ bool ThumbTranslatorVisitor::vfp_VLDM_a1(bool p, bool u, bool D, bool w, Reg n, 
     const auto d = ToExtReg(true, Vd, D);
     const size_t regs = imm8.ZeroExtend() / 2;
 
-    if (regs == 0 || regs > 16 || A32::RegNumber(d)+regs > 32) {
+    if (regs == 0 || regs > 16 || A32::RegNumber(d) + regs > 32) {
         return UnpredictableInstruction();
     }
 
@@ -2235,7 +2237,7 @@ bool ArmTranslatorVisitor::vfp_VLDM_a2(Cond cond, bool p, bool u, bool D, bool w
     const auto d = ToExtReg(false, Vd, D);
     const size_t regs = imm8.ZeroExtend();
 
-    if (regs == 0 || A32::RegNumber(d)+regs > 32) {
+    if (regs == 0 || A32::RegNumber(d) + regs > 32) {
         return UnpredictableInstruction();
     }
 
@@ -2281,7 +2283,7 @@ bool ThumbTranslatorVisitor::vfp_VLDM_a2(bool p, bool u, bool D, bool w, Reg n, 
     const auto d = ToExtReg(false, Vd, D);
     const size_t regs = imm8.ZeroExtend();
 
-    if (regs == 0 || A32::RegNumber(d)+regs > 32) {
+    if (regs == 0 || A32::RegNumber(d) + regs > 32) {
         return UnpredictableInstruction();
     }
 
@@ -2299,4 +2301,4 @@ bool ThumbTranslatorVisitor::vfp_VLDM_a2(bool p, bool u, bool D, bool w, Reg n, 
     return true;
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

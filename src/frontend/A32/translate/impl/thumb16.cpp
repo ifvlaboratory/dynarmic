@@ -1209,7 +1209,7 @@ bool ThumbTranslatorVisitor::thumb16_B_t2(Imm<11> imm11) {
         return true;
     }
     const auto it = ir.current_location.IT();
-    if (it.IsInITBlock() && ! it.IsLastInITBlock()) {
+    if (it.IsInITBlock() && !it.IsLastInITBlock()) {
         return UnpredictableInstruction();
     }
     const s32 imm32 = static_cast<s32>((imm11.SignExtend<u32>() << 1U) + 4);
@@ -1225,8 +1225,8 @@ bool ThumbTranslatorVisitor::thumb16_IT(Cond firstcond, Imm<4> mask) {
         return UndefinedInstruction();
     }
     if (firstcond == Cond::NV) {
-       // NV conditional is obsolete
-       return UnpredictableInstruction();
+        // NV conditional is obsolete
+        return UnpredictableInstruction();
     }
     u32 mask_value = mask.ZeroExtend();
     if (firstcond == Cond::AL && Common::BitCount(mask_value) != 1) {
@@ -1247,4 +1247,4 @@ bool ThumbTranslatorVisitor::thumb16_IT(Cond firstcond, Imm<4> mask) {
     return true;
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

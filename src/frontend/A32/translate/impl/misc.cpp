@@ -163,4 +163,4 @@ bool ArmTranslatorVisitor::arm_UBFX(Cond cond, Imm<5> widthm1, Reg d, Imm<5> lsb
     return true;
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

@@ -4,10 +4,11 @@
  */
 
 #include "frontend/A32/ir_emitter.h"
-#include "frontend/A32/types.h"
-#include "frontend/ir/opcodes.h"
 
 #include <dynarmic/A32/arch_version.h>
+
+#include "frontend/A32/types.h"
+#include "frontend/ir/opcodes.h"
 
 namespace Dynarmic::A32 {
 
@@ -427,4 +428,4 @@ void IREmitter::CoprocStoreWords(size_t coproc_no, bool two, bool long_transfer,
     Inst(Opcode::A32CoprocStoreWords, IR::Value(coproc_info), address);
 }
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32

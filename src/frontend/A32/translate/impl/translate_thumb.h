@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include "frontend/imm.h"
 #include "frontend/A32/location_descriptor.h"
-#include "frontend/A32/translate/translate.h"
 #include "frontend/A32/translate/helper.h"
+#include "frontend/A32/translate/translate.h"
+#include "frontend/imm.h"
 
 namespace Dynarmic::A32 {
 
@@ -17,23 +17,24 @@ enum class Exception;
 struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
     using instruction_return_type = bool;
 
-    explicit ThumbTranslatorVisitor(IR::Block& block, LocationDescriptor descriptor, const TranslationOptions& options) : A32TranslatorVisitor(block, descriptor, options), is_thumb_16(false) {
+    explicit ThumbTranslatorVisitor(IR::Block& block, LocationDescriptor descriptor, const TranslationOptions& options)
+            : A32TranslatorVisitor(block, descriptor, options), is_thumb_16(false) {
         ASSERT_MSG(descriptor.TFlag(), "The processor must be in Thumb mode");
     }
-    
+
     static u32 ThumbExpandImm(Imm<1> i, Imm<3> imm3, Imm<8> imm8) {
         const auto imm12 = concatenate(i, imm3, imm8);
         if (imm12.Bits<10, 11>() == 0) {
             const u32 bytes = imm12.Bits<0, 7>();
             switch (imm12.Bits<8, 9>()) {
-                case 0b00:
-                    return bytes;
-                case 0b01:
-                    return (bytes << 16U) | bytes;
-                case 0b10:
-                    return (bytes << 24U) | (bytes << 8U);
-                case 0b11:
-                    return Common::Replicate(bytes, 8);
+            case 0b00:
+                return bytes;
+            case 0b01:
+                return (bytes << 16U) | bytes;
+            case 0b10:
+                return (bytes << 24U) | (bytes << 8U);
+            case 0b11:
+                return Common::Replicate(bytes, 8);
             }
             assert(false);
         }
@@ -55,35 +56,35 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
         const auto reg = ir.GetRegister(n);
         u8 shift_n = static_cast<u8>(concatenate(imm3, imm2).ZeroExtend());
         switch (t.ZeroExtend()) {
-            case 0b00: {
-                const auto result = ir.LogicalShiftLeft(reg, ir.Imm8(shift_n), carry_in);
+        case 0b00: {
+            const auto result = ir.LogicalShiftLeft(reg, ir.Imm8(shift_n), carry_in);
+            return result;
+        }
+        case 0b01: {
+            if (shift_n == 0) {
+                shift_n = 32;
+            }
+            const auto result = ir.LogicalShiftRight(reg, ir.Imm8(shift_n), carry_in);
+            return result;
+        }
+        case 0b10: {
+            if (shift_n == 0) {
+                shift_n = 32;
+            }
+            const auto result = ir.ArithmeticShiftRight(reg, ir.Imm8(shift_n), carry_in);
+            return result;
+        }
+        default: { /* 0b11 */
+            if (shift_n == 0) {
+                const auto result = ir.RotateRightExtended(reg, carry_in);
                 return result;
             }
-            case 0b01: {
-                if (shift_n == 0) {
-                    shift_n = 32;
-                }
-                const auto result = ir.LogicalShiftRight(reg, ir.Imm8(shift_n), carry_in);
-                return result;
-            }
-            case 0b10: {
-                if (shift_n == 0) {
-                    shift_n = 32;
-                }
-                const auto result = ir.ArithmeticShiftRight(reg, ir.Imm8(shift_n), carry_in);
-                return result;
-            } 
-            default: { /* 0b11 */
-                if (shift_n == 0) {
-                    const auto result = ir.RotateRightExtended(reg, carry_in);
-                    return result;
-                }
-                const auto result = ir.RotateRight(reg, ir.Imm8(shift_n), carry_in);
-                return result;
-            }  
+            const auto result = ir.RotateRight(reg, ir.Imm8(shift_n), carry_in);
+            return result;
+        }
         }
     }
-    
+
     bool is_thumb_16;
 
     bool ConditionPassed();
@@ -172,21 +173,21 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
 
     // Load/Store Multiple
     bool thumb32_STMIA(bool W, Reg n, RegList reg_list);
-//    bool thumb32_POP(bool P, bool M, RegList reg_list);
+    //    bool thumb32_POP(bool P, bool M, RegList reg_list);
     bool thumb32_LDMIA(bool W, Reg n, RegList reg_list);
-//    bool thumb32_PUSH(bool M, RegList reg_list);
+    //    bool thumb32_PUSH(bool M, RegList reg_list);
     bool thumb32_STMDB(bool W, Reg n, RegList reg_list);
     bool thumb32_LDMDB(bool W, Reg n, RegList reg_list);
 
     // Load/Store Dual, Load/Store Exclusive, Table Branch
     bool thumb32_STREX(Reg n, Reg t, Reg d, Imm<8> imm8);
     bool thumb32_LDREX(Reg n, Reg t, Imm<8> imm8);
-//    bool thumb32_STREXB(Reg n, Reg t, Reg d);
+    //    bool thumb32_STREXB(Reg n, Reg t, Reg d);
     bool thumb32_STREXH(Reg n, Reg d, Reg t);
     bool thumb32_STREXD(Reg n, Reg t, Reg t2, Reg d);
     bool thumb32_TBB(Reg n, Reg m);
     bool thumb32_TBH(Reg n, Reg m);
-//    bool thumb32_LDREXB(Reg n, Reg t);
+    //    bool thumb32_LDREXB(Reg n, Reg t);
     bool thumb32_LDREXH(Reg n, Reg t);
     bool thumb32_LDREXD(Reg n, Reg t, Reg t2);
     bool thumb32_STRD_imm_2(bool P, bool U, bool W, Reg n, Reg t1, Reg t2, Imm<8> imm8);
@@ -196,7 +197,7 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
     bool thumb32_TST_reg(Reg n, Imm<3> imm3, Imm<2> imm2, Imm<2> t, Reg m);
     bool thumb32_AND_reg(bool S, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m);
     bool thumb32_BIC_reg(bool S, Reg n, Imm<3> imm3, Reg d, Imm<2> imm2, Imm<2> t, Reg m);
-//    bool thumb32_MOV_reg(bool S, Reg d, Reg m);
+    //    bool thumb32_MOV_reg(bool S, Reg d, Reg m);
     bool thumb32_LSL_imm(bool S, Imm<3> imm3, Reg d, Imm<2> imm2, Reg m);
     bool thumb32_LSR_imm(bool S, Imm<3> imm3, Reg d, Imm<2> imm2, Reg m);
     bool thumb32_ASR_imm(bool S, Imm<3> imm3, Reg d, Imm<2> imm2, Reg m);
@@ -251,7 +252,7 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
     // Branches and Miscellaneous Control
     bool thumb32_DSB(Imm<4> option);
     bool thumb32_DMB(Imm<4> option);
-//    bool thumb32_ISB(Imm<4> option);
+    //    bool thumb32_ISB(Imm<4> option);
 
     // Store Single Data Item
     bool thumb32_STRB_imm_1(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
@@ -287,7 +288,7 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
 
     // Load Word
     bool thumb32_LDR_lit(bool u, Reg t, Imm<12> imm12);
-//    bool thumb32_LDRT(Reg n, Reg t, Imm<8> imm8);
+    //    bool thumb32_LDRT(Reg n, Reg t, Imm<8> imm8);
     bool thumb32_LDR_reg(Reg n, Reg t, Imm<2> shift, Reg m);
     bool thumb32_LDR_imm8(Reg n, Reg t, bool p, bool u, bool w, Imm<8> imm8);
     bool thumb32_LDR_imm12(Reg n, Reg t, Imm<12> imm12);
@@ -332,8 +333,7 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
     bool asimd_SHR(bool U, bool D, size_t imm6, size_t Vd, bool L, bool Q, bool M, size_t Vm);
 
     // One register and modified immediate
-    bool asimd_VMOV_imm(Imm<1> a, bool D, Imm<1> b, Imm<1> c, Imm<1> d, size_t Vd,
-                        Imm<4> cmode, bool Q, bool op, Imm<1> e, Imm<1> f, Imm<1> g, Imm<1> h);
+    bool asimd_VMOV_imm(Imm<1> a, bool D, Imm<1> b, Imm<1> c, Imm<1> d, size_t Vd, Imm<4> cmode, bool Q, bool op, Imm<1> e, Imm<1> f, Imm<1> g, Imm<1> h);
 
     // Advanced SIMD load/store structures
     bool v8_VST_multiple(bool D, Reg n, size_t Vd, Imm<4> type, size_t size, size_t align, Reg m);
@@ -445,4 +445,4 @@ struct ThumbTranslatorVisitor final : public A32TranslatorVisitor {
     bool thumb32_UHSUB16(Reg n, Reg d, Reg m);
 };
 
-} // namespace Dynarmic::A32
+}  // namespace Dynarmic::A32
