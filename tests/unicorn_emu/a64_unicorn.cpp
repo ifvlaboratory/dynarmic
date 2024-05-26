@@ -166,10 +166,10 @@ void A64Unicorn::DumpMemoryInformation() {
     CHECKED(uc_free(regions));
 }
 
-void A64Unicorn::InterruptHook(uc_engine* uc, u32 int_number, void* user_data) {
+void A64Unicorn::InterruptHook(uc_engine* /*uc*/, u32 int_number, void* user_data) {
     auto* this_ = static_cast<A64Unicorn*>(user_data);
 
-    u32 esr;
+    u32 esr = 0;
     // CHECKED(uc_reg_read(uc, UC_ARM64_REG_ESR, &esr));
 
     auto ec = esr >> 26;
